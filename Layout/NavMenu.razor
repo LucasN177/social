@@ -1,0 +1,36 @@
+﻿@using Microsoft.AspNetCore.Components.Routing
+@using MudBlazor
+@using Social.Core.Interfaces.Services
+@using Social.Core.Models
+<MudNavMenu>
+
+    <!-- MAIN -->
+    <MudText Typo="Typo.caption" Class="px-3 mt-2 mb-1 text-muted">
+        Main
+    </MudText>
+
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+        Dashboard
+    </MudNavLink>
+
+    <!-- Gruppen -->
+    <MudDivider Class="my-3"/>
+    <MudText Typo="Typo.caption" Class="px-3 mt-4 mb-1 text-muted">
+        Gruppen
+    </MudText>
+        
+    <MudNavLink Href="newGroup" Icon="@Icons.Material.Filled.Add">
+        Gruppe erstellen
+    </MudNavLink>
+
+    <!-- SYSTEM -->
+    <MudDivider Class="my-3"/>
+
+    <MudText Typo="Typo.caption" Class="px-3 mt-4 mb-1 text-muted">
+        System
+    </MudText>
+    <MudNavLink Href="settings" Icon="@Icons.Material.Filled.Settings">
+        Einstellungen
+    </MudNavLink>
+
+</MudNavMenu>

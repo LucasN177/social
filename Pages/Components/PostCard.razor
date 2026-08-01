@@ -1,0 +1,237 @@
+@using Microsoft.AspNetCore.Components.Web
+@using MudBlazor
+@using Social.Core.Interfaces.Services
+@using Social.core.Models
+@using Social.Interfaces
+@inject IPostService PostService
+@inject ISnackbar Snackbar
+
+<MudCard Elevation="2" Class="mb-4">
+    <MudCardHeader>
+        <CardHeaderAvatar>
+            <MudAvatar Color="Color.Secondary" Size="Size.Medium">
+                <MudImage Src="@Post.User.ProfileImageUrl" Alt="@Post.User.DisplayName" />
+            </MudAvatar>
+        </CardHeaderAvatar>
+        <CardHeaderContent>
+            <MudText Typo="Typo.body1" Class="font-weight-bold">
+                @Post.User.DisplayName
+                @if (Post.User.IsVerified)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Color="Color.Primary" Class="ml-1" />
+                }
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                @Post.User.Username • @GetTimeAgo(Post.CreatedAt)
+                @if (!string.IsNullOrEmpty(Post.Location))
+                {
+                    <span> • @Post.Location</span>
+                }
+            </MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" />
+        </CardHeaderActions>
+    </MudCardHeader>
+
+    @if (Post.ImageUrls.Any())
+    {
+        <MudCardMedia>
+            @if (Post.ImageUrls.Count == 1)
+            {
+                <MudImage Src="@Post.ImageUrls[0]" Alt="Post image" Style="width: 100%; height: 400px; object-fit: cover;" />
+            }
+            else
+            {
+                <MudCarousel TData="string" Style="height: 400px;" ShowArrows="true" ShowBullets="true" AutoCycle="false">
+                    @foreach (var imageUrl in Post.ImageUrls)
+                    {
+                        <MudCarouselItem>
+                            <MudImage Src="@imageUrl" Alt="Post image" Style="width: 100%; height: 400px; object-fit: cover;" />
+                        </MudCarouselItem>
+                    }
+                </MudCarousel>
+            }
+        </MudCardMedia>
+    }
+
+    <MudCardContent>
+        <MudText Typo="Typo.body1" Class="mb-3">
+            @Post.Content
+        </MudText>
+
+        @if (Post.Tags.Any())
+        {
+            <div class="mb-3">
+                @foreach (var tag in Post.Tags)
+                {
+                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="mr-1">#@tag</MudChip>
+                }
+            </div>
+        }
+
+        <MudDivider Class="my-3" />
+
+        <div class="d-flex justify-space-between align-center">
+            <div class="d-flex align-center">
+                <MudIconButton Icon="@(Post.IsLiked ? Icons.Material.Filled.Favorite : Icons.Material.Filled.FavoriteBorder)" 
+                               Color="@(Post.IsLiked ? Color.Error : Color.Default)" 
+                               Size="Size.Medium" 
+                               OnClick="ToggleLike" 
+                               Class="mr-2" />
+                <MudIconButton Icon="@Icons.Material.Filled.ChatBubbleOutline" 
+                               Size="Size.Medium" 
+                               OnClick="@(() => ShowComments = !ShowComments)" 
+                               Class="mr-2" />
+                <MudIconButton Icon="@Icons.Material.Filled.Share" 
+                               Size="Size.Medium" 
+                               Class="mr-2" />
+            </div>
+            <MudIconButton Icon="@(Post.IsBookmarked ? Icons.Material.Filled.Bookmark : Icons.Material.Filled.BookmarkBorder)" 
+                           Color="@(Post.IsBookmarked ? Color.Primary : Color.Default)" 
+                           Size="Size.Medium" 
+                           OnClick="ToggleBookmark" />
+        </div>
+
+        <MudText Typo="Typo.body2" Class="mt-2 font-weight-bold">
+            @Post.LikesCount.ToString("N0") likes
+        </MudText>
+
+        @if (Post.CommentsCount > 0 && !ShowComments)
+        {
+            <MudButton Variant="Variant.Text" 
+                       Color="Color.Primary" 
+                       Size="Size.Small" 
+                       StartIcon="@Icons.Material.Filled.Comment" 
+                       OnClick="@(() => ShowComments = true)" 
+                       Class="mt-2">
+                View all @Post.CommentsCount comments
+            </MudButton>
+        }
+
+        @if (ShowComments)
+        {
+            <div class="mt-3">
+                @if (Comments == null)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                }
+                else
+                {
+                    @foreach (var comment in Comments)
+                    {
+                        <div class="d-flex align-start mb-2">
+                            <MudAvatar Size="Size.Small" Class="mr-2">
+                                <MudImage Src="@comment.User.ProfileImageUrl" Alt="@comment.User.DisplayName" />
+                            </MudAvatar>
+                            <div class="flex-grow-1">
+                                <MudText Typo="Typo.body2">
+                                    <strong>@comment.User.Username</strong> @comment.Content
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @GetTimeAgo(comment.CreatedAt) • @comment.LikesCount likes
+                                </MudText>
+                            </div>
+                        </div>
+                    }
+                }
+
+                <div class="d-flex align-center mt-3">
+                    <MudAvatar Size="Size.Small" Class="mr-2">
+                        <MudImage Src="https://via.placeholder.com/40x40" Alt="You" />
+                    </MudAvatar>
+                    <MudTextField @bind-Value="NewComment" 
+                                  Placeholder="Add a comment..." 
+                                  Variant="Variant.Text" 
+                                  Class="flex-grow-1" 
+                                  OnKeyDown="HandleCommentKeyDown" />
+                    <MudButton Variant="Variant.Text" 
+                               Color="Color.Primary" 
+                               Size="Size.Small" 
+                               OnClick="AddComment" 
+                               Disabled="string.IsNullOrWhiteSpace(NewComment)">
+                        Post
+                    </MudButton>
+                </div>
+            </div>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public Post Post { get; set; } = new();
+    
+    private bool ShowComments = false;
+    private List<Comment>? Comments;
+    private string NewComment = string.Empty;
+
+    private async Task ToggleLike()
+    {
+        var success = await PostService.ToggleLikeAsync(Post.Id);
+        if (success)
+        {
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleBookmark()
+    {
+        var success = await PostService.ToggleBookmarkAsync(Post.Id);
+        if (success)
+        {
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadComments()
+    {
+        if (Comments == null)
+        {
+            Comments = await PostService.GetCommentsAsync(Post.Id);
+        }
+    }
+
+    private async Task AddComment()
+    {
+        if (string.IsNullOrWhiteSpace(NewComment)) return;
+
+        var comment = await PostService.AddCommentAsync(Post.Id, NewComment);
+        Comments ??= new List<Comment>();
+        Comments.Add(comment);
+        Post.CommentsCount++;
+        NewComment = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task HandleCommentKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(NewComment))
+        {
+            await AddComment();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ShowComments && Comments == null)
+        {
+            await LoadComments();
+        }
+    }
+
+    private string GetTimeAgo(DateTime dateTime)
+    {
+        var timeSpan = DateTime.Now - dateTime;
+        
+        if (timeSpan.TotalMinutes < 1)
+            return "now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes}m";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours}h";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays}d";
+        
+        return dateTime.ToString("MMM dd");
+    }
+}

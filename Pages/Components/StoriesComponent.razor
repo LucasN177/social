@@ -1,0 +1,103 @@
+@using MudBlazor
+@using Social.core.Models
+@using Social.Interfaces
+@inject IUserService UserService
+
+<MudCard Elevation="1" Class="mb-4" Style="border-radius: 12px;">
+    <MudCardContent Class="py-3">
+        <div class="d-flex align-center overflow-x-auto" style="gap: 16px;">
+            <!-- Add Story Button -->
+            <div class="d-flex flex-column align-center" style="min-width: 80px;">
+                <div class="position-relative">
+                    <MudAvatar Size="Size.Large" Style="width: 60px; height: 60px; border: 2px solid #e0e0e0;">
+                        <MudImage Src="https://via.placeholder.com/60x60" Alt="Your Story" />
+                    </MudAvatar>
+                    <MudFab Color="Color.Primary" 
+                           Size="Size.Small" 
+                           StartIcon="@Icons.Material.Filled.Add" 
+                           Style="position: absolute; bottom: -4px; right: -4px; width: 24px; height: 24px; min-height: 24px;" />
+                </div>
+                <MudText Typo="Typo.caption" Class="mt-1 text-center">Your Story</MudText>
+            </div>
+
+            <!-- Stories -->
+            @if (Stories == null)
+            {
+                <div class="d-flex" style="gap: 16px;">
+                    @for (int i = 0; i < 5; i++)
+                    {
+                        <div class="d-flex flex-column align-center" style="min-width: 80px;">
+                            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="60px" Height="60px" />
+                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="12px" Class="mt-1" />
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                @foreach (var story in Stories)
+                {
+                    <div class="d-flex flex-column align-center" style="min-width: 80px; cursor: pointer;" @onclick="() => OpenStory(story)">
+                        <MudAvatar Size="Size.Large" 
+                                   Style="@GetStoryAvatarStyle(story)" 
+                                   Class="story-avatar">
+                            <MudImage Src="@story.User.ProfileImageUrl" Alt="@story.User.DisplayName" />
+                        </MudAvatar>
+                        <MudText Typo="Typo.caption" Class="mt-1 text-center">@story.User.DisplayName</MudText>
+                    </div>
+                }
+            }
+        </div>
+    </MudCardContent>
+</MudCard>
+
+<style>
+    .story-avatar {
+        width: 60px !important;
+        height: 60px !important;
+        border: 3px solid;
+        transition: transform 0.2s ease;
+    }
+
+    .story-avatar:hover {
+        transform: scale(1.05);
+    }
+
+    .overflow-x-auto {
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .overflow-x-auto::-webkit-scrollbar {
+        display: none;
+    }
+</style>
+
+@code {
+    private List<Story>? Stories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStories();
+    }
+
+    private async Task LoadStories()
+    {
+        Stories = await UserService.GetStoriesAsync();
+        StateHasChanged();
+    }
+
+    private string GetStoryAvatarStyle(Story story)
+    {
+        var borderColor = story.IsViewed ? "#e0e0e0" : "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)";
+        return $"border-color: {borderColor}; width: 60px; height: 60px;";
+    }
+
+    private void OpenStory(Story story)
+    {
+        // TODO: Implement story viewer
+        story.IsViewed = true;
+        StateHasChanged();
+    }
+}

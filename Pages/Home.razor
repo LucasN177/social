@@ -1,0 +1,235 @@
+﻿@page "/fyp"
+@using Microsoft.AspNetCore.Components.Web
+@using MudBlazor
+@using Social.Core.Interfaces.Services
+@using Social.core.Models
+@using Social.Interfaces
+@using Social.Pages.Components
+@inject IAuthService AuthService
+@inject IUserService UserService
+@inject IPostService PostService
+
+<PageTitle>Home - SocialApp</PageTitle>
+
+<MudGrid>
+    <MudItem xs="12" md="8">
+        <!-- Stories Section -->
+        <StoriesComponent />
+        
+        <!-- Posts Feed -->
+        <div class="feed-container">
+            @if (Posts == null)
+            {
+                <div class="d-flex justify-center my-4">
+                    <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+                </div>
+            }
+            else if (!Posts.Any())
+            {
+                <MudAlert Severity="Severity.Info" Class="my-4">
+                    No posts available. Follow some users to see their posts here!
+                </MudAlert>
+            }
+            else
+            {
+                @foreach (var post in Posts)
+                {
+                    <PostCard Post="post" />
+                }
+            }
+        </div>
+
+        <!-- Load More Button -->
+        @if (Posts != null && Posts.Any())
+        {
+            <div class="d-flex justify-center my-4">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Primary" 
+                           OnClick="LoadMorePosts" 
+                           Disabled="IsLoadingMore">
+                    @if (IsLoadingMore)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    }
+                    Load More
+                </MudButton>
+            </div>
+        }
+    </MudItem>
+
+    <MudItem xs="12" md="4">
+        <!-- User Profile Card -->
+        <MudCard Elevation="2" Class="mb-4">
+            <MudCardContent>
+                @if (CurrentUser == null)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Circle" Width="80px" Height="80px" Class="mx-auto mb-3" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="60%" Height="20px" Class="mx-auto mb-2" />
+                    <MudSkeleton SkeletonType="SkeletonType.Text" Width="80%" Height="16px" Class="mx-auto" />
+                }
+                else
+                {
+                    <div class="d-flex align-center mb-3">
+                        <MudAvatar Size="Size.Large" Class="mr-3">
+                            <MudImage Src="@CurrentUser.ProfileImageUrl" Alt="@CurrentUser.DisplayName" />
+                        </MudAvatar>
+                        <div>
+                            <MudText Typo="Typo.h6">User</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Email</MudText>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-space-between text-center mb-3">
+                        <div>
+                            <MudText Typo="Typo.h6">@CurrentUser.PostsCount.ToString("N0")</MudText>
+                            <MudText Typo="Typo.caption">Posts</MudText>
+                        </div>
+                        <div>
+                            <MudText Typo="Typo.h6">@CurrentUser.FollowersCount.ToString("N0")</MudText>
+                            <MudText Typo="Typo.caption">Followers</MudText>
+                        </div>
+                        <div>
+                            <MudText Typo="Typo.h6">@CurrentUser.FollowingCount.ToString("N0")</MudText>
+                            <MudText Typo="Typo.caption">Following</MudText>
+                        </div>
+                    </div>
+                    
+                    <MudText Typo="Typo.body2" Class="mb-3">@CurrentUser.Bio</MudText>
+                    
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary" 
+                               FullWidth="true" 
+                               StartIcon="@Icons.Material.Filled.Add">
+                        Create Post
+                    </MudButton>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Suggestions Card -->
+        <MudCard Elevation="2" Class="mb-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Suggestions for you</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (SuggestedUsers == null)
+                {
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <div class="d-flex align-center mb-3">
+                            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="40px" Height="40px" Class="mr-3" />
+                            <div class="flex-grow-1">
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="70%" Height="16px" Class="mb-1" />
+                                <MudSkeleton SkeletonType="SkeletonType.Text" Width="50%" Height="14px" />
+                            </div>
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="60px" Height="32px" />
+                        </div>
+                    }
+                }
+                else
+                {
+                    @foreach (var user in SuggestedUsers)
+                    {
+                        <div class="d-flex align-center mb-3">
+                            <MudAvatar Size="Size.Medium" Class="mr-3">
+                                <MudImage Src="@user.ProfileImageUrl" Alt="@user.DisplayName" />
+                            </MudAvatar>
+                            <div class="flex-grow-1">
+                                <MudText Typo="Typo.body2" Class="font-weight-bold">
+                                    @user.DisplayName
+                                    @if (user.IsVerified)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Color="Color.Primary" Class="ml-1" />
+                                    }
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@user.Username</MudText>
+                            </div>
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Small">
+                                Follow
+                            </MudButton>
+                        </div>
+                    }
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Trending Card -->
+        <MudCard Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Trending</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <div class="trending-item mb-3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Trending in Technology</MudText>
+                    <MudText Typo="Typo.body2" Class="font-weight-bold">#AI</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">24.5K posts</MudText>
+                </div>
+                <div class="trending-item mb-3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Trending in Photography</MudText>
+                    <MudText Typo="Typo.body2" Class="font-weight-bold">#Photography</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">18.2K posts</MudText>
+                </div>
+                <div class="trending-item mb-3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Trending in Travel</MudText>
+                    <MudText Typo="Typo.body2" Class="font-weight-bold">#Travel</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">15.8K posts</MudText>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<Post>? Posts;
+    private User? CurrentUser;
+    private List<User>? SuggestedUsers;
+    private bool IsLoadingMore = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(
+            LoadPosts(),
+            LoadCurrentUser(),
+            LoadSuggestedUsers()
+        );
+    }
+
+    private async Task LoadPosts()
+    {
+        Posts = await PostService.GetFeedPostsAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadCurrentUser()
+    {
+        CurrentUser = await UserService.GetCurrentUserAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadSuggestedUsers()
+    {
+        SuggestedUsers = await UserService.GetSuggestedUsersAsync();
+        StateHasChanged();
+    }
+
+    private async Task LoadMorePosts()
+    {
+        IsLoadingMore = true;
+        StateHasChanged();
+        
+        await Task.Delay(1000); // Simulate loading
+        
+        // In a real app, you would load more posts from the API
+        var morePosts = await PostService.GetFeedPostsAsync();
+        Posts?.AddRange(morePosts);
+        
+        IsLoadingMore = false;
+        StateHasChanged();
+    }
+}
