@@ -1,0 +1,91 @@
+@* Raster aus Post-Vorschaubildern mit "Load more"; die Datenquelle kommt von außen *@
+
+@if (_posts is null)
+{
+    <div class="post-grid">
+        @for (var i = 0; i < 6; i++)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Class="post-tile" Height="auto" />
+        }
+    </div>
+}
+else if (_posts.Count == 0)
+{
+    <div class="post-grid-empty">
+        <MudIcon Icon="@EmptyIcon" Size="Size.Large" />
+        <MudText Typo="Typo.subtitle1">@EmptyTitle</MudText>
+        @if (!string.IsNullOrEmpty(EmptyText))
+        {
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@EmptyText</MudText>
+        }
+        @EmptyAction
+    </div>
+}
+else
+{
+    <div class="post-grid">
+        @foreach (var post in _posts)
+        {
+            <a href="@($"p/{post.Id}")" class="post-tile" @key="post.Id" title="@Preview(post)">
+                @if (post.ImageUrls.Count > 0)
+                {
+                    <img src="@post.ImageUrls[0]" alt="@Preview(post)" loading="lazy" />
+                    @if (post.ImageUrls.Count > 1)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Collections" Class="post-tile-badge" Size="Size.Small" />
+                    }
+                }
+                else
+                {
+                    <span class="post-tile-text">@Preview(post)</span>
+                }
+                <span class="post-tile-overlay">
+                    <span><MudIcon Icon="@Icons.Material.Filled.Favorite" Size="Size.Small" /> @post.LikesCount</span>
+                    <span><MudIcon Icon="@Icons.Material.Filled.ChatBubble" Size="Size.Small" /> @post.CommentsCount</span>
+                </span>
+            </a>
+        }
+    </div>
+
+    @if (_hasMore)
+    {
+        <div class="d-flex justify-center my-4">
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="LoadMore" Disabled="_loadingMore">Load more</MudButton>
+        </div>
+    }
+}
+
+@code {
+    /// <summary>Lädt eine Seite (0-basiert) mit höchstens IPostService.PageSize Posts.</summary>
+    [Parameter, EditorRequired] public Func<int, Task<List<Post>>> LoadPage { get; set; } = null!;
+    [Parameter] public string EmptyIcon { get; set; } = Icons.Material.Outlined.PhotoCamera;
+    [Parameter] public string EmptyTitle { get; set; } = "No posts yet";
+    [Parameter] public string? EmptyText { get; set; }
+    [Parameter] public RenderFragment? EmptyAction { get; set; }
+
+    private List<Post>? _posts;
+    private int _page;
+    private bool _hasMore;
+    private bool _loadingMore;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var posts = await LoadPage(0);
+        _hasMore = posts.Count == IPostService.PageSize;
+        _posts = posts;
+    }
+
+    private async Task LoadMore()
+    {
+        _loadingMore = true;
+        var posts = await LoadPage(_page + 1);
+        _page++;
+        _hasMore = posts.Count == IPostService.PageSize;
+        var known = _posts!.Select(p => p.Id).ToHashSet();
+        _posts!.AddRange(posts.Where(p => !known.Contains(p.Id)));
+        _loadingMore = false;
+    }
+
+    private static string Preview(Post post) =>
+        post.Content.Length > 120 ? post.Content[..120] + "…" : post.Content;
+}

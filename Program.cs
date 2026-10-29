@@ -48,6 +48,7 @@ builder.Services.AddSingleton<Client>(provider =>
 });
 builder.Services.AddSingleton<IAuthRepository, AuthRepository>();
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
+builder.Services.AddSingleton<IPostRepository, PostRepository>();
 
 builder.Services.AddSingleton<AppStateService>();
 builder.Services.AddSingleton<IAuthService, AuthService>();

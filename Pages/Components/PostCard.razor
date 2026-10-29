@@ -1,236 +1,262 @@
-@using Microsoft.AspNetCore.Components.Web
-@using MudBlazor
-@using Social.Core.Interfaces.Services
-@using Social.Core.Models.Database
+@using System.Text.RegularExpressions
 @inject IPostService PostService
+@inject IUserService UserService
+@inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
 
-<MudCard Elevation="2" Class="mb-4">
-    <MudCardHeader>
-        <CardHeaderAvatar>
-            <MudAvatar Color="Color.Secondary" Size="Size.Medium">
-                <MudImage Src="@Post.User.ProfileImageUrl" Alt="@Post.User.DisplayName" />
-            </MudAvatar>
-        </CardHeaderAvatar>
-        <CardHeaderContent>
-            <MudText Typo="Typo.body1" Class="font-weight-bold">
-                @Post.User.DisplayName
+<MudPaper Elevation="0" Outlined="true" Class="mb-4" Style="border-radius: 16px; overflow: hidden">
+    <div class="post-header">
+        <a href="@ProfileUrl(Post.User)"><UserAvatar User="Post.User" Size="40" /></a>
+        <div class="post-meta">
+            <a href="@ProfileUrl(Post.User)" class="post-author">
+                @AuthorName(Post.User)
                 @if (Post.User.IsVerified)
                 {
-                    <MudIcon Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Color="Color.Primary" Class="ml-1" />
+                    <MudIcon Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Color="Color.Primary" Class="ml-1" Style="font-size: 16px" />
                 }
-            </MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">
-                @Post.User.Username • @GetTimeAgo(Post.CreatedAt)
+            </a>
+            <div class="post-sub">
+                <span title="@Post.CreatedAt.ToString("g")">@TimeAgo(Post.CreatedAt)</span>
                 @if (!string.IsNullOrEmpty(Post.Location))
                 {
-                    <span> • @Post.Location</span>
+                    <span> · <MudIcon Icon="@Icons.Material.Outlined.Place" Style="font-size: 14px; vertical-align: -2px" /> @Post.Location</span>
                 }
-            </MudText>
-        </CardHeaderContent>
-        <CardHeaderActions>
-            <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" />
-        </CardHeaderActions>
-    </MudCardHeader>
+            </div>
+        </div>
+        <MudMenu Icon="@Icons.Material.Filled.MoreHoriz" Size="Size.Small" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="Post options">
+            <MudMenuItem Icon="@Icons.Material.Outlined.Link" OnClick="CopyLink">Copy link</MudMenuItem>
+            @if (PostService.IsOwnPost(Post))
+            {
+                <MudMenuItem Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" OnClick="DeletePost">Delete</MudMenuItem>
+            }
+        </MudMenu>
+    </div>
 
-    @if (Post.ImageUrls.Any())
+    @if (Post.ImageUrls.Count == 1)
     {
-        <MudCardMedia>
-            @if (Post.ImageUrls.Count == 1)
-            {
-                <MudImage Src="@Post.ImageUrls[0]" Alt="Post image" Style="width: 100%; height: 400px; object-fit: cover;" />
-            }
-            else
-            {
-                <MudCarousel TData="string" Style="height: 400px;" ShowArrows="true" ShowBullets="true" AutoCycle="false">
-                    @foreach (var imageUrl in Post.ImageUrls)
-                    {
-                        <MudCarouselItem>
-                            <MudImage Src="@imageUrl" Alt="Post image" Style="width: 100%; height: 400px; object-fit: cover;" />
-                        </MudCarouselItem>
-                    }
-                </MudCarousel>
-            }
-        </MudCardMedia>
+        <div class="post-media" @ondblclick="LikeFromDoubleClick">
+            <img src="@Post.ImageUrls[0]" alt="Photo by @AuthorName(Post.User)" loading="lazy" />
+        </div>
+    }
+    else if (Post.ImageUrls.Count > 1)
+    {
+        <div class="post-media" @ondblclick="LikeFromDoubleClick">
+            <MudCarousel TData="object" Class="post-carousel" ShowArrows="true" ShowBullets="true" AutoCycle="false" EnableSwipeGesture="true">
+                @foreach (var imageUrl in Post.ImageUrls)
+                {
+                    <MudCarouselItem>
+                        <img src="@imageUrl" alt="Photo by @AuthorName(Post.User)" loading="lazy" />
+                    </MudCarouselItem>
+                }
+            </MudCarousel>
+        </div>
     }
 
-    <MudCardContent>
-        <MudText Typo="Typo.body1" Class="mb-3">
-            @Post.Content
-        </MudText>
+    <div class="post-body">
+        <div class="post-actions">
+            <MudIconButton Icon="@(Post.IsLiked ? Icons.Material.Filled.Favorite : Icons.Material.Outlined.FavoriteBorder)"
+                           Color="@(Post.IsLiked ? Color.Error : Color.Default)" OnClick="ToggleLike"
+                           Class="@(_likePulse ? "like-pulse" : null)" aria-label="@(Post.IsLiked ? "Unlike" : "Like")" />
+            <MudIconButton Icon="@Icons.Material.Outlined.ChatBubbleOutline" OnClick="ToggleComments" aria-label="Comments" />
+            <MudIconButton Icon="@Icons.Material.Outlined.Share" OnClick="CopyLink" aria-label="Copy link" />
+            <MudSpacer />
+            <MudIconButton Icon="@(Post.IsBookmarked ? Icons.Material.Filled.Bookmark : Icons.Material.Outlined.BookmarkBorder)"
+                           Color="@(Post.IsBookmarked ? Color.Primary : Color.Default)" OnClick="ToggleBookmark"
+                           aria-label="@(Post.IsBookmarked ? "Remove from saved" : "Save")" />
+        </div>
 
-        @if (Post.Tags.Any())
+        <div class="post-likes">@Post.LikesCount.ToString("N0") @(Post.LikesCount == 1 ? "like" : "likes")</div>
+
+        @if (!string.IsNullOrWhiteSpace(Post.Content))
         {
-            <div class="mb-3">
-                @foreach (var tag in Post.Tags)
+            <div class="post-content">
+                <a href="@ProfileUrl(Post.User)" class="post-author-inline">@(Post.User.Username ?? AuthorName(Post.User))</a>
+                @foreach (var part in SplitHashtags(Post.Content))
                 {
-                    <MudChip T="string" Color="Color.Primary" Size="Size.Small" Class="mr-1">#@tag</MudChip>
+                    if (part.IsTag)
+                    {
+                        <span class="post-hashtag">@part.Text</span>
+                    }
+                    else
+                    {
+                        @part.Text
+                    }
                 }
             </div>
         }
 
-        <MudDivider Class="my-3" />
-
-        <div class="d-flex justify-space-between align-center">
-            <div class="d-flex align-center">
-                <MudIconButton Icon="@(Post.IsLiked ? Icons.Material.Filled.Favorite : Icons.Material.Filled.FavoriteBorder)" 
-                               Color="@(Post.IsLiked ? Color.Error : Color.Default)" 
-                               Size="Size.Medium" 
-                               OnClick="ToggleLike" 
-                               Class="mr-2" />
-                <MudIconButton Icon="@Icons.Material.Filled.ChatBubbleOutline" 
-                               Size="Size.Medium" 
-                               OnClick="@(() => ShowComments = !ShowComments)" 
-                               Class="mr-2" />
-                <MudIconButton Icon="@Icons.Material.Filled.Share" 
-                               Size="Size.Medium" 
-                               Class="mr-2" />
-            </div>
-            <MudIconButton Icon="@(Post.IsBookmarked ? Icons.Material.Filled.Bookmark : Icons.Material.Filled.BookmarkBorder)" 
-                           Color="@(Post.IsBookmarked ? Color.Primary : Color.Default)" 
-                           Size="Size.Medium" 
-                           OnClick="ToggleBookmark" />
-        </div>
-
-        <MudText Typo="Typo.body2" Class="mt-2 font-weight-bold">
-            @Post.LikesCount.ToString("N0") likes
-        </MudText>
-
-        @if (Post.CommentsCount > 0 && !ShowComments)
+        @if (Post.CommentsCount > 0 && !_showComments)
         {
-            <MudButton Variant="Variant.Text" 
-                       Color="Color.Primary" 
-                       Size="Size.Small" 
-                       StartIcon="@Icons.Material.Filled.Comment" 
-                       OnClick="@(() => ShowComments = true)" 
-                       Class="mt-2">
-                View all @Post.CommentsCount comments
-            </MudButton>
+            <button class="post-link" @onclick="ToggleComments">
+                View @(Post.CommentsCount == 1 ? "1 comment" : $"all {Post.CommentsCount} comments")
+            </button>
         }
 
-        @if (ShowComments)
+        @if (_showComments)
         {
-            <div class="mt-3">
-                @if (Comments == null)
+            <div class="post-comments">
+                @if (_comments is null)
                 {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
                 }
                 else
                 {
-                    @foreach (var comment in Comments)
+                    @foreach (var comment in _comments)
                     {
-                        <div class="d-flex align-start mb-2">
-                            <MudAvatar Size="Size.Small" Class="mr-2">
-                                <MudImage Src="@comment.User.ProfileImageUrl" Alt="@comment.User.DisplayName" />
-                            </MudAvatar>
+                        <div class="post-comment">
+                            <a href="@ProfileUrl(comment.User)"><UserAvatar User="comment.User" Size="28" /></a>
                             <div class="flex-grow-1">
-                                <MudText Typo="Typo.body2">
-                                    <strong>@comment.User.Username</strong> @comment.Content
-                                </MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                    @GetTimeAgo(comment.CreatedAt) • @comment.LikesCount likes
-                                </MudText>
+                                <span><a href="@ProfileUrl(comment.User)" class="post-author-inline">@(comment.User.Username ?? AuthorName(comment.User))</a> @comment.Content</span>
+                                <div class="post-sub">@TimeAgo(comment.CreatedAt)</div>
                             </div>
+                            @if (PostService.IsOwnComment(comment) || PostService.IsOwnPost(Post))
+                            {
+                                <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" OnClick="() => DeleteComment(comment)" aria-label="Delete comment" />
+                            }
                         </div>
                     }
                 }
 
-                <div class="d-flex align-center mt-3">
-                    <MudAvatar Size="Size.Small" Class="mr-2">
-                        <MudImage Src="https://via.placeholder.com/40x40" Alt="You" />
-                    </MudAvatar>
-                    <MudTextField @bind-Value="NewComment" 
-                                  Placeholder="Add a comment..." 
-                                  Variant="Variant.Text" 
-                                  Class="flex-grow-1" 
-                                  OnKeyDown="HandleCommentKeyDown" />
-                    <MudButton Variant="Variant.Text" 
-                               Color="Color.Primary" 
-                               Size="Size.Small" 
-                               OnClick="AddComment" 
-                               Disabled="string.IsNullOrWhiteSpace(NewComment)">
-                        Post
-                    </MudButton>
+                <div class="post-comment-input" @onkeydown="OnCommentKeyDown">
+                    <UserAvatar User="_currentUser" Size="28" />
+                    <MudTextField T="string" @bind-Value="_newComment" Immediate="true" Placeholder="Add a comment…"
+                                  Variant="Variant.Text" Underline="false" MaxLength="2000" Class="flex-grow-1 mt-0" Disabled="_sendingComment" />
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" OnClick="AddComment"
+                               Disabled="@(string.IsNullOrWhiteSpace(_newComment) || _sendingComment)">Post</MudButton>
                 </div>
             </div>
         }
-    </MudCardContent>
-</MudCard>
+    </div>
+</MudPaper>
 
 @code {
-    [Parameter] public Post Post { get; set; } = new();
-    
-    private bool ShowComments = false;
-    private List<Comment>? Comments;
-    private string NewComment = string.Empty;
+    [Parameter, EditorRequired] public Post Post { get; set; } = null!;
+    [Parameter] public bool ShowCommentsInitially { get; set; }
+    [Parameter] public EventCallback<Post> OnDeleted { get; set; }
+
+    private static readonly Regex HashtagRegex = new(@"(#\w{1,50})", RegexOptions.Compiled);
+
+    private bool _showComments;
+    private List<Comment>? _comments;
+    private string _newComment = "";
+    private bool _sendingComment;
+    private bool _likePulse;
+    private User? _currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ShowCommentsInitially)
+            await ToggleComments();
+    }
 
     private async Task ToggleLike()
     {
-        var success = await PostService.ToggleLikeAsync(Post.Id);
-        if (success)
-        {
-            StateHasChanged();
-        }
+        _likePulse = !Post.IsLiked;
+        var result = await PostService.ToggleLikeAsync(Post);
+        if (!result.IsSuccess) Snackbar.Add("That didn't work. Please try again.", Severity.Error);
+    }
+
+    private async Task LikeFromDoubleClick()
+    {
+        if (!Post.IsLiked) await ToggleLike();
     }
 
     private async Task ToggleBookmark()
     {
-        var success = await PostService.ToggleBookmarkAsync(Post.Id);
-        if (success)
-        {
-            StateHasChanged();
-        }
+        var result = await PostService.ToggleBookmarkAsync(Post);
+        if (!result.IsSuccess)
+            Snackbar.Add("That didn't work. Please try again.", Severity.Error);
+        else if (Post.IsBookmarked)
+            Snackbar.Add("Saved to your profile", Severity.Normal);
     }
 
-    private async Task LoadComments()
+    private async Task ToggleComments()
     {
-        if (Comments == null)
+        _showComments = !_showComments;
+        if (_showComments)
         {
-            Comments = await PostService.GetCommentsAsync(Post.Id);
+            _currentUser ??= await UserService.GetCurrentUserAsync();
+            _comments ??= await PostService.GetCommentsAsync(Post.Id);
         }
     }
 
     private async Task AddComment()
     {
-        if (string.IsNullOrWhiteSpace(NewComment)) return;
+        if (string.IsNullOrWhiteSpace(_newComment) || _sendingComment) return;
 
-        var comment = await PostService.AddCommentAsync(Post.Id, NewComment);
-        Comments ??= new List<Comment>();
-        Comments.Add(comment);
-        Post.CommentsCount++;
-        NewComment = string.Empty;
-        StateHasChanged();
-    }
+        _sendingComment = true;
+        var result = await PostService.AddCommentAsync(Post, _newComment);
+        _sendingComment = false;
 
-    private async Task HandleCommentKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(NewComment))
+        if (result is { IsSuccess: true, Data: not null })
         {
-            await AddComment();
+            (_comments ??= new List<Comment>()).Add(result.Data);
+            _newComment = "";
+        }
+        else
+        {
+            Snackbar.Add(result.ErrorMessage ?? "Your comment could not be posted.", Severity.Error);
         }
     }
 
-    protected override async Task OnParametersSetAsync()
+    private async Task OnCommentKeyDown(KeyboardEventArgs e)
     {
-        if (ShowComments && Comments == null)
+        if (e.Key == "Enter" && !e.ShiftKey) await AddComment();
+    }
+
+    private async Task DeleteComment(Comment comment)
+    {
+        var result = await PostService.DeleteCommentAsync(Post, comment);
+        if (result.IsSuccess)
+            _comments?.Remove(comment);
+        else
+            Snackbar.Add("The comment could not be deleted.", Severity.Error);
+    }
+
+    private async Task DeletePost()
+    {
+        var confirmed = await DialogService.ShowMessageBoxAsync(
+            "Delete post?", "This can't be undone. Likes, comments and photos will be removed too.",
+            yesText: "Delete", cancelText: "Cancel");
+        if (confirmed != true) return;
+
+        var result = await PostService.DeletePostAsync(Post);
+        if (result.IsSuccess)
         {
-            await LoadComments();
+            Snackbar.Add("Post deleted", Severity.Normal);
+            await OnDeleted.InvokeAsync(Post);
+        }
+        else
+        {
+            Snackbar.Add(result.ErrorMessage ?? "The post could not be deleted.", Severity.Error);
         }
     }
 
-    private string GetTimeAgo(DateTime dateTime)
+    private async Task CopyLink()
     {
-        var timeSpan = DateTime.Now - dateTime;
-        
-        if (timeSpan.TotalMinutes < 1)
-            return "now";
-        if (timeSpan.TotalMinutes < 60)
-            return $"{(int)timeSpan.TotalMinutes}m";
-        if (timeSpan.TotalHours < 24)
-            return $"{(int)timeSpan.TotalHours}h";
-        if (timeSpan.TotalDays < 7)
-            return $"{(int)timeSpan.TotalDays}d";
-        
-        return dateTime.ToString("MMM dd");
+        var url = Navigation.ToAbsoluteUri($"p/{Post.Id}").ToString();
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", url);
+        Snackbar.Add("Link copied", Severity.Normal);
+    }
+
+    private static string AuthorName(User user) =>
+        !string.IsNullOrWhiteSpace(user.DisplayName) ? user.DisplayName : user.Username ?? "Unknown";
+
+    private static string ProfileUrl(User user) =>
+        string.IsNullOrEmpty(user.Username) ? "profile" : $"u/{user.Username}";
+
+    private static IEnumerable<(string Text, bool IsTag)> SplitHashtags(string content) =>
+        HashtagRegex.Split(content).Where(p => p.Length > 0).Select(p => (p, p.StartsWith('#') && HashtagRegex.IsMatch(p)));
+
+    internal static string TimeAgo(DateTime dateTime)
+    {
+        var span = DateTime.Now - dateTime;
+        if (span.TotalMinutes < 1) return "just now";
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m";
+        if (span.TotalHours < 24) return $"{(int)span.TotalHours}h";
+        if (span.TotalDays < 7) return $"{(int)span.TotalDays}d";
+        return dateTime.ToString(dateTime.Year == DateTime.Now.Year ? "d MMM" : "d MMM yyyy");
     }
 }

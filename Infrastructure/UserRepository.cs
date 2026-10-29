@@ -103,4 +103,20 @@ public class UserRepository(Supabase.Client client) : IUserRepository
             return Response<string>.Failure(ex);
         }
     }
+
+    public async Task<IResponse> DeleteAvatar(string publicUrl)
+    {
+        if (!StorageUrl.TryGetPath(publicUrl, AvatarBucket, out var path))
+            return Response.Failure("Not an avatar in our storage", null);
+
+        try
+        {
+            await client.Storage.From(AvatarBucket).Remove(path);
+            return Response.Success();
+        }
+        catch (Exception ex)
+        {
+            return Response.Failure(ex.Message, ex);
+        }
+    }
 }

@@ -1,0 +1,84 @@
+.create-page {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.create-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+    padding: 24px;
+    text-align: center;
+    border: 2px dashed var(--mud-palette-lines-inputs);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+}
+
+    .create-dropzone:hover {
+        border-color: var(--mud-palette-primary);
+        background: var(--mud-palette-action-default-hover);
+    }
+
+.create-page ::deep .create-dropzone-host {
+    width: 100%;
+}
+
+.create-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+}
+
+.create-thumb {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--mud-palette-background-gray);
+}
+
+    .create-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.create-thumb-actions {
+    position: absolute;
+    inset: 4px 4px auto 4px;
+    display: flex;
+}
+
+    .create-thumb-actions ::deep .mud-icon-button {
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+    }
+
+.create-cover {
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.create-page ::deep .create-add {
+    width: 100%;
+    display: grid;
+    place-items: center;
+    border: 2px dashed var(--mud-palette-lines-inputs);
+    color: var(--mud-palette-text-secondary);
+    cursor: pointer;
+}
+
+    .create-page ::deep .create-add:hover {
+        border-color: var(--mud-palette-primary);
+        color: var(--mud-palette-primary);
+    }

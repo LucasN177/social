@@ -1,0 +1,195 @@
+@page "/create"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject IPostService PostService
+@inject IUserService UserService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>New post - Social</PageTitle>
+
+<div class="create-page">
+    <div class="d-flex align-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.Close" Href="" aria-label="Cancel" Disabled="_publishing" />
+        <MudText Typo="Typo.h6" Class="flex-grow-1 ml-2">New post</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Publish" Disabled="@(!CanPublish)">
+            @if (_publishing)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <span>Sharing…</span>
+            }
+            else
+            {
+                <span>Share</span>
+            }
+        </MudButton>
+    </div>
+
+    <MudPaper Elevation="0" Outlined="true" Class="pa-4" Style="border-radius: 16px">
+        @if (_images.Count == 0)
+        {
+            <MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept="image/png, image/jpeg, image/webp" FilesChanged="OnFilesSelected"
+                           MaximumFileCount="IPostService.MaxImages" MaxFileSize="MaxUploadBytes" DragAndDrop="true"
+                           Class="create-dropzone-host" Disabled="_publishing">
+                <SelectedTemplate />
+                <CustomContent>
+                    <div class="create-dropzone" @onclick="@context.OpenFilePickerAsync">
+                        <MudIcon Icon="@Icons.Material.Outlined.AddPhotoAlternate" Size="Size.Large" Color="Color.Primary" />
+                        <MudText Typo="Typo.subtitle1" Class="mt-2">Add photos</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">Drag & drop or click · up to @IPostService.MaxImages photos</MudText>
+                    </div>
+                </CustomContent>
+            </MudFileUpload>
+        }
+        else
+        {
+            <div class="create-grid">
+                @for (var i = 0; i < _images.Count; i++)
+                {
+                    var index = i;
+                    var image = _images[index];
+                    <div class="create-thumb" @key="image">
+                        <img src="@image.Preview" alt="Photo @(index + 1)" />
+                        @if (index == 0)
+                        {
+                            <span class="create-cover">Cover</span>
+                        }
+                        <div class="create-thumb-actions">
+                            @if (index > 0)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small" OnClick="() => Move(index, -1)"
+                                               aria-label="Move left" Disabled="_publishing" />
+                            }
+                            <MudSpacer />
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => _images.RemoveAt(index)"
+                                           aria-label="Remove photo" Disabled="_publishing" />
+                        </div>
+                    </div>
+                }
+                @if (_images.Count < IPostService.MaxImages)
+                {
+                    <MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept="image/png, image/jpeg, image/webp" FilesChanged="OnFilesSelected"
+                                   MaximumFileCount="IPostService.MaxImages" MaxFileSize="MaxUploadBytes" Disabled="_publishing">
+                        <SelectedTemplate />
+                        <CustomContent>
+                            <button type="button" class="create-thumb create-add" @onclick="@context.OpenFilePickerAsync" disabled="@_publishing">
+                                <MudIcon Icon="@Icons.Material.Filled.Add" />
+                            </button>
+                        </CustomContent>
+                    </MudFileUpload>
+                }
+            </div>
+        }
+
+        @if (_processing)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mt-2" />
+        }
+
+        <div class="d-flex gap-3 mt-4">
+            <UserAvatar User="_currentUser" Size="36" />
+            <MudTextField T="string" @bind-Value="_content" Immediate="true" Placeholder="Write a caption… use #hashtags"
+                          Variant="Variant.Text" Lines="4" MaxLength="IPostService.MaxContentLength"
+                          Counter="IPostService.MaxContentLength" Class="flex-grow-1 mt-0" Disabled="_publishing" />
+        </div>
+
+        <MudTextField T="string" @bind-Value="_location" Placeholder="Add location" Variant="Variant.Outlined" Margin="Margin.Dense"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Place" MaxLength="100" Class="mt-4"
+                      Disabled="_publishing" />
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-4">@_errorMessage</MudAlert>
+        }
+    </MudPaper>
+</div>
+
+@code {
+    private const long MaxUploadBytes = 20 * 1024 * 1024;
+    private const int MaxImageSize = 1080;
+
+    private sealed record PendingImage(byte[] Data, string Preview);
+
+    private readonly List<PendingImage> _images = new();
+    private string _content = "";
+    private string _location = "";
+    private bool _processing;
+    private bool _publishing;
+    private string _errorMessage = "";
+    private User? _currentUser;
+
+    private bool CanPublish =>
+        !_publishing && !_processing && (_images.Count > 0 || !string.IsNullOrWhiteSpace(_content));
+
+    protected override async Task OnInitializedAsync()
+    {
+        _currentUser = await UserService.GetCurrentUserAsync();
+    }
+
+    private async Task OnFilesSelected(IReadOnlyList<IBrowserFile>? files)
+    {
+        if (files is null || files.Count == 0) return;
+
+        _errorMessage = "";
+        _processing = true;
+        var skipped = 0;
+
+        foreach (var file in files)
+        {
+            if (_images.Count >= IPostService.MaxImages)
+            {
+                skipped++;
+                continue;
+            }
+
+            try
+            {
+                // Im Browser auf max. 1080 px verkleinern und als JPEG kodieren
+                var resized = await file.RequestImageFileAsync("image/jpeg", MaxImageSize, MaxImageSize);
+                await using var stream = resized.OpenReadStream(MaxUploadBytes);
+                using var buffer = new MemoryStream();
+                await stream.CopyToAsync(buffer);
+                var data = buffer.ToArray();
+                _images.Add(new PendingImage(data, $"data:image/jpeg;base64,{Convert.ToBase64String(data)}"));
+            }
+            catch (Exception)
+            {
+                skipped++;
+            }
+        }
+
+        _processing = false;
+        if (skipped > 0)
+            _errorMessage = skipped == 1
+                ? "One photo was skipped (unsupported, too large or over the limit)."
+                : $"{skipped} photos were skipped (unsupported, too large or over the limit).";
+    }
+
+    private void Move(int index, int direction)
+    {
+        var target = index + direction;
+        if (target < 0 || target >= _images.Count) return;
+        (_images[index], _images[target]) = (_images[target], _images[index]);
+    }
+
+    private async Task Publish()
+    {
+        if (!CanPublish) return;
+
+        _publishing = true;
+        _errorMessage = "";
+
+        var uploads = _images.Select(i => new PostImageUpload(i.Data, "image/jpeg")).ToList();
+        var result = await PostService.CreatePostAsync(_content, _location, uploads);
+
+        if (result.IsSuccess)
+        {
+            Snackbar.Add("Your post is live 🎉", Severity.Success);
+            Navigation.NavigateTo($"p/{result.Data}");
+        }
+        else
+        {
+            _errorMessage = result.ErrorMessage ?? "Your post could not be published.";
+            _publishing = false;
+        }
+    }
+}

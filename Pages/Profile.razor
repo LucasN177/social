@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @implements IDisposable
 @inject IUserService UserService
+@inject IPostService PostService
 @inject IAuthService AuthService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -95,23 +96,22 @@ else
 
     <MudTabs Elevation="0" Rounded="true" Class="mt-4" TabPanelsClass="pt-4" MinimumTabWidth="0">
         <MudTabPanel Icon="@Icons.Material.Outlined.GridOn" Text="Posts">
-            <div class="profile-empty">
-                <MudIcon Icon="@Icons.Material.Outlined.PhotoCamera" Size="Size.Large" />
-                <MudText Typo="Typo.subtitle1">No posts yet</MudText>
-                @if (_isOwnProfile)
-                {
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Your posts will show up here.</MudText>
-                }
-            </div>
+            @* @key: beim Wechsel zu einem anderen Profil neu laden *@
+            <PostGrid @key="_profile.Id" LoadPage="page => PostService.GetUserPostsAsync(_profile.Id, page)"
+                      EmptyText="@(_isOwnProfile ? "Share your first photo." : null)">
+                <EmptyAction>
+                    @if (_isOwnProfile)
+                    {
+                        <MudButton Href="create" Variant="Variant.Text" Color="Color.Primary" Class="mt-2">Create post</MudButton>
+                    }
+                </EmptyAction>
+            </PostGrid>
         </MudTabPanel>
         @if (_isOwnProfile)
         {
             <MudTabPanel Icon="@Icons.Material.Outlined.BookmarkBorder" Text="Saved">
-                <div class="profile-empty">
-                    <MudIcon Icon="@Icons.Material.Outlined.BookmarkBorder" Size="Size.Large" />
-                    <MudText Typo="Typo.subtitle1">Nothing saved yet</MudText>
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Only you can see what you've saved.</MudText>
-                </div>
+                <PostGrid LoadPage="PostService.GetSavedPostsAsync" EmptyIcon="@Icons.Material.Outlined.BookmarkBorder"
+                          EmptyTitle="Nothing saved yet" EmptyText="Only you can see what you've saved." />
             </MudTabPanel>
         }
     </MudTabs>

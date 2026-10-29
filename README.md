@@ -19,7 +19,8 @@
 | Session bleibt nach Reload erhalten | ✅ |
 | Hell-/Dunkelmodus (folgt dem System, Wahl wird gespeichert) | ✅ |
 | Vorschläge „Suggestions for you“ (RPC `suggested_users`) | ✅ |
-| Feed mit Posts, Likes, Lesezeichen, Kommentaren | 🚧 (UI vorhanden, noch Mock-Daten) |
+| Beiträge mit bis zu 10 Fotos, Hashtags, Ort erstellen und löschen | ✅ |
+| Feed, Likes, Lesezeichen, Kommentare | ✅ |
 | Stories | 🚧 |
 | Profil ansehen & bearbeiten, Profilbild hochladen | ✅ |
 | Folgen, Suche | 📋 geplant |

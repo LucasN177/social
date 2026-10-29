@@ -17,4 +17,7 @@ public interface IUserRepository
 
     /// <summary>Lädt ein Profilbild in den Bucket "avatars" und gibt die öffentliche URL zurück.</summary>
     public Task<IResponse<string>> UploadAvatar(string userId, byte[] data, string contentType);
+
+    /// <summary>Löscht ein Profilbild aus dem Bucket "avatars"; fremde URLs werden ignoriert.</summary>
+    public Task<IResponse> DeleteAvatar(string publicUrl);
 }

@@ -45,6 +45,8 @@ public class UserService(IUserRepository userRepository, IAuthService authServic
 
     public async Task<IResponse<User>> UpdateProfileAsync(User profile, byte[]? avatarData = null, string? avatarContentType = null)
     {
+        var previousAvatarUrl = profile.ProfileImageUrl;
+
         if (avatarData is not null)
         {
             var upload = await userRepository.UploadAvatar(profile.Id, avatarData, avatarContentType ?? "image/jpeg");
@@ -58,7 +60,16 @@ public class UserService(IUserRepository userRepository, IAuthService authServic
 
         var update = await userRepository.UpdateProfile(profile);
         if (!update.IsSuccess)
+        {
+            // Neues Bild wurde nicht übernommen – nicht als Datei-Leiche im Storage lassen
+            if (avatarData is not null)
+                await userRepository.DeleteAvatar(profile.ProfileImageUrl);
             return Response<User>.Failure("Your profile could not be saved. Please try again.");
+        }
+
+        // Altes Profilbild erst nach erfolgreichem Speichern entfernen (best effort, Fehler sind unkritisch)
+        if (avatarData is not null && !string.IsNullOrEmpty(previousAvatarUrl) && previousAvatarUrl != profile.ProfileImageUrl)
+            await userRepository.DeleteAvatar(previousAvatarUrl);
 
         ProfileChanged?.Invoke(profile);
         return Response<User>.Success(profile);

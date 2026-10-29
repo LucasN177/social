@@ -29,8 +29,9 @@ Offen:
 2. **`SupabaseOptions.SessionHandler` wird in 1.1.1 ignoriert** → Persistenz wird in `Program.cs` explizit per `Auth.SetPersistence` gesetzt und per `LoadSession()` geladen.
 3. ~~Deployment nutzt Platzhalter aus `appsettings.json`~~ → der Workflow schreibt die Datei aus den Secrets `SUPABASE_URL` / `SUPABASE_ANON_KEY` (siehe README).
    **Offline-Cache auf GitHub Pages defekt:** `service-worker.published.js` nutzt `base = "/"` statt `/social/`, und der Workflow ändert `index.html` (base href) erst nach dem Publish, sodass der Integritäts-Hash nicht mehr passt. Die App läuft trotzdem, nur ohne Offline-Cache. → in Phase 6 beheben (base href per MSBuild-Property `StaticWebAssetBasePath` bzw. vor dem Publish setzen).
-4. `ISocialNetworkService` nutzt `int`-IDs, ist ungenutzt → beim Umbau der Posts (Phase 2) entfernen oder auf `uuid`/`long` umstellen.
+4. ~~`ISocialNetworkService` mit `int`-IDs~~ → entfernt; Posts/Kommentare nutzen `long`.
 5. ~~`User` und `UserDto` mappen beide die Tabelle `users`~~ → zusammengeführt.
+6. Der Feed zeigt bis Phase 3 **alle** Posts (noch kein Filter auf gefolgte Accounts).
 
 ## 2. Zielarchitektur
 
@@ -72,15 +73,21 @@ Supabase (Postgres + RLS, Auth, Storage, Realtime)
 - [x] Hinweis „Complete profile“ für Accounts ohne Username
 - [x] `User` und `UserDto` zusammengeführt; Profilzugriffe nur noch über `UserRepository`
 - [x] `012_users_profile_rules.sql`: Client darf nur Profilfelder ändern (nicht Zähler / `is_verified`), Format-Checks für Username und Bio
-- [ ] Alte Avatar-Dateien beim Ersetzen aus dem Storage löschen
+- [x] Alte Avatar-Dateien beim Ersetzen aus dem Storage löschen
 
 ### Phase 2 – Posts & Feed
-- [ ] `Post`-Modell auf Supabase mappen (`posts`, `post_images`)
-- [ ] Beitrag erstellen `/create`: Bilder-Upload (Bucket `post-images`), Text, Ort, Hashtags
-- [ ] Feed `/fyp` über View `feed_posts` mit Pagination (Range/Offset, Infinite Scroll)
-- [ ] Like / Bookmark (Tabellen `likes`, `bookmarks`), optimistisches UI-Update
-- [ ] Kommentare inkl. Kommentar-Likes
-- [ ] Beitrag löschen/bearbeiten (nur eigene, durch RLS abgesichert)
+- [x] Supabase-Modelle (`FeedPostRecord`, `CommentDetailRecord`, …) + Mapping auf die UI-Modelle `Post` / `Comment` (`Core/Mapping/PostMapper.cs`)
+- [x] Beitrag erstellen `/create`: bis zu 10 Fotos (im Browser auf 1080 px verkleinert, sortierbar, erstes = Cover), Text bis 2200 Zeichen, Ort, Hashtags werden automatisch erkannt
+- [x] RPC `create_post` legt Post + Bilder atomar an; schlägt sie fehl, werden hochgeladene Bilder wieder gelöscht
+- [x] Feed `/` über View `feed_posts` mit Pagination („Load more“, 10 pro Seite); aktualisiert sich nach Erstellen/Löschen
+- [x] Like (auch per Doppelklick aufs Bild) / Lesezeichen, optimistisch mit Rücksetzen bei Fehler
+- [x] Kommentare anzeigen, schreiben (Enter), löschen (eigene bzw. alle unter eigenem Post)
+- [x] Beitrag löschen (nur eigene, RLS) inkl. Bilder im Storage; Link kopieren
+- [x] Detailseite `/p/{id}`, Profil-Raster für „Posts“ und „Saved“
+- [x] Alte Avatar-Datei wird beim Ersetzen gelöscht
+- [ ] Beitrag bearbeiten
+- [ ] Kommentar-Likes (Tabelle `comment_likes` existiert bereits)
+- [ ] Infinite Scroll statt „Load more“
 
 ### Phase 3 – Social Graph & Suche
 - [ ] Folgen/Entfolgen (`follows`), Zähler per Trigger
@@ -123,6 +130,7 @@ Alle Skripte liegen in [`supabase/sql`](../supabase/sql) und werden **in Nummern
 | `010_storage.sql` | Buckets `avatars`, `post-images`, `stories` + Policies |
 | `011_realtime.sql` | Realtime-Publication für `notifications` |
 | `012_users_profile_rules.sql` | Spaltenrechte auf `users`, Format-Checks für Username/Bio |
+| `013_posts_api.sql` | RPC `create_post`, View `comment_details`, Feed um Vor-/Nachname erweitert |
 
 Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als neues Skript mit der nächsten Nummer angelegt.
 
