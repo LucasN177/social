@@ -67,6 +67,12 @@ a, .btn-link {
         content: "An error has occurred."
     }
 
+/* Doppelte Klasse für höhere Spezifität – MudBlazor.min.css wird nach app.css geladen */
+.mud-tab.mud-tab {
+    text-transform: none;
+    font-weight: 600;
+}
+
 .brand-title {
     font-weight: 700;
     letter-spacing: -0.02em;

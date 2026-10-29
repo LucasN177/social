@@ -1,5 +1,4 @@
 using Social.Core.Interfaces.Response;
-using Social.Core.Models.Database;
 using Supabase.Gotrue;
 using User = Supabase.Gotrue.User;
 
@@ -8,22 +7,16 @@ namespace Social.Core.Interfaces.Services;
 public interface IAuthService
 {
     public Session? CurrentSession { get; set; }
-    public User? CurrentUser { get; set; } 
+    public User? CurrentUser { get; set; }
     public Task<IResponse<User?>> GetCurrentUser();
-    
+
     public Task<IResponse<Session?>> GetCurrentSession();
-    
+
     public Task<IResponse<Session>> Login(string username, string password);
-    
-    public Task<IResponse<Session>> Register(string username, string password, UserDto profile);
+
+    public Task<IResponse<Session>> Register(string username, string password, Models.Database.User profile);
 
     public Task<IResponse<bool>> IsUsernameTaken(string username);
-    
+
     public Task<IResponse> Logout();
-    
-    public Task<IResponse> InsertUserMetadata(UserDto user);
-    
-    public Task<IResponse> UpdateUserMetadata(UserDto user);
-    
-    public Task<IResponse<UserDto>> GetUserMetadata(string id);
 }

@@ -1,0 +1,191 @@
+@page "/profile"
+@page "/u/{Username}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@implements IDisposable
+@inject IUserService UserService
+@inject IAuthService AuthService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>@PageTitleText - Social</PageTitle>
+
+<div class="profile-page">
+@if (_loading)
+{
+    <MudPaper Elevation="0" Outlined="true" Class="pa-6 profile-card">
+        <div class="d-flex align-center gap-6">
+            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="96px" Height="96px" />
+            <div class="flex-grow-1">
+                <MudSkeleton Width="50%" Height="28px" />
+                <MudSkeleton Width="30%" />
+                <MudSkeleton Width="80%" Class="mt-3" />
+            </div>
+        </div>
+    </MudPaper>
+}
+else if (_profile is null)
+{
+    <MudPaper Elevation="0" Outlined="true" Class="pa-8 profile-card text-center">
+        <MudIcon Icon="@Icons.Material.Outlined.PersonOff" Size="Size.Large" Class="mud-text-secondary" />
+        <MudText Typo="Typo.h6" Class="mt-2">User not found</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+            @(Username is null ? "Your profile could not be loaded." : $"There is no user called @{Username}.")
+        </MudText>
+        <MudButton Href="" Variant="Variant.Text" Color="Color.Primary" Class="mt-4">Back to home</MudButton>
+    </MudPaper>
+}
+else
+{
+    @if (_isOwnProfile && string.IsNullOrEmpty(_profile.Username))
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-4" Variant="Variant.Outlined"
+                  ContentAlignment="HorizontalAlignment.Left" ShowCloseIcon="false">
+            Choose a username so others can find you.
+            <MudButton Size="Size.Small" Color="Color.Primary" OnClick="OpenEditDialog" Class="ml-2">Complete profile</MudButton>
+        </MudAlert>
+    }
+
+    <MudPaper Elevation="0" Outlined="true" Class="pa-6 profile-card">
+        <div class="profile-header">
+            <UserAvatar User="_profile" Size="96" Class="profile-avatar" />
+
+            <div class="profile-info">
+                <div class="d-flex align-center flex-wrap gap-2">
+                    <MudText Typo="Typo.h5">@(string.IsNullOrEmpty(_profile.DisplayName) ? _profile.Username : _profile.DisplayName)</MudText>
+                    @if (_profile.IsVerified)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Primary" Size="Size.Small" />
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(_profile.Username))
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@("@" + _profile.Username)</MudText>
+                }
+
+                <div class="profile-stats">
+                    <div><b>@_profile.PostsCount.ToString("N0")</b> <span>posts</span></div>
+                    <div><b>@_profile.FollowersCount.ToString("N0")</b> <span>followers</span></div>
+                    <div><b>@_profile.FollowingCount.ToString("N0")</b> <span>following</span></div>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(_profile.Bio))
+        {
+            <MudText Typo="Typo.body1" Class="mt-4 profile-bio">@_profile.Bio</MudText>
+        }
+
+        <div class="d-flex gap-2 mt-5">
+            @if (_isOwnProfile)
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" FullWidth="true"
+                           StartIcon="@Icons.Material.Outlined.Edit" OnClick="OpenEditDialog">Edit profile</MudButton>
+                <MudIconButton Icon="@Icons.Material.Outlined.Share" Variant="Variant.Outlined" OnClick="ShareProfile"
+                               aria-label="Copy profile link" Disabled="string.IsNullOrEmpty(_profile.Username)" />
+            }
+            else
+            {
+                <MudTooltip Text="Following comes soon" RootClass="flex-grow-1">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="true">Follow</MudButton>
+                </MudTooltip>
+            }
+        </div>
+    </MudPaper>
+
+    <MudTabs Elevation="0" Rounded="true" Class="mt-4" TabPanelsClass="pt-4" MinimumTabWidth="0">
+        <MudTabPanel Icon="@Icons.Material.Outlined.GridOn" Text="Posts">
+            <div class="profile-empty">
+                <MudIcon Icon="@Icons.Material.Outlined.PhotoCamera" Size="Size.Large" />
+                <MudText Typo="Typo.subtitle1">No posts yet</MudText>
+                @if (_isOwnProfile)
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Your posts will show up here.</MudText>
+                }
+            </div>
+        </MudTabPanel>
+        @if (_isOwnProfile)
+        {
+            <MudTabPanel Icon="@Icons.Material.Outlined.BookmarkBorder" Text="Saved">
+                <div class="profile-empty">
+                    <MudIcon Icon="@Icons.Material.Outlined.BookmarkBorder" Size="Size.Large" />
+                    <MudText Typo="Typo.subtitle1">Nothing saved yet</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Only you can see what you've saved.</MudText>
+                </div>
+            </MudTabPanel>
+        }
+    </MudTabs>
+}
+
+</div>
+
+@code {
+    [Parameter] public string? Username { get; set; }
+
+    private User? _profile;
+    private bool _isOwnProfile;
+    private bool _loading = true;
+
+    private string PageTitleText => _profile switch
+    {
+        null => "Profile",
+        { Username: { Length: > 0 } username } => $"{_profile.DisplayName} (@{username})",
+        _ => _profile.DisplayName
+    };
+
+    protected override void OnInitialized()
+    {
+        UserService.ProfileChanged += OnProfileChanged;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _profile = Username is null
+            ? await UserService.GetCurrentUserAsync()
+            : await UserService.GetUserByUsernameAsync(Username);
+
+        var currentUserId = AuthService.CurrentUser?.Id ?? (await AuthService.GetCurrentUser()).Data?.Id;
+        _isOwnProfile = _profile is not null && _profile.Id == currentUserId;
+        _loading = false;
+    }
+
+    private async Task OpenEditDialog()
+    {
+        if (_profile is null) return;
+
+        var parameters = new DialogParameters<Social.Pages.Dialogs.EditProfileDialog> { { x => x.Profile, _profile } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<Social.Pages.Dialogs.EditProfileDialog>("Edit profile", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: User updated })
+        {
+            Snackbar.Add("Profile saved", Severity.Success);
+            // Bei geändertem Username auf die neue Profil-URL wechseln
+            if (Username is not null && updated.Username != Username)
+                Navigation.NavigateTo($"u/{updated.Username}", replace: true);
+        }
+    }
+
+    private void OnProfileChanged(User updated)
+    {
+        if (_profile?.Id != updated.Id) return;
+        _profile = updated;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ShareProfile()
+    {
+        var url = Navigation.ToAbsoluteUri($"u/{_profile!.Username}").ToString();
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", url);
+        Snackbar.Add("Profile link copied", Severity.Info);
+    }
+
+    [Inject] private IJSRuntime JS { get; set; } = null!;
+
+    public void Dispose()
+    {
+        UserService.ProfileChanged -= OnProfileChanged;
+    }
+}

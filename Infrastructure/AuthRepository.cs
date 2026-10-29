@@ -1,7 +1,5 @@
 using Social.Core.Interfaces.Infrastructure;
 using Social.Core.Interfaces.Response;
-using Social.Core.Models;
-using Social.Core.Models.Database;
 using Social.Core.Models.Response;
 using Supabase.Gotrue;
 using Supabase.Gotrue.Exceptions;
@@ -30,7 +28,7 @@ public class AuthRepository(Supabase.Client client, IGotrueSessionPersistence<Se
         }
     }
 
-    public async Task<IResponse<Session>> Register(string username, string password, UserDto profile)
+    public async Task<IResponse<Session>> Register(string username, string password, Core.Models.Database.User profile)
     {
         try
         {
@@ -40,7 +38,7 @@ public class AuthRepository(Supabase.Client client, IGotrueSessionPersistence<Se
             {
                 Data = new Dictionary<string, object>
                 {
-                    ["username"] = profile.Username,
+                    ["username"] = profile.Username ?? string.Empty,
                     ["vorname"] = profile.Vorname,
                     ["nachname"] = profile.Nachname,
                     ["display_name"] = $"{profile.Vorname} {profile.Nachname}".Trim()
@@ -96,40 +94,6 @@ public class AuthRepository(Supabase.Client client, IGotrueSessionPersistence<Se
         {
             return Task.FromException<IResponse<User>>(exception);
         }
-    }
-
-    public async Task<IResponse> InsertUserMetadata(UserDto user)
-    {
-        try
-        {
-            var currentUserId = client.Auth.CurrentUser?.Id;
-            if (currentUserId is null)
-                return Response.Failure("No login available", null);
-
-            user.UserId = currentUserId;
-            await client.From<UserDto>()
-                .Where(x => x.UserId == currentUserId)
-                .Set(x => x.Username, user.Username)
-                .Set(x => x.Vorname, user.Vorname)
-                .Set(x =>x.Nachname, user.Nachname)
-                .Update();
-            return Response.Success();
-        }
-        catch (Exception ex)
-        {
-            return Response.Failure(ex.Message, ex);
-        }
-    }
-
-    public Task<IResponse> UpdateUserMetadata(UserDto user)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<IResponse<UserDto>> GetUserMetadata(string id)
-    {
-        var result = await client.From<UserDto>().Where(x => x.UserId == id).Get();
-        return result.Model is not null ? Response<UserDto>.Success(result.Model) : Response<UserDto>.Failure("No user found");
     }
 
     private const string ServerUnreachable = "Server not reachable. Please check your connection.";

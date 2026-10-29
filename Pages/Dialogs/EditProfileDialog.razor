@@ -1,0 +1,161 @@
+@using System.Text.RegularExpressions
+@inject IUserService UserService
+
+<MudDialog ContentClass="pt-2">
+    <DialogContent>
+        <div class="d-flex flex-column align-center mb-4">
+            <UserAvatar User="_draft" Src="@_avatarPreview" Size="96" />
+            <MudFileUpload T="IBrowserFile" Accept="image/png, image/jpeg, image/webp" FilesChanged="OnAvatarSelected"
+                           MaxFileSize="MaxUploadBytes" Class="mt-2">
+                <SelectedTemplate />
+                <CustomContent>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
+                               StartIcon="@Icons.Material.Outlined.PhotoCamera" OnClick="@context.OpenFilePickerAsync">
+                        Change photo
+                    </MudButton>
+                </CustomContent>
+            </MudFileUpload>
+        </div>
+
+        <MudForm @ref="_form" @bind-IsValid="_valid">
+            <MudGrid Spacing="2">
+                <MudItem xs="6">
+                    <MudTextField Immediate="true" @bind-Value="_draft.Vorname" Label="First name" Variant="Variant.Outlined"
+                                  Required="true" RequiredError="Required." MaxLength="50" />
+                </MudItem>
+                <MudItem xs="6">
+                    <MudTextField Immediate="true" @bind-Value="_draft.Nachname" Label="Last name" Variant="Variant.Outlined"
+                                  Required="true" RequiredError="Required." MaxLength="50" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Immediate="true" Value="_username" ValueChanged="@((string v) => _username = (v ?? "").Trim().ToLowerInvariant())" Label="Username" Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start" AdornmentText="@("@")"
+                                  HelperText="3–30 characters: a–z, 0–9, . and _"
+                                  Required="true" RequiredError="Username is required."
+                                  Validation="@(new Func<string, string?>(ValidateUsername))" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Immediate="true" @bind-Value="_draft.Bio" Label="Bio" Variant="Variant.Outlined"
+                                  Lines="3" MaxLength="BioMaxLength" Counter="BioMaxLength" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-4">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_saving">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="_saving">
+            @if (_saving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter, EditorRequired] public User Profile { get; set; } = null!;
+
+    private const int BioMaxLength = 160;
+    private const long MaxUploadBytes = 10 * 1024 * 1024;
+    private const int AvatarSize = 512;
+    private static readonly Regex UsernameRegex = new("^[a-z0-9._]{3,30}$");
+
+    private MudForm _form = null!;
+    private bool _valid;
+    private bool _saving;
+    private string _errorMessage = "";
+
+    // Kopie, damit "Cancel" das angezeigte Profil nicht verändert
+    private User _draft = new();
+    private string _username = "";
+    private byte[]? _avatarData;
+    private string? _avatarPreview;
+
+    protected override void OnInitialized()
+    {
+        _draft = new User
+        {
+            Id = Profile.Id,
+            Username = Profile.Username,
+            Vorname = Profile.Vorname,
+            Nachname = Profile.Nachname,
+            DisplayName = Profile.DisplayName,
+            Bio = Profile.Bio,
+            ProfileImageUrl = Profile.ProfileImageUrl,
+            FollowersCount = Profile.FollowersCount,
+            FollowingCount = Profile.FollowingCount,
+            PostsCount = Profile.PostsCount,
+            IsVerified = Profile.IsVerified,
+            CreatedAt = Profile.CreatedAt
+        };
+        _username = Profile.Username ?? "";
+    }
+
+    private static string? ValidateUsername(string value) =>
+        string.IsNullOrEmpty(value) || UsernameRegex.IsMatch(value) ? null : "3–30 characters: a–z, 0–9, . and _";
+
+    private async Task OnAvatarSelected(IBrowserFile? file)
+    {
+        if (file is null) return;
+        _errorMessage = "";
+
+        try
+        {
+            // Im Browser auf max. 512 px verkleinern und als JPEG kodieren – spart Upload und Speicher
+            var resized = await file.RequestImageFileAsync("image/jpeg", AvatarSize, AvatarSize);
+            await using var stream = resized.OpenReadStream(MaxUploadBytes);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+
+            _avatarData = buffer.ToArray();
+            _avatarPreview = $"data:image/jpeg;base64,{Convert.ToBase64String(_avatarData)}";
+        }
+        catch (Exception)
+        {
+            _errorMessage = "This image could not be read. Please choose a JPG, PNG or WebP up to 10 MB.";
+        }
+    }
+
+    private async Task Save()
+    {
+        await _form.ValidateAsync();
+        if (!_form.IsValid || _saving) return;
+
+        _saving = true;
+        _errorMessage = "";
+
+        try
+        {
+            if (_username != Profile.Username && await UserService.IsUsernameTakenByOtherAsync(_username, Profile.Id))
+            {
+                _errorMessage = "This username is already taken.";
+                return;
+            }
+
+            _draft.Username = _username;
+            _draft.Vorname = _draft.Vorname.Trim();
+            _draft.Nachname = _draft.Nachname.Trim();
+            _draft.Bio = _draft.Bio.Trim();
+
+            var result = await UserService.UpdateProfileAsync(_draft, _avatarData, _avatarData is null ? null : "image/jpeg");
+            if (result is { IsSuccess: true, Data: not null })
+                MudDialog.Close(DialogResult.Ok(result.Data));
+            else
+                _errorMessage = result.ErrorMessage ?? "Your profile could not be saved.";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -1,0 +1,17 @@
+.user-avatar {
+    display: inline-flex;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--mud-palette-background-gray);
+}
+
+.user-avatar--initials {
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #fff;
+    background: linear-gradient(135deg, #e91e63, #ff5722);
+    user-select: none;
+}

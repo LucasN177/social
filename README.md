@@ -21,7 +21,8 @@
 | Vorschläge „Suggestions for you“ (RPC `suggested_users`) | ✅ |
 | Feed mit Posts, Likes, Lesezeichen, Kommentaren | 🚧 (UI vorhanden, noch Mock-Daten) |
 | Stories | 🚧 |
-| Profil, Folgen, Suche | 📋 geplant |
+| Profil ansehen & bearbeiten, Profilbild hochladen | ✅ |
+| Folgen, Suche | 📋 geplant |
 | Benachrichtigungen (Realtime), Nachrichten, Reels | 📋 geplant |
 
 Der vollständige Fahrplan steht im [Implementationsplan](docs/IMPLEMENTATIONSPLAN.md).

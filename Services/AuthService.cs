@@ -1,8 +1,6 @@
 using Social.Core.Interfaces.Infrastructure;
 using Social.Core.Interfaces.Response;
 using Social.Core.Interfaces.Services;
-using Social.Core.Models;
-using Social.Core.Models.Database;
 using Social.Core.Models.Response;
 using Supabase.Gotrue;
 using User = Supabase.Gotrue.User;
@@ -48,7 +46,7 @@ public class AuthService(IAuthRepository authRepository, IUserRepository userRep
         return Response<Session>.Success(result.Data);
     }
 
-    public async Task<IResponse<Session>> Register(string username, string password, UserDto profile)
+    public async Task<IResponse<Session>> Register(string username, string password, Core.Models.Database.User profile)
     {
         var result =  await authRepository.Register(username, password, profile);
         return result is { IsSuccess: true, Data: not null } ? Response<Session>.Success(result.Data) : Response<Session>.Failure(result.ErrorMessage ?? "Register failed.");
@@ -64,21 +62,5 @@ public class AuthService(IAuthRepository authRepository, IUserRepository userRep
         CurrentSession = null;
         CurrentUser = null;
         return await authRepository.Logout();
-    }
-
-    public async Task<IResponse> InsertUserMetadata(UserDto user)
-    {
-        return await authRepository.InsertUserMetadata(user);
-    }
-
-    public Task<IResponse> UpdateUserMetadata(UserDto user)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<IResponse<UserDto>> GetUserMetadata(string id)
-    {
-        var result = await authRepository.GetUserMetadata(id);
-        return result is { IsSuccess: true, Data: not null } ? Response<UserDto>.Success(result.Data) : Response<UserDto>.Failure(result.ErrorMessage ?? "No metadata found");
     }
 }

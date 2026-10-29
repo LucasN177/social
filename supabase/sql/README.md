@@ -37,3 +37,4 @@ for f in supabase/sql/*.sql; do psql "$SUPABASE_DB_URL" -f "$f"; done
 | `009_views_and_functions.sql` | View `feed_posts`, RPC `suggested_users` |
 | `010_storage.sql` | Storage-Buckets + Policies |
 | `011_realtime.sql` | Realtime für `notifications` |
+| `012_users_profile_rules.sql` | Nur Profilfelder für Clients änderbar, Format-Checks für Username/Bio |

@@ -71,9 +71,7 @@
                 else
                 {
                     <div class="d-flex align-center mb-3">
-                        <MudAvatar Size="Size.Large" Class="mr-3">
-                            <MudImage Src="@CurrentUser.ProfileImageUrl" Alt="@CurrentUser.DisplayName" />
-                        </MudAvatar>
+                        <a href="profile" class="mr-3"><UserAvatar User="CurrentUser" Size="56" /></a>
                         <div>
                             <MudText Typo="Typo.h6">@CurrentUser.DisplayName</MudText>
                             <MudText Typo="Typo.body2" Color="Color.Secondary">@("@" + CurrentUser.Username)</MudText>
@@ -134,9 +132,7 @@
                     @foreach (var user in SuggestedUsers)
                     {
                         <div class="d-flex align-center mb-3">
-                            <MudAvatar Size="Size.Medium" Class="mr-3">
-                                <MudImage Src="@user.ProfileImageUrl" Alt="@user.DisplayName" />
-                            </MudAvatar>
+                            <a href="@($"u/{user.Username}")" class="mr-3"><UserAvatar User="user" Size="40" /></a>
                             <div class="flex-grow-1">
                                 <MudText Typo="Typo.body2" Class="font-weight-bold">
                                     @user.DisplayName

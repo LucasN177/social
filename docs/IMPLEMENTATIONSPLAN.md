@@ -30,7 +30,7 @@ Offen:
 3. ~~Deployment nutzt Platzhalter aus `appsettings.json`~~ → der Workflow schreibt die Datei aus den Secrets `SUPABASE_URL` / `SUPABASE_ANON_KEY` (siehe README).
    **Offline-Cache auf GitHub Pages defekt:** `service-worker.published.js` nutzt `base = "/"` statt `/social/`, und der Workflow ändert `index.html` (base href) erst nach dem Publish, sodass der Integritäts-Hash nicht mehr passt. Die App läuft trotzdem, nur ohne Offline-Cache. → in Phase 6 beheben (base href per MSBuild-Property `StaticWebAssetBasePath` bzw. vor dem Publish setzen).
 4. `ISocialNetworkService` nutzt `int`-IDs, ist ungenutzt → beim Umbau der Posts (Phase 2) entfernen oder auf `uuid`/`long` umstellen.
-5. `User` und `UserDto` mappen beide die Tabelle `users` → zusammenführen, sobald das Profil (Phase 1) gebaut wird.
+5. ~~`User` und `UserDto` mappen beide die Tabelle `users`~~ → zusammengeführt.
 
 ## 2. Zielarchitektur
 
@@ -67,9 +67,12 @@ Supabase (Postgres + RLS, Auth, Storage, Realtime)
 ### Phase 1 – Auth & Profil
 - [x] Login/Registrierung als MudBlazor-Seite (`/login`, eigenes `AuthLayout`, Tabs, Validierung, verständliche Fehlermeldungen, Enter zum Absenden)
 - [x] Registrierung übergibt Username, Vor-/Nachname als User-Metadaten → Trigger `handle_new_user` legt die `users`-Zeile an (funktioniert auch mit E-Mail-Bestätigung)
-- [ ] Profilbild beim Onboarding / im Profil hochladen
-- [ ] Profilseite `/profile` und `/u/{username}`: Avatar, Bio, Zähler, Post-Grid
-- [ ] Profil bearbeiten (`UpdateUserMetadata` implementieren), Avatar-Upload in Bucket `avatars`
+- [x] Profilseite `/profile` und `/u/{username}`: Avatar (Initialen als Fallback), Bio, Zähler, Tabs „Posts“/„Saved“ (leer bis Phase 2), Profil-Link kopieren
+- [x] Profil bearbeiten (`EditProfileDialog`): Name, Username (Prüfung auf Duplikat), Bio (max. 160), Avatar-Upload in Bucket `avatars` (im Browser auf 512 px verkleinert)
+- [x] Hinweis „Complete profile“ für Accounts ohne Username
+- [x] `User` und `UserDto` zusammengeführt; Profilzugriffe nur noch über `UserRepository`
+- [x] `012_users_profile_rules.sql`: Client darf nur Profilfelder ändern (nicht Zähler / `is_verified`), Format-Checks für Username und Bio
+- [ ] Alte Avatar-Dateien beim Ersetzen aus dem Storage löschen
 
 ### Phase 2 – Posts & Feed
 - [ ] `Post`-Modell auf Supabase mappen (`posts`, `post_images`)
@@ -119,6 +122,7 @@ Alle Skripte liegen in [`supabase/sql`](../supabase/sql) und werden **in Nummern
 | `009_views_and_functions.sql` | View `feed_posts`, RPC `suggested_users` |
 | `010_storage.sql` | Buckets `avatars`, `post-images`, `stories` + Policies |
 | `011_realtime.sql` | Realtime-Publication für `notifications` |
+| `012_users_profile_rules.sql` | Spaltenrechte auf `users`, Format-Checks für Username/Bio |
 
 Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als neues Skript mit der nächsten Nummer angelegt.
 

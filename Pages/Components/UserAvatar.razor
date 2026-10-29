@@ -1,0 +1,24 @@
+@* Profilbild oder – ohne (ladbares) Bild – Initialen auf dem Marken-Verlauf *@
+@if (!string.IsNullOrEmpty(ImageUrl) && ImageUrl != _failedUrl)
+{
+    <img src="@ImageUrl" alt="@Alt" class="user-avatar @Class" style="@SizeStyle" @onerror="() => _failedUrl = ImageUrl" />
+}
+else
+{
+    <span class="user-avatar user-avatar--initials @Class" style="@SizeStyle; font-size: @(Size * 38 / 100)px" aria-label="@Alt">@Initials</span>
+}
+
+@code {
+    [Parameter] public User? User { get; set; }
+    /// <summary>Überschreibt das Bild des Users, z. B. für die Vorschau im Bearbeiten-Dialog.</summary>
+    [Parameter] public string? Src { get; set; }
+    [Parameter] public int Size { get; set; } = 40;
+    [Parameter] public string? Class { get; set; }
+
+    private string? _failedUrl;
+
+    private string? ImageUrl => Src ?? User?.ProfileImageUrl;
+    private string Initials => User?.Initials ?? "?";
+    private string Alt => User?.DisplayName is { Length: > 0 } name ? name : User?.Username ?? "Avatar";
+    private string SizeStyle => $"width: {Size}px; height: {Size}px";
+}

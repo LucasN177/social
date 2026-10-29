@@ -1,17 +1,27 @@
 using Social.Core.Interfaces.Infrastructure;
+using Social.Core.Interfaces.Response;
 using Social.Core.Interfaces.Services;
 using Social.Core.Models.Database;
+using Social.Core.Models.Response;
 
 namespace Social.Services;
 
 public class UserService(IUserRepository userRepository, IAuthService authService) : IUserService
 {
+    public event Action<User>? ProfileChanged;
+
     public async Task<User?> GetCurrentUserAsync()
     {
         var authUser = authService.CurrentUser ?? (await authService.GetCurrentUser()).Data;
         if (authUser?.Id is null) return null;
 
         var result = await userRepository.GetProfile(authUser.Id);
+        return result.IsSuccess ? result.Data : null;
+    }
+
+    public async Task<User?> GetUserByUsernameAsync(string username)
+    {
+        var result = await userRepository.GetProfileByUsername(username.ToLowerInvariant());
         return result.IsSuccess ? result.Data : null;
     }
 
@@ -25,5 +35,32 @@ public class UserService(IUserRepository userRepository, IAuthService authServic
     {
         // Stories kommen mit Phase 4 aus Supabase (supabase/sql/006_stories.sql)
         return Task.FromResult(new List<Story>());
+    }
+
+    public async Task<bool> IsUsernameTakenByOtherAsync(string username, string ownUserId)
+    {
+        var result = await userRepository.GetProfileByUsername(username);
+        return result is { IsSuccess: true, Data: not null } && result.Data.Id != ownUserId;
+    }
+
+    public async Task<IResponse<User>> UpdateProfileAsync(User profile, byte[]? avatarData = null, string? avatarContentType = null)
+    {
+        if (avatarData is not null)
+        {
+            var upload = await userRepository.UploadAvatar(profile.Id, avatarData, avatarContentType ?? "image/jpeg");
+            if (upload is not { IsSuccess: true, Data: not null })
+                return Response<User>.Failure("The profile picture could not be uploaded.");
+
+            profile.ProfileImageUrl = upload.Data;
+        }
+
+        profile.DisplayName = $"{profile.Vorname} {profile.Nachname}".Trim();
+
+        var update = await userRepository.UpdateProfile(profile);
+        if (!update.IsSuccess)
+            return Response<User>.Failure("Your profile could not be saved. Please try again.");
+
+        ProfileChanged?.Invoke(profile);
+        return Response<User>.Success(profile);
     }
 }

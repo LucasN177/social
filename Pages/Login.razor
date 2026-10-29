@@ -57,7 +57,7 @@
                                           Required="true" RequiredError="Required." autocomplete="family-name" />
                         </MudItem>
                         <MudItem xs="12">
-                            <MudTextField Immediate="true" @bind-Value="_username" Label="Username" Variant="Variant.Outlined"
+                            <MudTextField Immediate="true" Value="_username" ValueChanged="@((string v) => _username = (v ?? "").Trim().ToLowerInvariant())" Label="Username" Variant="Variant.Outlined"
                                           Adornment="Adornment.Start" AdornmentText="@("@")"
                                           HelperText="3–30 characters: a–z, 0–9, . and _"
                                           Required="true" RequiredError="Username is required." Validation="@(new Func<string, string?>(ValidateUsername))"
@@ -144,7 +144,7 @@
     private async Task SignIn()
     {
         await _loginForm.ValidateAsync();
-        if (!_loginValid || _isLoading) return;
+        if (!_loginForm.IsValid || _isLoading) return;
 
         _isLoading = true;
         _errorMessage = _infoMessage = "";
@@ -164,9 +164,8 @@
 
     private async Task SignUp()
     {
-        _username = _username.Trim().ToLowerInvariant();
         await _registerForm.ValidateAsync();
-        if (!_registerValid || _isLoading) return;
+        if (!_registerForm.IsValid || _isLoading) return;
 
         _isLoading = true;
         _errorMessage = _infoMessage = "";
@@ -180,7 +179,7 @@
                 return;
             }
 
-            var profile = new UserDto { Username = _username, Vorname = _vorname.Trim(), Nachname = _nachname.Trim() };
+            var profile = new User { Username = _username, Vorname = _vorname.Trim(), Nachname = _nachname.Trim() };
             var result = await AuthService.Register(_email.Trim(), _password, profile);
 
             if (!result.IsSuccess)
