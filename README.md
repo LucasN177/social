@@ -94,7 +94,7 @@ GitHub → Repository → *Settings* → *Secrets and variables* → *Actions* �
 | Secret | Wert |
 |---|---|
 | `SUPABASE_URL` | `https://<projekt>.supabase.co` |
-| `SUPABASE_ANON_KEY` | der `anon` / `public` Key |
+| `SUPABASE_KEY` | der `anon` / `public` Key |
 
 Oder per GitHub CLI (fragt den Wert interaktiv ab):
 
@@ -103,5 +103,5 @@ gh secret set SUPABASE_URL
 ```
 
 ```bash
-gh secret set SUPABASE_ANON_KEY
+gh secret set SUPABASE_KEY
 ```

@@ -28,7 +28,7 @@ if (!Uri.TryCreate(url, UriKind.Absolute, out _) || string.IsNullOrWhiteSpace(ke
 {
     Console.Error.WriteLine(
         "Supabase ist nicht konfiguriert: In wwwroot/appsettings.json 'Supabase:Url' und 'Supabase:AnonKey' eintragen " +
-        "(lokal) bzw. die Repository-Secrets SUPABASE_URL und SUPABASE_ANON_KEY setzen (Deployment).");
+        "(lokal) bzw. die Repository-Secrets SUPABASE_URL und SUPABASE_KEY setzen (Deployment).");
 }
 
 builder.Services.AddSingleton<IGotrueSessionPersistence<Session>, LocalStorageSessionHandler>();

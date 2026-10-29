@@ -26,7 +26,7 @@ jobs:
     - name: Write Supabase config
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_KEY }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       run: |
         if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
           echo "::error::Repository-Secrets SUPABASE_URL und SUPABASE_KEY fehlen (Settings → Secrets and variables → Actions)."
