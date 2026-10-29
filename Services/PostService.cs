@@ -1,5 +1,5 @@
 using Social.Core.Interfaces.Services;
-using Social.core.Models;
+using Social.Core.Models.Database;
 
 namespace Social.Services;
 

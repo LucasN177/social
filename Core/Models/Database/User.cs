@@ -1,13 +1,13 @@
 using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
 
-namespace Social.core.Models;
+namespace Social.Core.Models.Database;
 
 [Table("users")]
 public class User : BaseModel
 {   
     [PrimaryKey("id")]
-    public string Id { get; set; }
+    public string Id { get; set; } = string.Empty;
     
     [Column("username")]
     public string Username { get; set; } = string.Empty;

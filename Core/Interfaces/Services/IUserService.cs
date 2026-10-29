@@ -1,10 +1,10 @@
-using Social.core.Models;
+using Social.Core.Models.Database;
 
-namespace Social.Interfaces;
+namespace Social.Core.Interfaces.Services;
 
 public interface IUserService
 {
-    Task<User> GetCurrentUserAsync();
+    Task<User?> GetCurrentUserAsync();
     Task<List<User>> GetSuggestedUsersAsync();
     Task<List<Story>> GetStoriesAsync();    
 }

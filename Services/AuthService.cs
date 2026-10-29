@@ -5,15 +5,16 @@ using Social.Core.Models;
 using Social.Core.Models.Database;
 using Social.Core.Models.Response;
 using Supabase.Gotrue;
+using User = Supabase.Gotrue.User;
 using Task = System.Threading.Tasks.Task;
 
 namespace Social.Services;
 
-public class AuthService(IAuthRepository authRepository) : IAuthService
+public class AuthService(IAuthRepository authRepository, IUserRepository userRepository) : IAuthService
 {
     public Session? CurrentSession { get; set; }
-    public User? CurrentUser { get; set; } 
-    
+    public User? CurrentUser { get; set; }
+
     public async Task<IResponse<User?>> GetCurrentUser()
     {
         var result =  await authRepository.GetCurrentUser();
@@ -32,28 +33,37 @@ public class AuthService(IAuthRepository authRepository) : IAuthService
         {
             CurrentSession = result.Data;
             return Response<Session?>.Success(result.Data);
-        } 
+        }
         return Response<Session?>.Failure(result.ErrorMessage ?? "No current session");
     }
 
     public async Task<IResponse<Session>> Login(string username, string password)
     {
         var result =  await authRepository.Login(username, password);
-        return result is { IsSuccess: true, Data: not null } ? Response<Session>.Success(result.Data) : Response<Session>.Failure(result.ErrorMessage ?? "Login failed");
+        if (result is not { IsSuccess: true, Data: not null })
+            return Response<Session>.Failure(result.ErrorMessage ?? "Login failed");
+
+        CurrentSession = result.Data;
+        CurrentUser = result.Data.User;
+        return Response<Session>.Success(result.Data);
     }
 
-    public async Task<IResponse<Session>> Register(string username, string password)
+    public async Task<IResponse<Session>> Register(string username, string password, UserDto profile)
     {
-        var result =  await authRepository.Register(username, password);
+        var result =  await authRepository.Register(username, password, profile);
         return result is { IsSuccess: true, Data: not null } ? Response<Session>.Success(result.Data) : Response<Session>.Failure(result.ErrorMessage ?? "Register failed.");
     }
 
-    public Task<IResponse> Logout()
+    public async Task<IResponse<bool>> IsUsernameTaken(string username)
+    {
+        return await userRepository.IsUsernameTaken(username);
+    }
+
+    public async Task<IResponse> Logout()
     {
         CurrentSession = null;
         CurrentUser = null;
-        authRepository.Logout();
-        return Task.FromResult(Response.Success());
+        return await authRepository.Logout();
     }
 
     public async Task<IResponse> InsertUserMetadata(UserDto user)

@@ -1,6 +1,6 @@
 using Social.Core.Interfaces.Services;
-using Social.core.Models;
-using Social.Interfaces;
+using Social.Core.Models.Database;
+using Social.Core.Models.Enums;
 
 namespace Social.Services;
 

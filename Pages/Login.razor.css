@@ -1,0 +1,54 @@
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    animation: auth-fade-in 0.4s ease-out both;
+}
+
+.auth-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.auth-logo {
+    width: 72px;
+    height: 72px;
+    border-radius: 22px;
+    box-shadow: 0 16px 36px -14px #e91e63;
+}
+
+.auth-card ::deep .mud-paper {
+    border-radius: 20px;
+    background: var(--mud-palette-surface);
+}
+
+/* Beide Tabs teilen sich die volle Breite (jeder Tab steckt in einem Tooltip-Wrapper) */
+.auth-card ::deep .mud-tabs-tabbar-wrapper {
+    width: 100%;
+}
+
+    .auth-card ::deep .mud-tabs-tabbar-wrapper > * {
+        flex: 1;
+    }
+
+.auth-card ::deep .mud-tab {
+    width: 100%;
+    text-transform: none;
+    font-weight: 600;
+}
+
+.auth-card ::deep .auth-submit {
+    border-radius: 12px;
+    background: linear-gradient(90deg, var(--mud-palette-primary), var(--mud-palette-secondary));
+    box-shadow: 0 10px 24px -12px var(--mud-palette-primary);
+}
+
+@keyframes auth-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-card { animation: none; }
+}

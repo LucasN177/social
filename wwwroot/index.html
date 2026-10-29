@@ -4,13 +4,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Split</title>
+    <title>Social</title>
     <base href="/" />
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <link href="Syncro.styles.css" rel="stylesheet" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png" />
+    <meta name="theme-color" content="#e91e63" />
+    <link href="Social.styles.css" rel="stylesheet" />
     <link href="manifest.webmanifest" rel="manifest" />
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
@@ -21,11 +23,30 @@
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="splash" role="status" aria-live="polite">
+            <div class="splash-glow splash-glow--one"></div>
+            <div class="splash-glow splash-glow--two"></div>
+
+            <div class="splash-center">
+                <div class="splash-logo">
+                    <svg viewBox="0 0 48 48" aria-hidden="true">
+                        <circle cx="17" cy="18" r="7" />
+                        <circle cx="33" cy="18" r="5" opacity="0.75" />
+                        <path d="M5 38c0-7 5.4-11 12-11s12 4 12 11" />
+                        <path d="M27 31c1.6-2.4 3.9-3.6 6-3.6 5 0 9 3.4 9 9.6" opacity="0.75" />
+                    </svg>
+                </div>
+
+                <h1 class="splash-title">Social</h1>
+
+                <div class="splash-progress">
+                    <div class="splash-progress-bar"></div>
+                </div>
+                <div class="loading-progress-text"></div>
+            </div>
+
+            <div class="splash-footer">by <strong>Lucas Nagelsmann</strong></div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">

@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 *.swp
 
 wwwroot/appsettings.Development.json
+
+# Lokale Supabase-Keys (siehe README)
+wwwroot/appsettings.Development.json
