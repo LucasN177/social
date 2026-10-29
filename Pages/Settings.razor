@@ -1,0 +1,100 @@
+@page "/settings"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@implements IDisposable
+@inject IAuthService AuthService
+@inject IUserService UserService
+@inject IThemeService ThemeService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Settings - Social</PageTitle>
+
+<div style="max-width: 640px; margin: 0 auto">
+    <MudText Typo="Typo.h5" Class="mb-4">Settings</MudText>
+
+    <MudPaper Elevation="0" Outlined="true" Class="mb-4" Style="border-radius: 16px; overflow: hidden">
+        <MudList T="string" Dense="false">
+            <MudListSubheader>Account</MudListSubheader>
+            <MudListItem T="string" Icon="@Icons.Material.Outlined.Person" OnClick="EditProfile">
+                <div class="d-flex align-center gap-3">
+                    <UserAvatar User="_profile" Size="36" />
+                    <div>
+                        <div class="font-weight-bold">@(_profile?.DisplayName ?? "…")</div>
+                        <div class="mud-text-secondary" style="font-size: 0.85rem">Edit profile</div>
+                    </div>
+                </div>
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Outlined.Email">
+                <div>Email</div>
+                <div class="mud-text-secondary" style="font-size: 0.85rem">@(AuthService.CurrentUser?.Email ?? "–")</div>
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Outlined.AccountCircle" Href="profile">View my profile</MudListItem>
+        </MudList>
+    </MudPaper>
+
+    <MudPaper Elevation="0" Outlined="true" Class="mb-4" Style="border-radius: 16px; overflow: hidden">
+        <MudList T="string">
+            <MudListSubheader>Appearance</MudListSubheader>
+            <MudListItem T="string" Icon="@(ThemeService.IsDarkMode ? Icons.Material.Outlined.DarkMode : Icons.Material.Outlined.LightMode)">
+                <div class="d-flex align-center justify-space-between">
+                    <span>Dark mode</span>
+                    <MudSwitch T="bool" Value="ThemeService.IsDarkMode" ValueChanged="_ => ThemeService.ToggleTheme()" Color="Color.Primary" />
+                </div>
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+
+    <MudPaper Elevation="0" Outlined="true" Class="mb-4" Style="border-radius: 16px; overflow: hidden">
+        <MudList T="string">
+            <MudListItem T="string" Icon="@Icons.Material.Outlined.Logout" IconColor="Color.Error" OnClick="Logout">
+                <span class="mud-error-text">Sign out</span>
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+
+    <MudText Typo="Typo.caption" Align="Align.Center" Class="d-block mud-text-secondary mt-6">
+        Social · by <b>Lucas Nagelsmann</b>
+    </MudText>
+</div>
+
+@code {
+    private User? _profile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ThemeService.OnThemeChanged += OnThemeChanged;
+        UserService.ProfileChanged += OnProfileChanged;
+        _profile = await UserService.GetCurrentUserAsync();
+    }
+
+    private async Task EditProfile()
+    {
+        if (_profile is null) return;
+        var parameters = new DialogParameters<EditProfileDialog> { { x => x.Profile, _profile } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<EditProfileDialog>("Edit profile", parameters, options);
+        if (await dialog.Result is { Canceled: false })
+            Snackbar.Add("Profile saved", Severity.Success);
+    }
+
+    private async Task Logout()
+    {
+        var result = await AuthService.Logout();
+        Navigation.NavigateTo("login", forceLoad: !result.IsSuccess, replace: true);
+    }
+
+    private void OnThemeChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnProfileChanged(User user) => InvokeAsync(() =>
+    {
+        _profile = user;
+        StateHasChanged();
+    });
+
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= OnThemeChanged;
+        UserService.ProfileChanged -= OnProfileChanged;
+    }
+}

@@ -73,6 +73,11 @@ a, .btn-link {
     font-weight: 600;
 }
 
+/* Snackbars über der unteren Navigationsleiste (48px) statt darauf */
+.mud-snackbar-location-bottom-center.mud-snackbar-location-bottom-center {
+    bottom: calc(64px + env(safe-area-inset-bottom));
+}
+
 .dialog-scroll {
     max-height: 60vh;
     overflow-y: auto;
