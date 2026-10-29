@@ -22,6 +22,19 @@ jobs:
       with:
         dotnet-version: 10.0.x
 
+    # Vor dem Publish, damit die Hashes in service-worker-assets.js zur echten Datei passen
+    - name: Write Supabase config
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      run: |
+        if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+          echo "::error::Repository-Secrets SUPABASE_URL und SUPABASE_ANON_KEY fehlen (Settings → Secrets and variables → Actions)."
+          exit 1
+        fi
+        jq -n --arg url "$SUPABASE_URL" --arg key "$SUPABASE_ANON_KEY" \
+          '{ Supabase: { Url: $url, AnonKey: $key } }' > wwwroot/appsettings.json
+
     - name: Publish
       run: dotnet publish -c Release -o release
 

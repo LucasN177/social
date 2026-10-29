@@ -1,0 +1,131 @@
+# Implementationsplan – Social (Blazor WASM · MudBlazor · Supabase)
+
+Stand: 29.10.2026
+
+## 1. Ausgangslage
+
+| Bereich | Status |
+|---|---|
+| Hosting | Blazor WebAssembly (.NET 10), Deployment via GitHub Actions auf GitHub Pages (`/social/`) |
+| UI | MudBlazor 9.3, Layout mit oberer AppBar + Bottom-Navigation (Home, Reels, Messages, Search, Profile) |
+| Backend | Supabase-Client (`Supabase` 1.1.1) als Singleton in `Program.cs`, Konfiguration über `wwwroot/appsettings.json` |
+| Auth | `AuthRepository` / `AuthService`: Login, Registrierung, Logout, Session, `users`-Metadaten lesen/schreiben |
+| Daten | `PostService`, `NotificationService` liefern **Mock-Daten**; `User`, `Post`, `Comment`, `Story`, `Notification` sind noch keine Supabase-Modelle (außer `User`/`UserDto`) |
+| Seiten | `Login` (`/`), `Home` (`/fyp`), `NotFound`; Komponenten `PostCard`, `StoriesComponent` |
+
+### Bekannte Probleme
+
+Behoben in Phase 0:
+
+- ~~`IUserService` nicht registriert~~ → `UserService` + `UserRepository` registriert.
+- ~~Namespaces uneinheitlich~~ → `Social.Core.Models.Database` / `.Enums`, alle Service-Interfaces in `Social.Core.Interfaces.Services`, zentrale `_Imports.razor`.
+- ~~Drei Theme-Quellen, Dark-Mode-Toggle wirkungslos~~ → nur noch `ThemeService`, Wahl in `localStorage`.
+- ~~`Logout()` nicht abgewartet~~, ~~Session nicht persistiert~~, ~~Login mit Bootstrap-Markup~~.
+- ~~Absolute Links (`/create`, `/fyp`)~~ → relative Links, damit die App unter `/social/` auf GitHub Pages funktioniert.
+
+Offen:
+
+1. **Supabase-Realtime funktioniert im Browser nicht** mit Paket `Supabase` 1.1.1: Der Realtime-Client setzt WebSocket-Header, was in WebAssembly `PlatformNotSupported` wirft. `AutoConnectRealtime` ist deshalb aus. Für Phase 5 entweder ein neueres Paket prüfen oder Realtime über `supabase-js` per JS-Interop anbinden.
+2. **`SupabaseOptions.SessionHandler` wird in 1.1.1 ignoriert** → Persistenz wird in `Program.cs` explizit per `Auth.SetPersistence` gesetzt und per `LoadSession()` geladen.
+3. ~~Deployment nutzt Platzhalter aus `appsettings.json`~~ → der Workflow schreibt die Datei aus den Secrets `SUPABASE_URL` / `SUPABASE_ANON_KEY` (siehe README).
+   **Offline-Cache auf GitHub Pages defekt:** `service-worker.published.js` nutzt `base = "/"` statt `/social/`, und der Workflow ändert `index.html` (base href) erst nach dem Publish, sodass der Integritäts-Hash nicht mehr passt. Die App läuft trotzdem, nur ohne Offline-Cache. → in Phase 6 beheben (base href per MSBuild-Property `StaticWebAssetBasePath` bzw. vor dem Publish setzen).
+4. `ISocialNetworkService` nutzt `int`-IDs, ist ungenutzt → beim Umbau der Posts (Phase 2) entfernen oder auf `uuid`/`long` umstellen.
+5. `User` und `UserDto` mappen beide die Tabelle `users` → zusammenführen, sobald das Profil (Phase 1) gebaut wird.
+
+## 2. Zielarchitektur
+
+```
+Pages / Components (MudBlazor)
+        │  inject
+        ▼
+Services (Social.Services)          ← Geschäftslogik, Caching, State
+        │
+        ▼
+Repositories (Social.Infrastructure) ← nur Supabase-Zugriff (Postgrest, Storage, Realtime)
+        │
+        ▼
+Supabase (Postgres + RLS, Auth, Storage, Realtime)
+```
+
+- **Core**: Interfaces, Datenbank-Modelle (`BaseModel` mit `[Table]`/`[Column]`), DTOs, `IResponse`.
+- **Infrastructure**: je Aggregat ein Repository (`PostRepository`, `CommentRepository`, `FollowRepository`, `StoryRepository`, `NotificationRepository`, `StorageRepository`).
+- **Services**: kapseln Repositories, mappen DB-Modelle → UI-Modelle (`Core/Mapping`).
+- **Datenbank**: alle Skripte versioniert unter [`supabase/sql`](../supabase/sql), Sicherheit ausschließlich über **Row Level Security**.
+
+## 3. Phasen
+
+### Phase 0 – Grundlagen & Aufräumen
+- [x] Moderner Ladebildschirm in `wwwroot/index.html` („by Lucas Nagelsmann“)
+- [x] Ordner `supabase/sql` mit nummerierten SQL-Skripten
+- [x] Favicon (SVG + PNG), PWA-Icons und Manifest im Markendesign
+- [x] Namespaces vereinheitlichen, fehlende DI-Registrierungen ergänzen
+- [x] Ein Theme (`ThemeService`) als Single Source of Truth, Dark-Mode-Toggle darüber, Wahl in `localStorage` speichern
+- [x] Session-Persistenz (`LocalStorageSessionHandler`, synchrones JS-Interop)
+- [x] `SupabaseAuthStateProvider`, `<AuthorizeRouteView>` + Redirect auf `/login?returnUrl=…`
+- [x] Logout im AppBar-Menü (funktioniert auch ohne Serververbindung)
+
+### Phase 1 – Auth & Profil
+- [x] Login/Registrierung als MudBlazor-Seite (`/login`, eigenes `AuthLayout`, Tabs, Validierung, verständliche Fehlermeldungen, Enter zum Absenden)
+- [x] Registrierung übergibt Username, Vor-/Nachname als User-Metadaten → Trigger `handle_new_user` legt die `users`-Zeile an (funktioniert auch mit E-Mail-Bestätigung)
+- [ ] Profilbild beim Onboarding / im Profil hochladen
+- [ ] Profilseite `/profile` und `/u/{username}`: Avatar, Bio, Zähler, Post-Grid
+- [ ] Profil bearbeiten (`UpdateUserMetadata` implementieren), Avatar-Upload in Bucket `avatars`
+
+### Phase 2 – Posts & Feed
+- [ ] `Post`-Modell auf Supabase mappen (`posts`, `post_images`)
+- [ ] Beitrag erstellen `/create`: Bilder-Upload (Bucket `post-images`), Text, Ort, Hashtags
+- [ ] Feed `/fyp` über View `feed_posts` mit Pagination (Range/Offset, Infinite Scroll)
+- [ ] Like / Bookmark (Tabellen `likes`, `bookmarks`), optimistisches UI-Update
+- [ ] Kommentare inkl. Kommentar-Likes
+- [ ] Beitrag löschen/bearbeiten (nur eigene, durch RLS abgesichert)
+
+### Phase 3 – Social Graph & Suche
+- [ ] Folgen/Entfolgen (`follows`), Zähler per Trigger
+- [ ] Suche `/search`: User (Username/Name, `ilike` bzw. `pg_trgm`) und Hashtags
+- [ ] Vorschläge „Wem folgen?“ (RPC `suggested_users`)
+
+### Phase 4 – Stories & Reels
+- [ ] Stories (24h gültig, `expires_at`), Story-Viewer mit Fortschrittsbalken, `story_views`
+- [ ] Reels `/reels`: Video-Posts (`media_type = 'video'`), vertikaler Snap-Scroll
+
+### Phase 5 – Benachrichtigungen & Nachrichten
+- [ ] Notifications per DB-Trigger (Like, Kommentar, Follow), Badge in AppBar
+- [ ] Supabase Realtime-Subscription auf `notifications` des aktuellen Users
+- [ ] Direktnachrichten `/messages`: `conversations`, `conversation_members`, `messages`, Realtime-Chat
+
+### Phase 6 – Qualität & Release
+- [ ] Loading-Skeletons (`MudSkeleton`) und leere Zustände auf allen Seiten
+- [ ] Fehlerbehandlung über `IResponse` + zentrale Snackbar
+- [ ] Unit-Tests für Services (xUnit + Moq), bUnit für Komponenten
+- [x] Supabase-Keys im Deploy-Workflow aus GitHub Secrets in `appsettings.json` schreiben
+- [ ] Service Worker / Offline-Cache für `/social/` korrigieren
+- [ ] PWA: Offline-Fallback, App-Icons im Markendesign
+
+## 4. Datenbank
+
+Alle Skripte liegen in [`supabase/sql`](../supabase/sql) und werden **in Nummernreihenfolge** im Supabase SQL-Editor ausgeführt (Details: [`supabase/sql/README.md`](../supabase/sql/README.md)).
+
+| Skript | Inhalt |
+|---|---|
+| `000_extensions.sql` | Extensions, Hilfsfunktion `set_updated_at` |
+| `001_users.sql` | `users`-Profil, Trigger bei Registrierung |
+| `002_posts.sql` | `posts`, `post_images` |
+| `003_comments.sql` | `comments`, `comment_likes` |
+| `004_interactions.sql` | `likes`, `bookmarks` |
+| `005_follows.sql` | `follows` |
+| `006_stories.sql` | `stories`, `story_views` |
+| `007_notifications.sql` | `notifications` + Trigger |
+| `008_counters.sql` | Zähler-Trigger (Likes, Kommentare, Follower, Posts) |
+| `009_views_and_functions.sql` | View `feed_posts`, RPC `suggested_users` |
+| `010_storage.sql` | Buckets `avatars`, `post-images`, `stories` + Policies |
+| `011_realtime.sql` | Realtime-Publication für `notifications` |
+
+Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als neues Skript mit der nächsten Nummer angelegt.
+
+## 5. Konventionen
+
+- Tabellen/Spalten in `snake_case`, C#-Properties in `PascalCase` mit `[Column("...")]`.
+- IDs: `uuid` (User = `auth.users.id`), Inhalte `bigint generated always as identity`.
+- Jede Tabelle hat RLS aktiviert; keine Policy = kein Zugriff.
+- Services geben `IResponse` / `IResponse<T>` zurück, keine Exceptions an die UI.
+- UI-Texte zentral halten, damit später Lokalisierung (de/en) möglich ist.

@@ -1,6 +1,6 @@
-using Social.core.Models;
+using Social.Core.Models.Database;
 
-namespace Social.Interfaces;
+namespace Social.Core.Interfaces.Services;
 
 public interface ISocialNetworkService
 {

@@ -1,4 +1,4 @@
-using Social.core.Models;
+using Social.Core.Models.Database;
 
 namespace Social.Core.Interfaces.Services;
 

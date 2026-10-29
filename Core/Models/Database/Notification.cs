@@ -1,4 +1,6 @@
-namespace Social.core.Models;
+using Social.Core.Models.Enums;
+
+namespace Social.Core.Models.Database;
 
 public class Notification
 {

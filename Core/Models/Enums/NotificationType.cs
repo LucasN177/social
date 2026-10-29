@@ -1,4 +1,4 @@
-namespace Social.core.Models;
+namespace Social.Core.Models.Enums;
 
 public enum NotificationType
 {
