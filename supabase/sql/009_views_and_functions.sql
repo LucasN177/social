@@ -3,6 +3,8 @@
 
 -- Feed: Beiträge inkl. Autor, Bilder und Like-/Bookmark-Status des aktuellen Users.
 -- security_invoker = true, damit die RLS-Policies der Basistabellen greifen.
+-- Spalten identisch mit 013_posts_api.sql halten: "create or replace view" kann keine Spalten
+-- entfernen, sonst scheitert ein erneutes Ausführen aller Skripte (setup.sql).
 create or replace view public.feed_posts
 with (security_invoker = true)
 as
@@ -26,7 +28,9 @@ select
         '{}'
     ) as image_urls,
     exists (select 1 from public.likes l     where l.post_id = p.id and l.user_id = auth.uid()) as is_liked,
-    exists (select 1 from public.bookmarks b where b.post_id = p.id and b.user_id = auth.uid()) as is_bookmarked
+    exists (select 1 from public.bookmarks b where b.post_id = p.id and b.user_id = auth.uid()) as is_bookmarked,
+    u.vorname,
+    u.nachname
 from public.posts p
 join public.users u on u.id = p.user_id;
 

@@ -1,0 +1,46 @@
+@inject IUserService UserService
+
+<MudDialog ContentClass="dialog-scroll">
+    <DialogContent>
+        @if (_users is null)
+        {
+            @for (var i = 0; i < 4; i++)
+            {
+                <div class="d-flex align-center gap-3 py-2">
+                    <MudSkeleton SkeletonType="SkeletonType.Circle" Width="44px" Height="44px" />
+                    <MudSkeleton Width="50%" />
+                </div>
+            }
+        }
+        else if (_users.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary py-6">
+                @(ShowFollowers ? "No followers yet." : "Not following anyone yet.")
+            </MudText>
+        }
+        else
+        {
+            @foreach (var user in _users)
+            {
+                <UserListItem @key="user.Id" User="user" OnNavigate="() => MudDialog.Close()" />
+            }
+        }
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter, EditorRequired] public string UserId { get; set; } = null!;
+    /// <summary>true = Follower, false = gefolgte Accounts.</summary>
+    [Parameter] public bool ShowFollowers { get; set; } = true;
+
+    private List<User>? _users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _users = ShowFollowers
+            ? await UserService.GetFollowersAsync(UserId)
+            : await UserService.GetFollowingAsync(UserId);
+    }
+}

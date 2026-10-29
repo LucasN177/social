@@ -1,0 +1,135 @@
+@page "/search"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@implements IDisposable
+@inject IUserService UserService
+@inject IPostService PostService
+@inject NavigationManager Navigation
+
+<PageTitle>Search - Social</PageTitle>
+
+<div style="max-width: 640px; margin: 0 auto">
+    <MudTextField T="string" Value="_term" ValueChanged="OnTermChanged" Immediate="true" DebounceInterval="300"
+                  Placeholder="Search people or #hashtags" Variant="Variant.Outlined" Clearable="true" AutoFocus="true"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-2" />
+
+    <MudTabs @bind-ActivePanelIndex="_tab" Elevation="0" Rounded="true" MinimumTabWidth="0" TabPanelsClass="pt-3">
+        <MudTabPanel Text="Accounts" Icon="@Icons.Material.Outlined.Person">
+            @if (string.IsNullOrWhiteSpace(_term))
+            {
+                <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-2">Suggested for you</MudText>
+                @if (_suggested is null)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_suggested.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">No suggestions right now.</MudText>
+                }
+                else
+                {
+                    @foreach (var user in _suggested)
+                    {
+                        <UserListItem @key="user.Id" User="user" IsFollowing="false" ShowFollowers="true" />
+                    }
+                }
+            }
+            else if (_searching)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            else if (_users.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary py-6">No accounts found for “@_term”.</MudText>
+            }
+            else
+            {
+                @foreach (var user in _users)
+                {
+                    <UserListItem @key="user.Id" User="user" ShowFollowers="true" />
+                }
+            }
+        </MudTabPanel>
+
+        <MudTabPanel Text="Tags" Icon="@Icons.Material.Outlined.Tag">
+            @if (string.IsNullOrWhiteSpace(_term))
+            {
+                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary py-6">Type to search hashtags.</MudText>
+            }
+            else if (_searching)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            else if (_tags.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary py-6">No hashtags found for “@_term”.</MudText>
+            }
+            else
+            {
+                <MudList T="string" Dense="true">
+                    @foreach (var tag in _tags)
+                    {
+                        <MudListItem T="string" Href="@($"tags/{Uri.EscapeDataString(tag.Tag)}")" Icon="@Icons.Material.Outlined.Tag">
+                            <div class="d-flex justify-space-between">
+                                <span class="font-weight-bold">#@tag.Tag</span>
+                                <span class="mud-text-secondary">@tag.PostCount.ToString("N0") @(tag.PostCount == 1 ? "post" : "posts")</span>
+                            </div>
+                        </MudListItem>
+                    }
+                </MudList>
+            }
+        </MudTabPanel>
+    </MudTabs>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "q")] public string? Query { get; set; }
+
+    private string _term = "";
+    private int _tab;
+    private bool _searching;
+    private List<User>? _suggested;
+    private List<User> _users = new();
+    private List<HashtagResult> _tags = new();
+    private CancellationTokenSource? _cts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(Query))
+            await OnTermChanged(Query);
+        _suggested = await UserService.GetSuggestedUsersAsync();
+    }
+
+    private async Task OnTermChanged(string? value)
+    {
+        _term = value ?? "";
+        _cts?.Cancel();
+        var cts = _cts = new CancellationTokenSource();
+
+        // Eingabe mit "#" springt direkt in den Tags-Tab
+        if (_term.TrimStart().StartsWith('#')) _tab = 1;
+
+        if (string.IsNullOrWhiteSpace(_term))
+        {
+            _users.Clear();
+            _tags.Clear();
+            _searching = false;
+            return;
+        }
+
+        _searching = true;
+        var usersTask = UserService.SearchUsersAsync(_term);
+        var tagsTask = PostService.SearchHashtagsAsync(_term);
+        await Task.WhenAll(usersTask, tagsTask);
+
+        // Ältere Antworten verwerfen, wenn inzwischen weitergetippt wurde
+        if (cts.IsCancellationRequested) return;
+        _users = usersTask.Result;
+        _tags = tagsTask.Result;
+        _searching = false;
+
+        // Suchbegriff in der URL halten (Zurück-Navigation, Teilen)
+        Navigation.NavigateTo($"search?q={Uri.EscapeDataString(_term)}", replace: true);
+    }
+
+    public void Dispose() => _cts?.Cancel();
+}

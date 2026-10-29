@@ -5,7 +5,15 @@ namespace Social.Core.Interfaces.Infrastructure;
 
 public interface IPostRepository
 {
+    /// <summary>Alle Posts (Explore).</summary>
     public Task<IResponse<List<FeedPostRecord>>> GetFeed(int offset, int limit);
+
+    /// <summary>Eigene Posts + Posts gefolgter Accounts (View home_feed).</summary>
+    public Task<IResponse<List<FeedPostRecord>>> GetHomeFeed(int offset, int limit);
+
+    public Task<IResponse<List<FeedPostRecord>>> GetPostsByTag(string tag, int offset, int limit);
+
+    public Task<IResponse<List<HashtagResult>>> SearchHashtags(string term, int maxResults);
 
     public Task<IResponse<List<FeedPostRecord>>> GetUserPosts(string userId, int offset, int limit);
 

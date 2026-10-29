@@ -29,6 +29,24 @@ public class FeedPostRecord : BaseModel
     [Column("is_bookmarked")] public bool IsBookmarked { get; set; }
 }
 
+/// <summary>Zeile der View home_feed (014): eigene Posts + Posts gefolgter Accounts.</summary>
+[Table("home_feed")]
+public class HomeFeedRecord : FeedPostRecord;
+
+/// <summary>Ergebnis der RPC search_hashtags (014).</summary>
+public class HashtagResult
+{
+    [Newtonsoft.Json.JsonProperty("tag")] public string Tag { get; set; } = string.Empty;
+    [Newtonsoft.Json.JsonProperty("post_count")] public int PostCount { get; set; }
+}
+
+[Table("follows")]
+public class FollowRecord : BaseModel
+{
+    [PrimaryKey("follower_id", true)] public string FollowerId { get; set; } = string.Empty;
+    [PrimaryKey("following_id", true)] public string FollowingId { get; set; } = string.Empty;
+}
+
 /// <summary>Zeile der Tabelle posts – zum Löschen.</summary>
 [Table("posts")]
 public class PostRecord : BaseModel

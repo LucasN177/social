@@ -12,7 +12,12 @@ public interface IPostService
     event Action<long>? PostCreated;
     event Action<long>? PostDeleted;
 
+    /// <summary>Alle Posts (Explore).</summary>
     Task<List<Post>> GetFeedAsync(int page);
+    /// <summary>Eigene Posts + Posts gefolgter Accounts.</summary>
+    Task<List<Post>> GetHomeFeedAsync(int page);
+    Task<List<Post>> GetPostsByTagAsync(string tag, int page);
+    Task<List<HashtagResult>> SearchHashtagsAsync(string term);
     Task<List<Post>> GetUserPostsAsync(string userId, int page);
     Task<List<Post>> GetSavedPostsAsync(int page);
     Task<Post?> GetPostAsync(long id);

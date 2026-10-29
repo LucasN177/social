@@ -1,0 +1,34 @@
+@* Eine Zeile mit Avatar, Name, @username und optionalem Follow-Button *@
+<div class="user-item">
+    <a href="@ProfileUrl" class="user-item-link" @onclick="OnNavigate">
+        <UserAvatar User="User" Size="44" />
+        <div class="user-item-text">
+            <div class="user-item-name">
+                @(string.IsNullOrWhiteSpace(User.DisplayName) ? User.Username : User.DisplayName)
+                @if (User.IsVerified)
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Primary" Style="font-size: 15px; vertical-align: -2px" />
+                }
+            </div>
+            @if (!string.IsNullOrEmpty(User.Username))
+            {
+                <div class="user-item-sub">@("@" + User.Username)@(ShowFollowers ? $" · {User.FollowersCount:N0} followers" : "")</div>
+            }
+        </div>
+    </a>
+    @if (ShowFollowButton)
+    {
+        <FollowButton Target="User" IsFollowing="IsFollowing" Size="Size.Small" />
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public User User { get; set; } = null!;
+    [Parameter] public bool ShowFollowButton { get; set; } = true;
+    [Parameter] public bool? IsFollowing { get; set; }
+    [Parameter] public bool ShowFollowers { get; set; }
+    /// <summary>Z. B. um einen Dialog zu schließen, bevor zum Profil navigiert wird.</summary>
+    [Parameter] public EventCallback OnNavigate { get; set; }
+
+    private string ProfileUrl => string.IsNullOrEmpty(User.Username) ? "profile" : $"u/{User.Username}";
+}

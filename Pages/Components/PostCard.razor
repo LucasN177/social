@@ -77,7 +77,7 @@
                 {
                     if (part.IsTag)
                     {
-                        <span class="post-hashtag">@part.Text</span>
+                        <a class="post-hashtag" href="@($"tags/{Uri.EscapeDataString(part.Text[1..].ToLowerInvariant())}")">@part.Text</a>
                     }
                     else
                     {

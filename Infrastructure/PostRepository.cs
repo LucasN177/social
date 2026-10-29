@@ -27,6 +27,56 @@ public class PostRepository(Supabase.Client client) : IPostRepository
         }
     }
 
+    public async Task<IResponse<List<FeedPostRecord>>> GetHomeFeed(int offset, int limit)
+    {
+        try
+        {
+            var result = await client.From<HomeFeedRecord>()
+                .Order(x => x.CreatedAt, Ordering.Descending)
+                .Range(offset, offset + limit - 1)
+                .Get();
+            return Response<List<FeedPostRecord>>.Success(result.Models.Cast<FeedPostRecord>().ToList());
+        }
+        catch (Exception ex)
+        {
+            return Response<List<FeedPostRecord>>.Failure(ex);
+        }
+    }
+
+    public async Task<IResponse<List<FeedPostRecord>>> GetPostsByTag(string tag, int offset, int limit)
+    {
+        try
+        {
+            var result = await client.From<FeedPostRecord>()
+                .Filter("tags", Operator.Contains, new List<object> { tag })
+                .Order(x => x.CreatedAt, Ordering.Descending)
+                .Range(offset, offset + limit - 1)
+                .Get();
+            return Response<List<FeedPostRecord>>.Success(result.Models);
+        }
+        catch (Exception ex)
+        {
+            return Response<List<FeedPostRecord>>.Failure(ex);
+        }
+    }
+
+    public async Task<IResponse<List<HashtagResult>>> SearchHashtags(string term, int maxResults)
+    {
+        try
+        {
+            var result = await client.Rpc<List<HashtagResult>>("search_hashtags", new Dictionary<string, object>
+            {
+                ["term"] = term,
+                ["max_results"] = maxResults
+            });
+            return Response<List<HashtagResult>>.Success(result ?? new List<HashtagResult>());
+        }
+        catch (Exception ex)
+        {
+            return Response<List<HashtagResult>>.Failure(ex);
+        }
+    }
+
     public async Task<IResponse<List<FeedPostRecord>>> GetUserPosts(string userId, int offset, int limit)
     {
         try

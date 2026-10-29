@@ -24,6 +24,23 @@
     flex-wrap: wrap;
 }
 
+.profile-stat-button {
+    /* MudBlazor macht Buttons zu Flex-Containern – Leerzeichen zwischen den Kindern fallen dort weg */
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+    .profile-stat-button:hover span {
+        text-decoration: underline;
+    }
+
     .profile-stats b {
         font-weight: 700;
     }

@@ -1,0 +1,82 @@
+@* Folgen / Entfolgen; lädt den Status selbst, wenn IsFollowing nicht übergeben wird *@
+@implements IDisposable
+@inject IUserService UserService
+@inject ISnackbar Snackbar
+
+@if (_isSelf)
+{
+    @* Eigenes Profil: kein Button *@
+}
+else if (_following is null)
+{
+    <MudButton Variant="Variant.Outlined" Size="Size" FullWidth="FullWidth" Disabled="true">…</MudButton>
+}
+else if (_following == true)
+{
+    <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size" FullWidth="FullWidth" Disabled="_busy"
+               OnClick="() => SetFollow(false)" aria-label="@($"Unfollow {Target.Username}")">Following</MudButton>
+}
+else
+{
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size" FullWidth="FullWidth" Disabled="_busy"
+               OnClick="() => SetFollow(true)" aria-label="@($"Follow {Target.Username}")">Follow</MudButton>
+}
+
+@code {
+    [Parameter, EditorRequired] public User Target { get; set; } = null!;
+    /// <summary>Bekannter Status (z. B. Vorschläge = nicht gefolgt); null = selbst laden.</summary>
+    [Parameter] public bool? IsFollowing { get; set; }
+    [Parameter] public Size Size { get; set; } = Size.Medium;
+    [Parameter] public bool FullWidth { get; set; }
+    [Parameter] public EventCallback<bool> OnChanged { get; set; }
+
+    [Inject] private IAuthService AuthService { get; set; } = null!;
+
+    private bool? _following;
+    private bool _busy;
+    private bool _isSelf;
+    private string? _loadedFor;
+
+    protected override void OnInitialized()
+    {
+        UserService.FollowChanged += OnFollowChanged;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_loadedFor == Target.Id) return;
+        _loadedFor = Target.Id;
+        _isSelf = Target.Id == AuthService.CurrentUser?.Id;
+        _following = IsFollowing ?? (_isSelf ? false : await UserService.IsFollowingAsync(Target.Id));
+    }
+
+    private async Task SetFollow(bool follow)
+    {
+        _busy = true;
+        var result = await UserService.SetFollowAsync(Target, follow);
+        _busy = false;
+
+        if (result.IsSuccess)
+        {
+            _following = follow;
+            await OnChanged.InvokeAsync(follow);
+        }
+        else
+        {
+            Snackbar.Add(result.ErrorMessage ?? "That didn't work. Please try again.", Severity.Error);
+        }
+    }
+
+    // Gleicher User an anderer Stelle (z. B. Profil + Vorschläge) bleibt synchron
+    private void OnFollowChanged(string userId, bool following)
+    {
+        if (userId != Target.Id || _following == following) return;
+        _following = following;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        UserService.FollowChanged -= OnFollowChanged;
+    }
+}

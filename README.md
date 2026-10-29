@@ -23,7 +23,8 @@
 | Feed, Likes, Lesezeichen, Kommentare | ✅ |
 | Stories | 🚧 |
 | Profil ansehen & bearbeiten, Profilbild hochladen | ✅ |
-| Folgen, Suche | 📋 geplant |
+| Folgen / Entfolgen, Follower-Listen, Feed „Following“ / „Explore“ | ✅ |
+| Suche nach Accounts und Hashtags, Hashtag-Seiten | ✅ |
 | Benachrichtigungen (Realtime), Nachrichten, Reels | 📋 geplant |
 
 Der vollständige Fahrplan steht im [Implementationsplan](docs/IMPLEMENTATIONSPLAN.md).
@@ -74,9 +75,9 @@ Voraussetzung: [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
 ## Datenbank einrichten
 
-Alle Skripte liegen in [`supabase/sql`](supabase/sql/README.md) und werden **in Nummernreihenfolge** im Supabase SQL-Editor ausgeführt. Sie sind idempotent und können erneut ausgeführt werden.
+Den kompletten Inhalt von [`supabase/setup.sql`](supabase/setup.sql) im Supabase **SQL Editor** einfügen und ausführen – fertig. Das Skript läuft in einer Transaktion, ist idempotent und kann nach jedem Update einfach erneut ausgeführt werden.
 
-Neue Datenbankänderungen kommen immer als neues Skript mit der nächsten Nummer dazu – bestehende Skripte werden nicht verändert.
+`setup.sql` wird aus den nummerierten Skripten in [`supabase/sql`](supabase/sql/README.md) erzeugt (`supabase/build-setup.ps1`). Neue Datenbankänderungen kommen immer als neues nummeriertes Skript dazu; danach `setup.sql` neu erzeugen.
 
 In den Supabase Auth-Einstellungen unter *URL Configuration* die Site-URL (z. B. `https://<user>.github.io/social/`) und `http://localhost:5046` als Redirect-URL eintragen.
 

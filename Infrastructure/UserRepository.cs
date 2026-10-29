@@ -63,6 +63,60 @@ public class UserRepository(Supabase.Client client) : IUserRepository
         }
     }
 
+    public Task<IResponse<List<User>>> SearchUsers(string term, int maxResults) =>
+        CallUserListRpc("search_users", new Dictionary<string, object> { ["term"] = term, ["max_results"] = maxResults });
+
+    public async Task<IResponse<bool>> IsFollowing(string followerId, string followingId)
+    {
+        try
+        {
+            var result = await client.From<FollowRecord>()
+                .Where(x => x.FollowerId == followerId && x.FollowingId == followingId)
+                .Get();
+            return Response<bool>.Success(result.Models.Count > 0);
+        }
+        catch (Exception ex)
+        {
+            return Response<bool>.Failure(ex);
+        }
+    }
+
+    public async Task<IResponse> SetFollow(string followerId, string followingId, bool follow)
+    {
+        try
+        {
+            // RLS (005_follows.sql) erlaubt nur follower_id = auth.uid(); Zähler + Benachrichtigung per Trigger
+            if (follow)
+                await client.From<FollowRecord>().Insert(new FollowRecord { FollowerId = followerId, FollowingId = followingId });
+            else
+                await client.From<FollowRecord>().Where(x => x.FollowerId == followerId && x.FollowingId == followingId).Delete();
+            return Response.Success();
+        }
+        catch (Exception ex)
+        {
+            return Response.Failure(ex.Message, ex);
+        }
+    }
+
+    public Task<IResponse<List<User>>> GetFollowers(string userId) =>
+        CallUserListRpc("list_followers", new Dictionary<string, object> { ["target"] = userId });
+
+    public Task<IResponse<List<User>>> GetFollowing(string userId) =>
+        CallUserListRpc("list_following", new Dictionary<string, object> { ["target"] = userId });
+
+    private async Task<IResponse<List<User>>> CallUserListRpc(string function, Dictionary<string, object> parameters)
+    {
+        try
+        {
+            var result = await client.Rpc<List<User>>(function, parameters);
+            return Response<List<User>>.Success(result ?? new List<User>());
+        }
+        catch (Exception ex)
+        {
+            return Response<List<User>>.Failure(ex);
+        }
+    }
+
     public async Task<IResponse> UpdateProfile(User user)
     {
         try

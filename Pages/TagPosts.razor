@@ -1,0 +1,28 @@
+@page "/tags/{Tag}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject IPostService PostService
+@inject IJSRuntime JS
+
+<PageTitle>#@NormalizedTag - Social</PageTitle>
+
+<div style="max-width: 900px; margin: 0 auto">
+    <div class="d-flex align-center mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack" aria-label="Back" />
+        <div class="ml-2">
+            <MudText Typo="Typo.h5" Class="brand-title">#@NormalizedTag</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Posts with this hashtag</MudText>
+        </div>
+    </div>
+
+    @* @key: beim Wechsel zwischen Hashtags neu laden *@
+    <PostGrid @key="NormalizedTag" LoadPage="page => PostService.GetPostsByTagAsync(NormalizedTag, page)"
+              EmptyIcon="@Icons.Material.Outlined.Tag" EmptyTitle="No posts with this hashtag yet" />
+</div>
+
+@code {
+    [Parameter] public string Tag { get; set; } = "";
+
+    private string NormalizedTag => Social.Services.PostService.NormalizeTag(Tag);
+
+    private async Task GoBack() => await JS.InvokeVoidAsync("history.back");
+}

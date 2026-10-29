@@ -9,6 +9,50 @@ namespace Social.Services;
 public class UserService(IUserRepository userRepository, IAuthService authService) : IUserService
 {
     public event Action<User>? ProfileChanged;
+    public event Action<string, bool>? FollowChanged;
+
+    private string? CurrentUserId => authService.CurrentUser?.Id;
+
+    public async Task<List<User>> SearchUsersAsync(string term)
+    {
+        term = term.Trim().TrimStart('@');
+        if (term.Length == 0) return new List<User>();
+        var result = await userRepository.SearchUsers(term, 20);
+        return result is { IsSuccess: true, Data: not null } ? result.Data : new List<User>();
+    }
+
+    public async Task<bool> IsFollowingAsync(string userId)
+    {
+        if (CurrentUserId is not { } me || me == userId) return false;
+        var result = await userRepository.IsFollowing(me, userId);
+        return result is { IsSuccess: true, Data: true };
+    }
+
+    public async Task<IResponse> SetFollowAsync(User target, bool follow)
+    {
+        if (CurrentUserId is not { } me) return Response.Failure("Please sign in again.", null);
+        if (me == target.Id) return Response.Failure("You can't follow yourself.", null);
+
+        var result = await userRepository.SetFollow(me, target.Id, follow);
+        if (!result.IsSuccess)
+            return Response.Failure(follow ? "Could not follow. Please try again." : "Could not unfollow. Please try again.", result.Exception);
+
+        target.FollowersCount = Math.Max(0, target.FollowersCount + (follow ? 1 : -1));
+        FollowChanged?.Invoke(target.Id, follow);
+        return Response.Success();
+    }
+
+    public async Task<List<User>> GetFollowersAsync(string userId)
+    {
+        var result = await userRepository.GetFollowers(userId);
+        return result is { IsSuccess: true, Data: not null } ? result.Data : new List<User>();
+    }
+
+    public async Task<List<User>> GetFollowingAsync(string userId)
+    {
+        var result = await userRepository.GetFollowing(userId);
+        return result is { IsSuccess: true, Data: not null } ? result.Data : new List<User>();
+    }
 
     public async Task<User?> GetCurrentUserAsync()
     {

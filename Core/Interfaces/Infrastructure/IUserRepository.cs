@@ -13,6 +13,16 @@ public interface IUserRepository
 
     public Task<IResponse<bool>> IsUsernameTaken(string username);
 
+    public Task<IResponse<List<User>>> SearchUsers(string term, int maxResults);
+
+    public Task<IResponse<bool>> IsFollowing(string followerId, string followingId);
+
+    public Task<IResponse> SetFollow(string followerId, string followingId, bool follow);
+
+    public Task<IResponse<List<User>>> GetFollowers(string userId);
+
+    public Task<IResponse<List<User>>> GetFollowing(string userId);
+
     public Task<IResponse> UpdateProfile(User user);
 
     /// <summary>Lädt ein Profilbild in den Bucket "avatars" und gibt die öffentliche URL zurück.</summary>

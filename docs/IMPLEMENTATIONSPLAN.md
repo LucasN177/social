@@ -31,7 +31,8 @@ Offen:
    **Offline-Cache auf GitHub Pages defekt:** `service-worker.published.js` nutzt `base = "/"` statt `/social/`, und der Workflow ändert `index.html` (base href) erst nach dem Publish, sodass der Integritäts-Hash nicht mehr passt. Die App läuft trotzdem, nur ohne Offline-Cache. → in Phase 6 beheben (base href per MSBuild-Property `StaticWebAssetBasePath` bzw. vor dem Publish setzen).
 4. ~~`ISocialNetworkService` mit `int`-IDs~~ → entfernt; Posts/Kommentare nutzen `long`.
 5. ~~`User` und `UserDto` mappen beide die Tabelle `users`~~ → zusammengeführt.
-6. Der Feed zeigt bis Phase 3 **alle** Posts (noch kein Filter auf gefolgte Accounts).
+6. ~~Der Feed zeigt alle Posts~~ → Home hat jetzt „Following“ (View `home_feed`) und „Explore“.
+7. ~~`client.Rpc<List<User>>` ignoriert `[Column]`-Namen~~ → `User` hat zusätzlich `[JsonProperty]`; bei weiteren RPC-Modellen ebenso vorgehen.
 
 ## 2. Zielarchitektur
 
@@ -90,9 +91,13 @@ Supabase (Postgres + RLS, Auth, Storage, Realtime)
 - [ ] Infinite Scroll statt „Load more“
 
 ### Phase 3 – Social Graph & Suche
-- [ ] Folgen/Entfolgen (`follows`), Zähler per Trigger
-- [ ] Suche `/search`: User (Username/Name, `ilike` bzw. `pg_trgm`) und Hashtags
-- [ ] Vorschläge „Wem folgen?“ (RPC `suggested_users`)
+- [x] Folgen/Entfolgen (`FollowButton`, im Profil, in Vorschlägen, in Listen – bleibt überall synchron), Zähler per Trigger
+- [x] Follower-/Gefolgte-Listen im Profil (`FollowListDialog`, RPCs `list_followers` / `list_following`)
+- [x] Home: „Following“ (eigene + gefolgte Accounts, View `home_feed`) und „Explore“ (alle); leerer Zustand mit Verweis auf Explore/Suche
+- [x] Suche `/search`: Accounts (RPC `search_users`, Trigram) und Hashtags (RPC `search_hashtags`), Suchbegriff in der URL
+- [x] Hashtag-Seite `/tags/{tag}`; Hashtags in Posts und „Popular“ verlinkt
+- [x] Vorschläge „Wem folgen?“ mit funktionierendem Follow-Button
+- [x] Alle SQL-Skripte zusätzlich als `supabase/setup.sql` (eine Transaktion, erzeugt per `supabase/build-setup.ps1`, getestet: zweimal hintereinander ausführbar)
 
 ### Phase 4 – Stories & Reels
 - [ ] Stories (24h gültig, `expires_at`), Story-Viewer mit Fortschrittsbalken, `story_views`
@@ -113,7 +118,7 @@ Supabase (Postgres + RLS, Auth, Storage, Realtime)
 
 ## 4. Datenbank
 
-Alle Skripte liegen in [`supabase/sql`](../supabase/sql) und werden **in Nummernreihenfolge** im Supabase SQL-Editor ausgeführt (Details: [`supabase/sql/README.md`](../supabase/sql/README.md)).
+Zum Einrichten genügt [`supabase/setup.sql`](../supabase/setup.sql) im Supabase SQL-Editor. Es wird aus den nummerierten Skripten in [`supabase/sql`](../supabase/sql) erzeugt (Details: [`supabase/sql/README.md`](../supabase/sql/README.md)).
 
 | Skript | Inhalt |
 |---|---|
@@ -131,6 +136,7 @@ Alle Skripte liegen in [`supabase/sql`](../supabase/sql) und werden **in Nummern
 | `011_realtime.sql` | Realtime-Publication für `notifications` |
 | `012_users_profile_rules.sql` | Spaltenrechte auf `users`, Format-Checks für Username/Bio |
 | `013_posts_api.sql` | RPC `create_post`, View `comment_details`, Feed um Vor-/Nachname erweitert |
+| `014_social_graph.sql` | View `home_feed`, RPCs `search_hashtags`, `list_followers`, `list_following` |
 
 Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als neues Skript mit der nächsten Nummer angelegt.
 

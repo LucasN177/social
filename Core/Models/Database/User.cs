@@ -1,4 +1,5 @@
 using Supabase.Postgrest.Attributes;
+using Newtonsoft.Json;
 using Supabase.Postgrest.Models;
 
 namespace Social.Core.Models.Database;
@@ -6,43 +7,44 @@ namespace Social.Core.Models.Database;
 [Table("users")]
 public class User : BaseModel
 {
-    [PrimaryKey("id")]
+    [PrimaryKey("id"), JsonProperty("id")]
     public string Id { get; set; } = string.Empty;
 
     // null, solange der User noch keinen Username gewählt hat (z. B. Accounts von vor der Registrierungsseite)
-    [Column("username")]
+    [Column("username"), JsonProperty("username")]
     public string? Username { get; set; }
 
-    [Column("display_name")]
+    [Column("display_name"), JsonProperty("display_name")]
     public string DisplayName { get; set; } = string.Empty;
 
-    [Column("vorname")]
+    [Column("vorname"), JsonProperty("vorname")]
     public string Vorname { get; set; } = string.Empty;
 
-    [Column("nachname")]
+    [Column("nachname"), JsonProperty("nachname")]
     public string Nachname { get; set; } = string.Empty;
 
-    [Column("bio")]
+    [Column("bio"), JsonProperty("bio")]
     public string Bio { get; set; } = string.Empty;
 
-    [Column("profile_image_url")]
+    [Column("profile_image_url"), JsonProperty("profile_image_url")]
     public string ProfileImageUrl { get; set; } = string.Empty;
 
-    [Column("followers_count")]
+    [Column("followers_count"), JsonProperty("followers_count")]
     public int FollowersCount { get; set; }
 
-    [Column("following_count")]
+    [Column("following_count"), JsonProperty("following_count")]
     public int FollowingCount { get; set; }
 
-    [Column("posts_count")]
+    [Column("posts_count"), JsonProperty("posts_count")]
     public int PostsCount { get; set; }
 
-    [Column("is_verified")]
+    [Column("is_verified"), JsonProperty("is_verified")]
     public bool IsVerified { get; set; }
 
-    [Column("created_at")]
+    [Column("created_at"), JsonProperty("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 
+    [JsonIgnore]
     public string Initials =>
         string.Concat(new[] { Vorname, Nachname }.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => char.ToUpperInvariant(s[0])))
             is { Length: > 0 } initials ? initials : string.IsNullOrEmpty(Username) ? "?" : Username[..1].ToUpperInvariant();

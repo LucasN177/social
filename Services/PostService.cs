@@ -23,6 +23,29 @@ public class PostService(IPostRepository postRepository, IAuthService authServic
         return ToPosts(result);
     }
 
+    public async Task<List<Post>> GetHomeFeedAsync(int page)
+    {
+        var result = await postRepository.GetHomeFeed(page * IPostService.PageSize, IPostService.PageSize);
+        return ToPosts(result);
+    }
+
+    public async Task<List<Post>> GetPostsByTagAsync(string tag, int page)
+    {
+        var result = await postRepository.GetPostsByTag(NormalizeTag(tag), page * IPostService.PageSize, IPostService.PageSize);
+        return ToPosts(result);
+    }
+
+    public async Task<List<HashtagResult>> SearchHashtagsAsync(string term)
+    {
+        term = NormalizeTag(term);
+        if (term.Length == 0) return new List<HashtagResult>();
+        var result = await postRepository.SearchHashtags(term, 20);
+        return result is { IsSuccess: true, Data: not null } ? result.Data : new List<HashtagResult>();
+    }
+
+    /// <summary>Tags werden beim Erstellen kleingeschrieben und ohne "#" gespeichert.</summary>
+    public static string NormalizeTag(string tag) => tag.Trim().TrimStart('#').ToLowerInvariant();
+
     public async Task<List<Post>> GetUserPostsAsync(string userId, int page)
     {
         var result = await postRepository.GetUserPosts(userId, page * IPostService.PageSize, IPostService.PageSize);

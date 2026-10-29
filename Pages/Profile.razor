@@ -66,8 +66,8 @@ else
 
                 <div class="profile-stats">
                     <div><b>@_profile.PostsCount.ToString("N0")</b> <span>posts</span></div>
-                    <div><b>@_profile.FollowersCount.ToString("N0")</b> <span>followers</span></div>
-                    <div><b>@_profile.FollowingCount.ToString("N0")</b> <span>following</span></div>
+                    <button type="button" class="profile-stat-button" @onclick="() => OpenFollowList(true)"><b>@_profile.FollowersCount.ToString("N0")</b> <span>followers</span></button>
+                    <button type="button" class="profile-stat-button" @onclick="() => OpenFollowList(false)"><b>@_profile.FollowingCount.ToString("N0")</b> <span>following</span></button>
                 </div>
             </div>
         </div>
@@ -87,9 +87,9 @@ else
             }
             else
             {
-                <MudTooltip Text="Following comes soon" RootClass="flex-grow-1">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="true">Follow</MudButton>
-                </MudTooltip>
+                <div class="flex-grow-1">
+                    <FollowButton @key="_profile.Id" Target="_profile" FullWidth="true" OnChanged="@(_ => StateHasChanged())" />
+                </div>
             }
         </div>
     </MudPaper>
@@ -166,6 +166,18 @@ else
             if (Username is not null && updated.Username != Username)
                 Navigation.NavigateTo($"u/{updated.Username}", replace: true);
         }
+    }
+
+    private async Task OpenFollowList(bool followers)
+    {
+        if (_profile is null) return;
+        var parameters = new DialogParameters<FollowListDialog>
+        {
+            { x => x.UserId, _profile.Id },
+            { x => x.ShowFollowers, followers }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+        await DialogService.ShowAsync<FollowListDialog>(followers ? "Followers" : "Following", parameters, options);
     }
 
     private void OnProfileChanged(User updated)
