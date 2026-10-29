@@ -21,11 +21,12 @@
 | Vorschläge „Suggestions for you“ (RPC `suggested_users`) | ✅ |
 | Beiträge mit bis zu 10 Fotos, Hashtags, Ort erstellen und löschen | ✅ |
 | Feed, Likes, Lesezeichen, Kommentare | ✅ |
-| Stories | 🚧 |
+| Stories (24 h) mit Viewer, Gesehen-Status und Aufrufen | ✅ |
+| Reels: Videos hochladen, Snap-Scroll mit Autoplay | ✅ |
 | Profil ansehen & bearbeiten, Profilbild hochladen | ✅ |
 | Folgen / Entfolgen, Follower-Listen, Feed „Following“ / „Explore“ | ✅ |
 | Suche nach Accounts und Hashtags, Hashtag-Seiten | ✅ |
-| Benachrichtigungen (Realtime), Nachrichten, Reels | 📋 geplant |
+| Benachrichtigungen (Realtime), Nachrichten | 📋 geplant |
 
 Der vollständige Fahrplan steht im [Implementationsplan](docs/IMPLEMENTATIONSPLAN.md).
 

@@ -52,6 +52,20 @@
         height: auto !important;
     }
 
+.post-media--video {
+    display: flex;
+    justify-content: center;
+    background: #000;
+}
+
+    .post-media--video video {
+        display: block;
+        max-width: 100%;
+        max-height: 640px;
+        aspect-ratio: 9 / 16;
+        object-fit: contain;
+    }
+
 .post-body {
     padding: 4px 16px 16px;
 }

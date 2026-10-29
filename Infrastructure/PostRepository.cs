@@ -10,6 +10,7 @@ namespace Social.Infrastructure;
 public class PostRepository(Supabase.Client client) : IPostRepository
 {
     private const string ImageBucket = "post-images";
+    private const string ReelBucket = "reels";
 
     public async Task<IResponse<List<FeedPostRecord>>> GetFeed(int offset, int limit)
     {
@@ -177,20 +178,74 @@ public class PostRepository(Supabase.Client client) : IPostRepository
 
     public async Task<IResponse> DeletePostImages(IEnumerable<string> publicUrls)
     {
-        var paths = publicUrls
-            .Select(url => StorageUrl.TryGetPath(url, ImageBucket, out var path) ? path : null)
-            .OfType<string>()
-            .ToList();
-        if (paths.Count == 0) return Response.Success();
-
+        var urls = publicUrls.ToList();
         try
         {
-            await client.Storage.From(ImageBucket).Remove(paths);
+            foreach (var bucket in new[] { ImageBucket, ReelBucket })
+            {
+                var paths = urls
+                    .Select(url => StorageUrl.TryGetPath(url, bucket, out var path) ? path : null)
+                    .OfType<string>()
+                    .ToList();
+                if (paths.Count > 0)
+                    await client.Storage.From(bucket).Remove(paths);
+            }
             return Response.Success();
         }
         catch (Exception ex)
         {
             return Response.Failure(ex.Message, ex);
+        }
+    }
+
+    public async Task<IResponse<List<FeedPostRecord>>> GetVideoPosts(int offset, int limit)
+    {
+        try
+        {
+            var result = await client.From<FeedPostRecord>()
+                .Filter("media_type", Operator.Equals, "video")
+                .Order(x => x.CreatedAt, Ordering.Descending)
+                .Range(offset, offset + limit - 1)
+                .Get();
+            return Response<List<FeedPostRecord>>.Success(result.Models);
+        }
+        catch (Exception ex)
+        {
+            return Response<List<FeedPostRecord>>.Failure(ex);
+        }
+    }
+
+    public async Task<IResponse<string>> UploadReelVideo(string userId, byte[] data, string contentType)
+    {
+        try
+        {
+            var extension = contentType switch { "video/webm" => "webm", "video/quicktime" => "mov", _ => "mp4" };
+            var path = $"{userId}/{Guid.NewGuid():N}.{extension}";
+            var bucket = client.Storage.From(ReelBucket);
+            await bucket.Upload(data, path, new FileOptions { ContentType = contentType });
+            return Response<string>.Success(bucket.GetPublicUrl(path));
+        }
+        catch (Exception ex)
+        {
+            return Response<string>.Failure(ex);
+        }
+    }
+
+    public async Task<IResponse<long>> CreateReel(string content, List<string> tags, string videoUrl)
+    {
+        try
+        {
+            var id = await client.Rpc<long>("create_reel", new Dictionary<string, object>
+            {
+                ["p_content"] = content,
+                ["p_tags"] = tags,
+                ["p_video_url"] = videoUrl
+            });
+            return Response<long>.Success(id);
+        }
+        catch (Exception ex)
+        {
+            return Response<long>.Failure(ex);
         }
     }
 

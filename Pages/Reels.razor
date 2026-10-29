@@ -1,0 +1,160 @@
+@page "/reels"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@implements IAsyncDisposable
+@inject IPostService PostService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Reels - Social</PageTitle>
+
+@if (_reels is null)
+{
+    <div class="reels-feed reels-feed--center">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    </div>
+}
+else if (_reels.Count == 0)
+{
+    <div class="reels-feed reels-feed--center">
+        <div class="text-center">
+            <MudIcon Icon="@Icons.Material.Outlined.VideoLibrary" Size="Size.Large" Class="mud-text-secondary" />
+            <MudText Typo="Typo.h6" Class="mt-2">No reels yet</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Share a short video to get things started.</MudText>
+            <MudButton Href="create?type=reel" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
+                       StartIcon="@Icons.Material.Outlined.VideoCall">Create reel</MudButton>
+        </div>
+    </div>
+}
+else
+{
+    <div class="reels-feed" @ref="_container">
+        @foreach (var reel in _reels)
+        {
+            <section class="reel" @key="reel.Id">
+                <video src="@reel.ImageUrls.FirstOrDefault()" class="reel-video" loop playsinline muted="@_muted"
+                       preload="metadata" @ondblclick="() => LikeOnce(reel)"></video>
+                @* Antippen pausiert/spielt – erledigt socialMedia.observeReels (js/media.js) *@
+
+                <div class="reel-actions">
+                    <button type="button" class="reel-action" @onclick="() => ToggleLike(reel)" aria-label="@(reel.IsLiked ? "Unlike" : "Like")">
+                        <MudIcon Icon="@(reel.IsLiked ? Icons.Material.Filled.Favorite : Icons.Material.Outlined.FavoriteBorder)"
+                                 Style="@(reel.IsLiked ? "color: #ff4d6d" : null)" />
+                        <span>@reel.LikesCount.ToString("N0")</span>
+                    </button>
+                    <a class="reel-action" href="@($"p/{reel.Id}")" aria-label="Comments">
+                        <MudIcon Icon="@Icons.Material.Outlined.ChatBubbleOutline" />
+                        <span>@reel.CommentsCount.ToString("N0")</span>
+                    </a>
+                    <button type="button" class="reel-action" @onclick="() => CopyLink(reel)" aria-label="Copy link">
+                        <MudIcon Icon="@Icons.Material.Outlined.Share" />
+                    </button>
+                    <button type="button" class="reel-action" @onclick="ToggleMute" aria-label="@(_muted ? "Unmute" : "Mute")">
+                        <MudIcon Icon="@(_muted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)" />
+                    </button>
+                </div>
+
+                <div class="reel-info">
+                    <div class="d-flex align-center gap-2">
+                        <a href="@($"u/{reel.User.Username}")" class="reel-author">
+                            <UserAvatar User="reel.User" Size="32" />
+                            <span>@(reel.User.Username ?? reel.User.DisplayName)</span>
+                        </a>
+                        <FollowButton Target="reel.User" Size="Size.Small" />
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(reel.Content))
+                    {
+                        <p class="reel-caption">@reel.Content</p>
+                    }
+                </div>
+            </section>
+        }
+
+        @if (_hasMore)
+        {
+            <section class="reel reel--more">
+                <MudButton Variant="Variant.Outlined" Style="color: #fff; border-color: #fff" OnClick="LoadMore" Disabled="_loadingMore">
+                    Load more reels
+                </MudButton>
+            </section>
+        }
+    </div>
+
+    <MudFab Href="create?type=reel" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Size="Size.Medium"
+            Style="position: fixed; right: 20px; bottom: 72px; z-index: 10" aria-label="Create reel" />
+}
+
+@code {
+    private List<Post>? _reels;
+    private ElementReference _container;
+    private bool _observing;
+    private bool _muted = true;
+    private int _page;
+    private bool _hasMore;
+    private bool _loadingMore;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var reels = await PostService.GetReelsAsync(0);
+        _hasMore = reels.Count == IPostService.PageSize;
+        _reels = reels;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Beobachter erst starten, wenn der Container gerendert ist
+        if (!_observing && _reels is { Count: > 0 })
+        {
+            _observing = true;
+            await JS.InvokeVoidAsync("socialMedia.observeReels", _container);
+        }
+    }
+
+    private async Task LoadMore()
+    {
+        _loadingMore = true;
+        var reels = await PostService.GetReelsAsync(_page + 1);
+        _page++;
+        _hasMore = reels.Count == IPostService.PageSize;
+        var known = _reels!.Select(r => r.Id).ToHashSet();
+        _reels!.AddRange(reels.Where(r => !known.Contains(r.Id)));
+        _loadingMore = false;
+    }
+
+    private async Task ToggleMute()
+    {
+        _muted = !_muted;
+        await JS.InvokeVoidAsync("socialMedia.setMuted", _container, _muted);
+    }
+
+    private async Task ToggleLike(Post reel)
+    {
+        var result = await PostService.ToggleLikeAsync(reel);
+        if (!result.IsSuccess) Snackbar.Add("That didn't work. Please try again.", Severity.Error);
+    }
+
+    private async Task LikeOnce(Post reel)
+    {
+        if (!reel.IsLiked) await ToggleLike(reel);
+    }
+
+    private async Task CopyLink(Post reel)
+    {
+        var url = Navigation.ToAbsoluteUri($"p/{reel.Id}").ToString();
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", url);
+        Snackbar.Add("Link copied", Severity.Normal);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (!_observing) return;
+        try
+        {
+            await JS.InvokeVoidAsync("socialMedia.disposeReels", _container);
+        }
+        catch (JSDisconnectedException)
+        {
+            // Seite wird geschlossen
+        }
+    }
+}

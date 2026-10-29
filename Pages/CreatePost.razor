@@ -1,16 +1,18 @@
 @page "/create"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@implements IAsyncDisposable
 @inject IPostService PostService
 @inject IUserService UserService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
-<PageTitle>New post - Social</PageTitle>
+<PageTitle>@(_isReel ? "New reel" : "New post") - Social</PageTitle>
 
 <div class="create-page">
     <div class="d-flex align-center mb-4">
         <MudIconButton Icon="@Icons.Material.Filled.Close" Href="" aria-label="Cancel" Disabled="_publishing" />
-        <MudText Typo="Typo.h6" Class="flex-grow-1 ml-2">New post</MudText>
+        <MudText Typo="Typo.h6" Class="flex-grow-1 ml-2">@(_isReel ? "New reel" : "New post")</MudText>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Publish" Disabled="@(!CanPublish)">
             @if (_publishing)
             {
@@ -24,8 +26,39 @@
         </MudButton>
     </div>
 
+    <MudToggleGroup T="bool" @bind-Value="_isReel" Color="Color.Primary" Size="Size.Small" CheckMark="false"
+                    SelectionMode="SelectionMode.SingleSelection" Class="mb-4" Disabled="_publishing">
+        <MudToggleItem Value="false" Text="Post" />
+        <MudToggleItem Value="true" Text="Reel" />
+    </MudToggleGroup>
+
     <MudPaper Elevation="0" Outlined="true" Class="pa-4" Style="border-radius: 16px">
-        @if (_images.Count == 0)
+        @if (_isReel)
+        {
+            @if (_videoPreviewUrl is null)
+            {
+                <MudFileUpload T="IBrowserFile" Accept="video/mp4, video/webm, video/quicktime" FilesChanged="OnVideoSelected"
+                               MaxFileSize="IPostService.MaxVideoBytes" Class="create-dropzone-host" Disabled="_publishing || _processing">
+                    <SelectedTemplate />
+                    <CustomContent>
+                        <div class="create-dropzone" @onclick="@context.OpenFilePickerAsync">
+                            <MudIcon Icon="@Icons.Material.Outlined.VideoCall" Size="Size.Large" Color="Color.Primary" />
+                            <MudText Typo="Typo.subtitle1" Class="mt-2">Add a video</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">MP4, WebM or MOV · up to 50 MB · vertical works best</MudText>
+                        </div>
+                    </CustomContent>
+                </MudFileUpload>
+            }
+            else
+            {
+                <div class="create-video">
+                    <video src="@_videoPreviewUrl" controls playsinline muted loop autoplay></video>
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="RemoveVideo"
+                                   Class="create-video-remove" aria-label="Remove video" Disabled="_publishing" />
+                </div>
+            }
+        }
+        else if (_images.Count == 0)
         {
             <MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept="image/png, image/jpeg, image/webp" FilesChanged="OnFilesSelected"
                            MaximumFileCount="IPostService.MaxImages" MaxFileSize="MaxUploadBytes" DragAndDrop="true"
@@ -92,9 +125,12 @@
                           Counter="IPostService.MaxContentLength" Class="flex-grow-1 mt-0" Disabled="_publishing" />
         </div>
 
-        <MudTextField T="string" @bind-Value="_location" Placeholder="Add location" Variant="Variant.Outlined" Margin="Margin.Dense"
-                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Place" MaxLength="100" Class="mt-4"
-                      Disabled="_publishing" />
+        @if (!_isReel)
+        {
+            <MudTextField T="string" @bind-Value="_location" Placeholder="Add location" Variant="Variant.Outlined" Margin="Margin.Dense"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Place" MaxLength="100" Class="mt-4"
+                          Disabled="_publishing" />
+        }
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
@@ -117,12 +153,77 @@
     private string _errorMessage = "";
     private User? _currentUser;
 
+    [SupplyParameterFromQuery(Name = "type")] public string? Type { get; set; }
+
+    private bool _isReel;
+    private byte[]? _video;
+    private string _videoContentType = "video/mp4";
+    private string? _videoPreviewUrl;
+
     private bool CanPublish =>
-        !_publishing && !_processing && (_images.Count > 0 || !string.IsNullOrWhiteSpace(_content));
+        !_publishing && !_processing &&
+        (_isReel ? _video is not null : _images.Count > 0 || !string.IsNullOrWhiteSpace(_content));
 
     protected override async Task OnInitializedAsync()
     {
+        _isReel = Type == "reel";
         _currentUser = await UserService.GetCurrentUserAsync();
+    }
+
+    private async Task OnVideoSelected(IBrowserFile? file)
+    {
+        if (file is null) return;
+        _errorMessage = "";
+
+        if (file.Size > IPostService.MaxVideoBytes)
+        {
+            _errorMessage = "Videos can be up to 50 MB.";
+            return;
+        }
+
+        _processing = true;
+        try
+        {
+            await using var stream = file.OpenReadStream(IPostService.MaxVideoBytes);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            _video = buffer.ToArray();
+            _videoContentType = string.IsNullOrEmpty(file.ContentType) ? "video/mp4" : file.ContentType;
+
+            // Vorschau als Blob-URL, per Stream an JS übergeben
+            using var previewStream = new MemoryStream(_video);
+            _videoPreviewUrl = await JS.InvokeAsync<string>("socialMedia.createObjectUrl",
+                new DotNetStreamReference(previewStream), _videoContentType);
+        }
+        catch (Exception)
+        {
+            _video = null;
+            _errorMessage = "This video could not be read. Please choose an MP4, WebM or MOV up to 50 MB.";
+        }
+        finally
+        {
+            _processing = false;
+        }
+    }
+
+    private async Task RemoveVideo()
+    {
+        await JS.InvokeVoidAsync("socialMedia.revokeObjectUrl", _videoPreviewUrl);
+        _videoPreviewUrl = null;
+        _video = null;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_videoPreviewUrl is null) return;
+        try
+        {
+            await JS.InvokeVoidAsync("socialMedia.revokeObjectUrl", _videoPreviewUrl);
+        }
+        catch (JSDisconnectedException)
+        {
+            // Seite wird geschlossen
+        }
     }
 
     private async Task OnFilesSelected(IReadOnlyList<IBrowserFile>? files)
@@ -178,12 +279,13 @@
         _publishing = true;
         _errorMessage = "";
 
-        var uploads = _images.Select(i => new PostImageUpload(i.Data, "image/jpeg")).ToList();
-        var result = await PostService.CreatePostAsync(_content, _location, uploads);
+        var result = _isReel
+            ? await PostService.CreateReelAsync(_content, _video!, _videoContentType)
+            : await PostService.CreatePostAsync(_content, _location, _images.Select(i => new PostImageUpload(i.Data, "image/jpeg")).ToList());
 
         if (result.IsSuccess)
         {
-            Snackbar.Add("Your post is live 🎉", Severity.Success);
+            Snackbar.Add(_isReel ? "Your reel is live 🎬" : "Your post is live 🎉", Severity.Success);
             Navigation.NavigateTo($"p/{result.Data}");
         }
         else

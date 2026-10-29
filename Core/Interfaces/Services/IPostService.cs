@@ -8,6 +8,8 @@ public interface IPostService
     const int PageSize = 10;
     const int MaxImages = 10;
     const int MaxContentLength = 2200;
+    /// <summary>Entspricht dem Limit des Buckets "reels" (015_stories_reels.sql).</summary>
+    const long MaxVideoBytes = 50 * 1024 * 1024;
 
     event Action<long>? PostCreated;
     event Action<long>? PostDeleted;
@@ -18,6 +20,10 @@ public interface IPostService
     Task<List<Post>> GetHomeFeedAsync(int page);
     Task<List<Post>> GetPostsByTagAsync(string tag, int page);
     Task<List<HashtagResult>> SearchHashtagsAsync(string term);
+    Task<List<Post>> GetReelsAsync(int page);
+
+    /// <summary>Lädt das Video hoch und legt den Reel an (max. MaxVideoBytes).</summary>
+    Task<IResponse<long>> CreateReelAsync(string content, byte[] video, string contentType);
     Task<List<Post>> GetUserPostsAsync(string userId, int page);
     Task<List<Post>> GetSavedPostsAsync(int page);
     Task<Post?> GetPostAsync(long id);

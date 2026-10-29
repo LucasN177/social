@@ -100,8 +100,15 @@ Supabase (Postgres + RLS, Auth, Storage, Realtime)
 - [x] Alle SQL-Skripte zusätzlich als `supabase/setup.sql` (eine Transaktion, erzeugt per `supabase/build-setup.ps1`, getestet: zweimal hintereinander ausführbar)
 
 ### Phase 4 – Stories & Reels
-- [ ] Stories (24h gültig, `expires_at`), Story-Viewer mit Fortschrittsbalken, `story_views`
-- [ ] Reels `/reels`: Video-Posts (`media_type = 'video'`), vertikaler Snap-Scroll
+- [x] Stories-Leiste: eigene Story hinzufügen (Bild, im Browser auf max. 1080 × 1920 verkleinert), Ringe für ungesehen/gesehen, Reihenfolge eigene → ungesehene → gesehene
+- [x] Story-Viewer: Vollbild, Fortschrittsbalken (5 s pro Story), Tippen links/rechts, Gedrückthalten/Leertaste = Pause, Pfeiltasten/Escape, Gesehen-Status (`mark_story_viewed`)
+- [x] Eigene Story: Aufrufzahl + Liste („Viewed by“, `story_viewers`), löschen inkl. Bild
+- [x] Story-Feed nur von mir + gefolgten Accounts, abgelaufene Stories ausgeblendet (View `story_feed`)
+- [x] Reels `/reels`: Video-Posts (`media_type = 'video'`), vertikaler Snap-Scroll, Autoplay des sichtbaren Videos (IntersectionObserver, `wwwroot/js/media.js`), Ton an/aus, Tippen = Pause, Like (auch Doppeltipp), Kommentare, Link kopieren, Folgen
+- [x] Reel erstellen über `/create` (Umschalter Post/Reel bzw. `create?type=reel`): MP4/WebM/MOV bis 50 MB, Vorschau, RPC `create_reel`, Bucket `reels` mit Größen-/Typ-Limit
+- [x] Videos auch im Feed (PostCard) und im Profil-Raster (Vorschaubild + Play-Symbol)
+- [ ] Abgelaufene Story-Bilder automatisch aus dem Storage löschen (z. B. Supabase Cron / Edge Function)
+- [ ] Mehrere Bilder/Videos pro Story, Story-Antworten
 
 ### Phase 5 – Benachrichtigungen & Nachrichten
 - [ ] Notifications per DB-Trigger (Like, Kommentar, Follow), Badge in AppBar
@@ -137,6 +144,7 @@ Zum Einrichten genügt [`supabase/setup.sql`](../supabase/setup.sql) im Supabase
 | `012_users_profile_rules.sql` | Spaltenrechte auf `users`, Format-Checks für Username/Bio |
 | `013_posts_api.sql` | RPC `create_post`, View `comment_details`, Feed um Vor-/Nachname erweitert |
 | `014_social_graph.sql` | View `home_feed`, RPCs `search_hashtags`, `list_followers`, `list_following` |
+| `015_stories_reels.sql` | View `story_feed`, RPCs `mark_story_viewed`, `story_viewers`, `create_reel`, Bucket `reels`, Upload-Limits |
 
 Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als neues Skript mit der nächsten Nummer angelegt.
 

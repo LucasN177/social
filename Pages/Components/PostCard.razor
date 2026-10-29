@@ -34,7 +34,13 @@
         </MudMenu>
     </div>
 
-    @if (Post.ImageUrls.Count == 1)
+    @if (Post.IsVideo && Post.ImageUrls.Count > 0)
+    {
+        <div class="post-media post-media--video">
+            <video src="@Post.ImageUrls[0]" controls playsinline loop muted preload="metadata"></video>
+        </div>
+    }
+    else if (Post.ImageUrls.Count == 1)
     {
         <div class="post-media" @ondblclick="LikeFromDoubleClick">
             <img src="@Post.ImageUrls[0]" alt="Photo by @AuthorName(Post.User)" loading="lazy" />

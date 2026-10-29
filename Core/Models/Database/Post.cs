@@ -16,4 +16,7 @@ public class Post
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public string Location { get; set; } = string.Empty;
     public List<string> Tags { get; set; } = new();
+    /// <summary>"image", "text" oder "video" (Reel; die Video-URL steht dann in ImageUrls[0]).</summary>
+    public string MediaType { get; set; } = "image";
+    public bool IsVideo => MediaType == "video";
 }

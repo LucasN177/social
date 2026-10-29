@@ -15,6 +15,14 @@ public interface IPostRepository
 
     public Task<IResponse<List<HashtagResult>>> SearchHashtags(string term, int maxResults);
 
+    /// <summary>Reels = Posts mit media_type "video".</summary>
+    public Task<IResponse<List<FeedPostRecord>>> GetVideoPosts(int offset, int limit);
+
+    public Task<IResponse<string>> UploadReelVideo(string userId, byte[] data, string contentType);
+
+    /// <summary>Legt einen Reel über die RPC create_reel (015_stories_reels.sql) an.</summary>
+    public Task<IResponse<long>> CreateReel(string content, List<string> tags, string videoUrl);
+
     public Task<IResponse<List<FeedPostRecord>>> GetUserPosts(string userId, int offset, int limit);
 
     /// <summary>Vom eingeloggten User gespeicherte Posts (is_bookmarked bezieht sich auf auth.uid()).</summary>
@@ -29,7 +37,7 @@ public interface IPostRepository
 
     public Task<IResponse<string>> UploadPostImage(string userId, byte[] data, string contentType);
 
-    /// <summary>Löscht Bilder aus dem Bucket "post-images"; fremde URLs werden ignoriert.</summary>
+    /// <summary>Löscht Dateien aus den Buckets "post-images" und "reels"; fremde URLs werden ignoriert.</summary>
     public Task<IResponse> DeletePostImages(IEnumerable<string> publicUrls);
 
     public Task<IResponse> SetLike(long postId, string userId, bool liked);

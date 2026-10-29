@@ -1,0 +1,229 @@
+@implements IAsyncDisposable
+@inject IStoryService StoryService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<div class="story-viewer" tabindex="0" @ref="_root" @onkeydown="OnKeyDown" role="dialog" aria-modal="true"
+     aria-label="@($"Story by {Group.User.Username}")">
+    <div class="story-frame">
+        <div class="story-progress">
+            @for (var i = 0; i < Group.Stories.Count; i++)
+            {
+                <div class="story-progress-track">
+                    <div class="story-progress-bar" style="width: @(BarWidth(i))%"></div>
+                </div>
+            }
+        </div>
+
+        <div class="story-header">
+            <a href="@($"u/{Group.User.Username}")" class="story-author" @onclick="Close">
+                <UserAvatar User="Group.User" Size="32" />
+                <span class="story-author-name">@(Group.User.Username ?? Group.User.DisplayName)</span>
+                <span class="story-time">@PostCard.TimeAgo(Current.CreatedAt)</span>
+            </a>
+            <div class="d-flex align-center">
+                @if (StoryService.IsOwn(Current))
+                {
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Style="color: #fff" OnClick="DeleteCurrent" aria-label="Delete story" />
+                }
+                <MudIconButton Icon="@(_paused ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause)" Size="Size.Small" Style="color: #fff"
+                               OnClick="TogglePause" aria-label="@(_paused ? "Play" : "Pause")" />
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" Style="color: #fff" OnClick="Close" aria-label="Close" />
+            </div>
+        </div>
+
+        <img src="@Current.ImageUrl" alt="Story" class="story-image" @key="Current.Id" draggable="false" />
+
+        @* Tippen links = zurück, rechts = weiter; gedrückt halten = Pause *@
+        <div class="story-tap story-tap--prev" @onclick="() => Tap(Previous)" @onpointerdown="HoldStart" @onpointerup="HoldEnd" @onpointerleave="HoldEnd"></div>
+        <div class="story-tap story-tap--next" @onclick="() => Tap(Next)" @onpointerdown="HoldStart" @onpointerup="HoldEnd" @onpointerleave="HoldEnd"></div>
+
+        @if (StoryService.IsOwn(Current))
+        {
+            <button type="button" class="story-views" @onclick="ToggleViewers">
+                <MudIcon Icon="@Icons.Material.Outlined.Visibility" Style="font-size: 18px" />
+                @Current.ViewCount @(Current.ViewCount == 1 ? "view" : "views")
+            </button>
+
+            @if (_viewers is not null)
+            {
+                <div class="story-viewers">
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <b>Viewed by</b>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="ToggleViewers" aria-label="Close viewers" />
+                    </div>
+                    @if (_viewers.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">No views yet.</MudText>
+                    }
+                    @foreach (var viewer in _viewers)
+                    {
+                        <UserListItem @key="viewer.Id" User="viewer" ShowFollowButton="false" OnNavigate="Close" />
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<StoryGroup> Groups { get; set; } = null!;
+    [Parameter, EditorRequired] public StoryGroup StartGroup { get; set; } = null!;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private const int DurationMs = 5000;
+    private const int TickMs = 50;
+
+    private ElementReference _root;
+    private int _groupIndex;
+    private int _storyIndex;
+    private int _elapsedMs;
+    private bool _paused;
+    private bool _holding;
+    private List<User>? _viewers;
+    private readonly CancellationTokenSource _cts = new();
+
+    private StoryGroup Group => Groups[_groupIndex];
+    private Story Current => Group.Stories[_storyIndex];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _groupIndex = Math.Max(0, Groups.IndexOf(StartGroup));
+        // In einer Gruppe bei der ersten ungesehenen Story starten
+        _storyIndex = Math.Max(0, Group.Stories.FindIndex(s => !s.IsViewed));
+        await StoryService.MarkViewedAsync(Current);
+        _ = RunTimerAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await _root.FocusAsync();
+    }
+
+    private async Task RunTimerAsync()
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(TickMs));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_cts.Token))
+            {
+                if (_paused || _holding || _viewers is not null) continue;
+                _elapsedMs += TickMs;
+                if (_elapsedMs >= DurationMs)
+                    await InvokeAsync(Next);
+                else
+                    await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Viewer geschlossen
+        }
+    }
+
+    private double BarWidth(int index) =>
+        index < _storyIndex ? 100 : index > _storyIndex ? 0 : Math.Min(100, _elapsedMs * 100.0 / DurationMs);
+
+    private async Task Next()
+    {
+        if (_storyIndex < Group.Stories.Count - 1)
+            _storyIndex++;
+        else if (_groupIndex < Groups.Count - 1)
+            (_groupIndex, _storyIndex) = (_groupIndex + 1, 0);
+        else
+        {
+            await Close();
+            return;
+        }
+        await ShowCurrent();
+    }
+
+    private async Task Previous()
+    {
+        if (_storyIndex > 0)
+            _storyIndex--;
+        else if (_groupIndex > 0)
+            (_groupIndex, _storyIndex) = (_groupIndex - 1, Groups[_groupIndex - 1].Stories.Count - 1);
+        await ShowCurrent();
+    }
+
+    private async Task ShowCurrent()
+    {
+        _elapsedMs = 0;
+        _viewers = null;
+        StateHasChanged();
+        await StoryService.MarkViewedAsync(Current);
+    }
+
+    private void TogglePause() => _paused = !_paused;
+
+    private DateTime _holdStartedAt;
+
+    private void HoldStart()
+    {
+        _holding = true;
+        _holdStartedAt = DateTime.UtcNow;
+    }
+
+    private void HoldEnd() => _holding = false;
+
+    // Nach längerem Gedrückthalten (Pause) nicht zusätzlich blättern
+    private async Task Tap(Func<Task> action)
+    {
+        if (DateTime.UtcNow - _holdStartedAt < TimeSpan.FromMilliseconds(300))
+            await action();
+    }
+
+    private async Task ToggleViewers()
+    {
+        _viewers = _viewers is null ? await StoryService.GetViewersAsync(Current) : null;
+    }
+
+    private async Task DeleteCurrent()
+    {
+        _paused = true;
+        var confirmed = await DialogService.ShowMessageBoxAsync("Delete story?", "It will be removed for everyone.",
+            yesText: "Delete", cancelText: "Cancel");
+        if (confirmed != true)
+        {
+            _paused = false;
+            return;
+        }
+
+        var result = await StoryService.DeleteStoryAsync(Current);
+        if (result.IsSuccess)
+        {
+            Snackbar.Add("Story deleted", Severity.Normal);
+            await Close();
+        }
+        else
+        {
+            Snackbar.Add(result.ErrorMessage ?? "The story could not be deleted.", Severity.Error);
+            _paused = false;
+        }
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "Escape": await Close(); break;
+            case "ArrowRight": await Next(); break;
+            case "ArrowLeft": await Previous(); break;
+            case " ": TogglePause(); break;
+        }
+    }
+
+    private async Task Close()
+    {
+        _cts.Cancel();
+        await OnClose.InvokeAsync();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _cts.Cancel();
+        _cts.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}

@@ -1,102 +1,171 @@
-@using MudBlazor
-@using Social.Core.Models.Database
+@implements IDisposable
+@inject IStoryService StoryService
 @inject IUserService UserService
+@inject ISnackbar Snackbar
 
-<MudCard Elevation="1" Class="mb-4" Style="border-radius: 12px;">
-    <MudCardContent Class="py-3">
-        <div class="d-flex align-center overflow-x-auto" style="gap: 16px;">
-            <!-- Add Story Button -->
-            <div class="d-flex flex-column align-center" style="min-width: 80px;">
-                <div class="position-relative">
-                    <MudAvatar Size="Size.Large" Style="width: 60px; height: 60px; border: 2px solid #e0e0e0;">
-                        <MudImage Src="https://via.placeholder.com/60x60" Alt="Your Story" />
-                    </MudAvatar>
-                    <MudFab Color="Color.Primary" 
-                           Size="Size.Small" 
-                           StartIcon="@Icons.Material.Filled.Add" 
-                           Style="position: absolute; bottom: -4px; right: -4px; width: 24px; height: 24px; min-height: 24px;" />
-                </div>
-                <MudText Typo="Typo.caption" Class="mt-1 text-center">Your Story</MudText>
-            </div>
-
-            <!-- Stories -->
-            @if (Stories == null)
-            {
-                <div class="d-flex" style="gap: 16px;">
-                    @for (int i = 0; i < 5; i++)
-                    {
-                        <div class="d-flex flex-column align-center" style="min-width: 80px;">
-                            <MudSkeleton SkeletonType="SkeletonType.Circle" Width="60px" Height="60px" />
-                            <MudSkeleton SkeletonType="SkeletonType.Text" Width="60px" Height="12px" Class="mt-1" />
-                        </div>
-                    }
-                </div>
-            }
-            else
-            {
-                @foreach (var story in Stories)
-                {
-                    <div class="d-flex flex-column align-center" style="min-width: 80px; cursor: pointer;" @onclick="() => OpenStory(story)">
-                        <MudAvatar Size="Size.Large" 
-                                   Style="@GetStoryAvatarStyle(story)" 
-                                   Class="story-avatar">
-                            <MudImage Src="@story.User.ProfileImageUrl" Alt="@story.User.DisplayName" />
-                        </MudAvatar>
-                        <MudText Typo="Typo.caption" Class="mt-1 text-center">@story.User.DisplayName</MudText>
+<MudPaper Elevation="0" Outlined="true" Class="mb-4 py-3" Style="border-radius: 16px">
+    <div class="stories-strip">
+        @* Eigene Story: ansehen (falls vorhanden) oder hinzufügen *@
+        <div class="story-item">
+            <MudFileUpload T="IBrowserFile" Accept="image/png, image/jpeg, image/webp" FilesChanged="AddStory"
+                           MaxFileSize="MaxUploadBytes" Disabled="_uploading">
+                <SelectedTemplate />
+                <CustomContent>
+                    <div class="story-own">
+                        <button type="button" class="@RingClass(_ownGroup)" disabled="@_uploading"
+                                @onclick="() => OnOwnStoryClick(context)"
+                                aria-label="@(_ownGroup is null ? "Add to your story" : "View your story")">
+                            <UserAvatar User="_currentUser" Size="56" />
+                        </button>
+                        <button type="button" class="story-add" @onclick="@context.OpenFilePickerAsync" disabled="@_uploading" aria-label="Add to your story">
+                            @if (_uploading)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Style="width: 14px; height: 14px; color: #fff" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Add" Style="font-size: 16px" />
+                            }
+                        </button>
                     </div>
-                }
-            }
+                </CustomContent>
+            </MudFileUpload>
+            <span class="story-name">Your story</span>
         </div>
-    </MudCardContent>
-</MudCard>
 
-<style>
-    .story-avatar {
-        width: 60px !important;
-        height: 60px !important;
-        border: 3px solid;
-        transition: transform 0.2s ease;
-    }
+        @if (_groups is null)
+        {
+            @for (var i = 0; i < 4; i++)
+            {
+                <div class="story-item">
+                    <MudSkeleton SkeletonType="SkeletonType.Circle" Width="68px" Height="68px" />
+                    <MudSkeleton Width="56px" />
+                </div>
+            }
+        }
+        else
+        {
+            @foreach (var group in _groups.Where(g => g != _ownGroup))
+            {
+                <div class="story-item" @key="group.User.Id">
+                    <button type="button" class="@RingClass(group)" @onclick="() => Open(group)" aria-label="@($"View story of {group.User.Username}")">
+                        <UserAvatar User="group.User" Size="56" />
+                    </button>
+                    <span class="story-name">@(group.User.Username ?? group.User.DisplayName)</span>
+                </div>
+            }
+        }
+    </div>
+</MudPaper>
 
-    .story-avatar:hover {
-        transform: scale(1.05);
-    }
-
-    .overflow-x-auto {
-        overflow-x: auto;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-
-    .overflow-x-auto::-webkit-scrollbar {
-        display: none;
-    }
-</style>
+@if (_viewerStart is not null && _groups is not null)
+{
+    <StoryViewer Groups="_groups" StartGroup="_viewerStart" OnClose="CloseViewer" />
+}
 
 @code {
-    private List<Story>? Stories;
+    private const long MaxUploadBytes = 20 * 1024 * 1024;
+
+    private List<StoryGroup>? _groups;
+    private StoryGroup? _ownGroup;
+    private StoryGroup? _viewerStart;
+    private User? _currentUser;
+    private bool _uploading;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadStories();
+        StoryService.StoriesChanged += OnStoriesChanged;
+        UserService.FollowChanged += OnFollowChanged;
+        UserService.ProfileChanged += OnProfileChanged;
+
+        var userTask = UserService.GetCurrentUserAsync();
+        await Task.WhenAll(LoadStories(), userTask);
+        _currentUser = userTask.Result;
     }
 
     private async Task LoadStories()
     {
-        Stories = await UserService.GetStoriesAsync();
-        StateHasChanged();
+        _groups = await StoryService.GetStoryGroupsAsync();
+        _ownGroup = _groups.FirstOrDefault(g => g.Stories.Any(StoryService.IsOwn));
     }
 
-    private string GetStoryAvatarStyle(Story story)
+    private static string RingClass(StoryGroup? group) => group switch
     {
-        var borderColor = story.IsViewed ? "#e0e0e0" : "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)";
-        return $"border-color: {borderColor}; width: 60px; height: 60px;";
+        null => "story-ring story-ring--none",
+        { AllViewed: true } => "story-ring story-ring--seen",
+        _ => "story-ring"
+    };
+
+    private void Open(StoryGroup group) => _viewerStart = group;
+
+    // Ohne eigene Story öffnet der Klick direkt die Dateiauswahl
+    private async Task OnOwnStoryClick(MudFileUpload<IBrowserFile> upload)
+    {
+        if (_ownGroup is null)
+            await upload.OpenFilePickerAsync();
+        else
+            Open(_ownGroup);
     }
 
-    private void OpenStory(Story story)
+    private async Task CloseViewer()
     {
-        // TODO: Implement story viewer
-        story.IsViewed = true;
+        _viewerStart = null;
+        // Gesehen-Status und Reihenfolge aktualisieren
+        if (_groups is not null)
+        {
+            _groups = _groups.OrderByDescending(g => g == _ownGroup).ThenBy(g => g.AllViewed).ToList();
+        }
+        await Task.CompletedTask;
+    }
+
+    private async Task AddStory(IBrowserFile? file)
+    {
+        if (file is null) return;
+        _uploading = true;
         StateHasChanged();
+
+        try
+        {
+            // Hochformat, max. 1080 × 1920 – im Browser verkleinert
+            var resized = await file.RequestImageFileAsync("image/jpeg", 1080, 1920);
+            await using var stream = resized.OpenReadStream(MaxUploadBytes);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+
+            var result = await StoryService.AddStoryAsync(buffer.ToArray());
+            if (result.IsSuccess)
+                Snackbar.Add("Added to your story", Severity.Success);
+            else
+                Snackbar.Add(result.ErrorMessage ?? "Your story could not be published.", Severity.Error);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("This image could not be read. Please choose a JPG, PNG or WebP.", Severity.Error);
+        }
+        finally
+        {
+            _uploading = false;
+        }
+    }
+
+    private void OnStoriesChanged() => InvokeAsync(async () =>
+    {
+        await LoadStories();
+        StateHasChanged();
+    });
+
+    private void OnFollowChanged(string _, bool __) => OnStoriesChanged();
+
+    private void OnProfileChanged(User user) => InvokeAsync(() =>
+    {
+        _currentUser = user;
+        StateHasChanged();
+    });
+
+    public void Dispose()
+    {
+        StoryService.StoriesChanged -= OnStoriesChanged;
+        UserService.FollowChanged -= OnFollowChanged;
+        UserService.ProfileChanged -= OnProfileChanged;
     }
 }

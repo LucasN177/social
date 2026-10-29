@@ -14,6 +14,7 @@ public class FeedPostRecord : BaseModel
     [Column("content")] public string Content { get; set; } = string.Empty;
     [Column("location")] public string Location { get; set; } = string.Empty;
     [Column("tags")] public List<string> Tags { get; set; } = new();
+    [Column("media_type")] public string MediaType { get; set; } = "image";
     [Column("likes_count")] public int LikesCount { get; set; }
     [Column("comments_count")] public int CommentsCount { get; set; }
     [Column("shares_count")] public int SharesCount { get; set; }
@@ -24,6 +25,7 @@ public class FeedPostRecord : BaseModel
     [Column("nachname")] public string Nachname { get; set; } = string.Empty;
     [Column("profile_image_url")] public string ProfileImageUrl { get; set; } = string.Empty;
     [Column("is_verified")] public bool IsVerified { get; set; }
+    /// <summary>Bild-URLs bzw. bei Reels die Video-URL.</summary>
     [Column("image_urls")] public List<string> ImageUrls { get; set; } = new();
     [Column("is_liked")] public bool IsLiked { get; set; }
     [Column("is_bookmarked")] public bool IsBookmarked { get; set; }
@@ -82,6 +84,34 @@ public class CommentRecord : BaseModel
     [Column("user_id")] public string UserId { get; set; } = string.Empty;
     [Column("content")] public string Content { get; set; } = string.Empty;
     [Column("created_at", ignoreOnInsert: true, ignoreOnUpdate: true)] public DateTime CreatedAt { get; set; }
+}
+
+/// <summary>Zeile der View story_feed (015) – nur lesend.</summary>
+[Table("story_feed")]
+public class StoryFeedRecord : BaseModel
+{
+    [PrimaryKey("id")] public long Id { get; set; }
+    [Column("user_id")] public string UserId { get; set; } = string.Empty;
+    [Column("image_url")] public string ImageUrl { get; set; } = string.Empty;
+    [Column("created_at")] public DateTime CreatedAt { get; set; }
+    [Column("expires_at")] public DateTime ExpiresAt { get; set; }
+    [Column("username")] public string? Username { get; set; }
+    [Column("display_name")] public string DisplayName { get; set; } = string.Empty;
+    [Column("vorname")] public string Vorname { get; set; } = string.Empty;
+    [Column("nachname")] public string Nachname { get; set; } = string.Empty;
+    [Column("profile_image_url")] public string ProfileImageUrl { get; set; } = string.Empty;
+    [Column("is_verified")] public bool IsVerified { get; set; }
+    [Column("is_viewed")] public bool IsViewed { get; set; }
+    [Column("view_count")] public int ViewCount { get; set; }
+}
+
+/// <summary>Zeile der Tabelle stories – zum Anlegen und Löschen.</summary>
+[Table("stories")]
+public class StoryRecord : BaseModel
+{
+    [PrimaryKey("id", false)] public long Id { get; set; }
+    [Column("user_id")] public string UserId { get; set; } = string.Empty;
+    [Column("image_url")] public string ImageUrl { get; set; } = string.Empty;
 }
 
 [Table("likes")]

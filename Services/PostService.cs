@@ -43,6 +43,45 @@ public class PostService(IPostRepository postRepository, IAuthService authServic
         return result is { IsSuccess: true, Data: not null } ? result.Data : new List<HashtagResult>();
     }
 
+    public async Task<List<Post>> GetReelsAsync(int page)
+    {
+        var result = await postRepository.GetVideoPosts(page * IPostService.PageSize, IPostService.PageSize);
+        return ToPosts(result);
+    }
+
+    public async Task<IResponse<long>> CreateReelAsync(string content, byte[] video, string contentType)
+    {
+        if (CurrentUserId is not { } userId)
+            return Response<long>.Failure("Please sign in again.");
+
+        content = content.Trim();
+        if (content.Length > IPostService.MaxContentLength)
+            return Response<long>.Failure($"Your caption is too long (max. {IPostService.MaxContentLength} characters).");
+        if (video.Length == 0 || video.Length > IPostService.MaxVideoBytes)
+            return Response<long>.Failure("Videos can be up to 50 MB.");
+
+        var upload = await postRepository.UploadReelVideo(userId, video, contentType);
+        if (upload is not { IsSuccess: true, Data: not null })
+            return Response<long>.Failure("The video could not be uploaded. Please try again.");
+
+        var result = await postRepository.CreateReel(content, ExtractTags(content), upload.Data);
+        if (!result.IsSuccess)
+        {
+            await postRepository.DeletePostImages(new[] { upload.Data });
+            return Response<long>.Failure("Your reel could not be published. Please try again.");
+        }
+
+        PostCreated?.Invoke(result.Data);
+        return result;
+    }
+
+    private static List<string> ExtractTags(string content) =>
+        HashtagRegex.Matches(content)
+            .Select(m => m.Groups[1].Value.ToLowerInvariant())
+            .Distinct()
+            .Take(30)
+            .ToList();
+
     /// <summary>Tags werden beim Erstellen kleingeschrieben und ohne "#" gespeichert.</summary>
     public static string NormalizeTag(string tag) => tag.Trim().TrimStart('#').ToLowerInvariant();
 
@@ -90,13 +129,7 @@ public class PostService(IPostRepository postRepository, IAuthService authServic
             uploadedUrls.Add(upload.Data);
         }
 
-        var tags = HashtagRegex.Matches(content)
-            .Select(m => m.Groups[1].Value.ToLowerInvariant())
-            .Distinct()
-            .Take(30)
-            .ToList();
-
-        var result = await postRepository.CreatePost(content, location.Trim(), tags, uploadedUrls);
+        var result = await postRepository.CreatePost(content, location.Trim(), ExtractTags(content), uploadedUrls);
         if (!result.IsSuccess)
         {
             // Post wurde nicht angelegt – hochgeladene Bilder wieder entfernen

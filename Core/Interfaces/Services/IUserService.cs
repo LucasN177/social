@@ -15,7 +15,6 @@ public interface IUserService
     Task<User?> GetUserByUsernameAsync(string username);
     Task<List<User>> GetSuggestedUsersAsync();
     Task<List<User>> SearchUsersAsync(string term);
-    Task<List<Story>> GetStoriesAsync();
 
     /// <summary>true, wenn der Username schon von einem anderen User belegt ist.</summary>
     Task<bool> IsUsernameTakenByOtherAsync(string username, string ownUserId);

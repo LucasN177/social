@@ -27,7 +27,13 @@ else
         @foreach (var post in _posts)
         {
             <a href="@($"p/{post.Id}")" class="post-tile" @key="post.Id" title="@Preview(post)">
-                @if (post.ImageUrls.Count > 0)
+                @if (post.IsVideo && post.ImageUrls.Count > 0)
+                {
+                    @* Erstes Videobild als Vorschau *@
+                    <video src="@($"{post.ImageUrls[0]}#t=0.1")" muted playsinline preload="metadata" aria-label="@Preview(post)"></video>
+                    <MudIcon Icon="@Icons.Material.Filled.PlayArrow" Class="post-tile-badge" Size="Size.Small" />
+                }
+                else if (post.ImageUrls.Count > 0)
                 {
                     <img src="@post.ImageUrls[0]" alt="@Preview(post)" loading="lazy" />
                     @if (post.ImageUrls.Count > 1)

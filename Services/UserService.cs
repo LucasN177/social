@@ -75,12 +75,6 @@ public class UserService(IUserRepository userRepository, IAuthService authServic
         return result is { IsSuccess: true, Data: not null } ? result.Data : new List<User>();
     }
 
-    public Task<List<Story>> GetStoriesAsync()
-    {
-        // Stories kommen mit Phase 4 aus Supabase (supabase/sql/006_stories.sql)
-        return Task.FromResult(new List<Story>());
-    }
-
     public async Task<bool> IsUsernameTakenByOtherAsync(string username, string ownUserId)
     {
         var result = await userRepository.GetProfileByUsername(username);

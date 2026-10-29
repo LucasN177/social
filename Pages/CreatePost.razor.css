@@ -26,6 +26,31 @@
     width: 100%;
 }
 
+.create-video {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+}
+
+    .create-video video {
+        display: block;
+        max-width: 100%;
+        max-height: 60vh;
+        aspect-ratio: 9 / 16;
+        object-fit: contain;
+    }
+
+    .create-video ::deep .create-video-remove {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.55);
+    }
+
 .create-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
