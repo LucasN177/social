@@ -2,6 +2,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @implements IDisposable
 @inject IAuthService AuthService
+@inject ActivityService Activity
 @inject IUserService UserService
 @inject IThemeService ThemeService
 @inject IDialogService DialogService
@@ -80,6 +81,7 @@
 
     private async Task Logout()
     {
+        Activity.Stop();
         var result = await AuthService.Logout();
         Navigation.NavigateTo("login", forceLoad: !result.IsSuccess, replace: true);
     }

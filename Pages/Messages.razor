@@ -1,21 +1,73 @@
 @page "/messages"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject IMessageService MessageService
+@inject ActivityService Activity
 
 <PageTitle>Messages - Social</PageTitle>
 
-@* Platzhalter bis Phase 5 (Direktnachrichten mit Realtime) *@
 <div style="max-width: 640px; margin: 0 auto">
-    <MudText Typo="Typo.h5" Class="mb-4">Messages</MudText>
+    <div class="d-flex align-center justify-space-between mb-4">
+        <MudText Typo="Typo.h5">Messages</MudText>
+        <MudButton Href="search" Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Edit">New message</MudButton>
+    </div>
 
-    <MudPaper Elevation="0" Outlined="true" Class="pa-8 text-center" Style="border-radius: 16px">
-        <MudIcon Icon="@Icons.Material.Outlined.Forum" Size="Size.Large" Color="Color.Primary" />
-        <MudText Typo="Typo.h6" Class="mt-2">Direct messages are coming soon</MudText>
-        <MudText Typo="Typo.body2" Class="mud-text-secondary">
-            Soon you'll be able to chat privately with people you follow.
-        </MudText>
-        <div class="d-flex justify-center flex-wrap gap-2 mt-4">
-            <MudButton Href="" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Home">Back to feed</MudButton>
-            <MudButton Href="search" Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.PersonSearch">Find people</MudButton>
-        </div>
+    <MudPaper Elevation="0" Outlined="true" Style="border-radius: 16px; overflow: hidden">
+        @if (_conversations is null)
+        {
+            @for (var i = 0; i < 4; i++)
+            {
+                <div class="d-flex align-center gap-3 pa-3">
+                    <MudSkeleton SkeletonType="SkeletonType.Circle" Width="52px" Height="52px" />
+                    <div class="flex-grow-1">
+                        <MudSkeleton Width="40%" />
+                        <MudSkeleton Width="70%" />
+                    </div>
+                </div>
+            }
+        }
+        else if (_conversations.Count == 0)
+        {
+            <div class="pa-8 text-center">
+                <MudIcon Icon="@Icons.Material.Outlined.Forum" Size="Size.Large" Color="Color.Primary" />
+                <MudText Typo="Typo.h6" Class="mt-2">No messages yet</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Open someone's profile and tap “Message” to start a chat.</MudText>
+                <MudButton Href="search" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
+                           StartIcon="@Icons.Material.Outlined.PersonSearch">Find people</MudButton>
+            </div>
+        }
+        else
+        {
+            @foreach (var conversation in _conversations)
+            {
+                <a href="@($"messages/{conversation.Id}")" class="conversation @(conversation.UnreadCount > 0 ? "conversation--unread" : null)" @key="conversation.Id">
+                    <UserAvatar User="conversation.Other" Size="52" />
+                    <div class="conversation-text">
+                        <div class="conversation-name">
+                            @(string.IsNullOrWhiteSpace(conversation.Other.DisplayName) ? conversation.Other.Username : conversation.Other.DisplayName)
+                        </div>
+                        <div class="conversation-preview">
+                            @(conversation.LastMessageIsMine ? "You: " : "")@conversation.LastMessage
+                        </div>
+                    </div>
+                    <div class="conversation-meta">
+                        <span>@PostCard.TimeAgo(conversation.LastMessageAt)</span>
+                        @if (conversation.UnreadCount > 0)
+                        {
+                            <span class="conversation-badge">@conversation.UnreadCount</span>
+                        }
+                    </div>
+                </a>
+            }
+        }
     </MudPaper>
 </div>
+
+@code {
+    private List<Conversation>? _conversations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _conversations = await MessageService.GetConversationsAsync();
+        await Activity.RefreshAsync();
+    }
+}

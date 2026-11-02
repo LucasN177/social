@@ -26,7 +26,9 @@
 | Profil ansehen & bearbeiten, Profilbild hochladen | ✅ |
 | Folgen / Entfolgen, Follower-Listen, Feed „Following“ / „Explore“ | ✅ |
 | Suche nach Accounts und Hashtags, Hashtag-Seiten | ✅ |
-| Benachrichtigungen (Realtime), Nachrichten | 📋 geplant |
+| Benachrichtigungen mit Badge (Like, Kommentar, Follow) | ✅ (Polling, Realtime geplant) |
+| Direktnachrichten 1:1 mit Ungelesen-Zähler | ✅ (Polling, Realtime geplant) |
+| Installierbar als PWA mit Offline-Cache | ✅ |
 
 Der vollständige Fahrplan steht im [Implementationsplan](docs/IMPLEMENTATIONSPLAN.md).
 

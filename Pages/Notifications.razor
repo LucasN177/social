@@ -1,0 +1,116 @@
+@page "/notifications"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using Social.Core.Models.Enums
+@inject INotificationService NotificationService
+@inject ActivityService Activity
+
+<PageTitle>Notifications - Social</PageTitle>
+
+<div style="max-width: 640px; margin: 0 auto">
+    <MudText Typo="Typo.h5" Class="mb-4">Notifications</MudText>
+
+    <MudPaper Elevation="0" Outlined="true" Style="border-radius: 16px; overflow: hidden">
+        @if (_items is null)
+        {
+            @for (var i = 0; i < 5; i++)
+            {
+                <div class="d-flex align-center gap-3 pa-3">
+                    <MudSkeleton SkeletonType="SkeletonType.Circle" Width="44px" Height="44px" />
+                    <MudSkeleton Width="60%" />
+                </div>
+            }
+        }
+        else if (_items.Count == 0)
+        {
+            <div class="pa-8 text-center">
+                <MudIcon Icon="@Icons.Material.Outlined.NotificationsNone" Size="Size.Large" Class="mud-text-secondary" />
+                <MudText Typo="Typo.h6" Class="mt-2">No notifications yet</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Likes, comments and new followers will show up here.</MudText>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in _items)
+            {
+                <div class="notification @(item.IsRead ? null : "notification--unread")" @key="item.Id">
+                    <a href="@ProfileUrl(item.Actor)"><UserAvatar User="item.Actor" Size="44" /></a>
+                    <div class="notification-text">
+                        <a href="@ProfileUrl(item.Actor)" class="notification-actor">@(item.Actor.Username ?? item.Actor.DisplayName)</a>
+                        @Describe(item.Type)
+                        <span class="notification-time">@PostCard.TimeAgo(item.CreatedAt)</span>
+                    </div>
+                    @if (item.Type == NotificationType.Follow)
+                    {
+                        <FollowButton Target="item.Actor" Size="Size.Small" />
+                    }
+                    else if (item.PostId is { } postId)
+                    {
+                        <a href="@($"p/{postId}")" class="notification-post" aria-label="Open post">
+                            @if (item.PostIsVideo)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.PlayArrow" />
+                            }
+                            else if (!string.IsNullOrEmpty(item.PostPreviewUrl))
+                            {
+                                <img src="@item.PostPreviewUrl" alt="" loading="lazy" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Outlined.Notes" />
+                            }
+                        </a>
+                    }
+                </div>
+            }
+
+            @if (_hasMore)
+            {
+                <div class="d-flex justify-center pa-3">
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="LoadMore" Disabled="_loadingMore">Load more</MudButton>
+                </div>
+            }
+        }
+    </MudPaper>
+</div>
+
+@code {
+    private List<Notification>? _items;
+    private int _page;
+    private bool _hasMore;
+    private bool _loadingMore;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _items = await NotificationService.GetNotificationsAsync(0);
+        _hasMore = _items.Count == INotificationService.PageSize;
+
+        // Gesehen = gelesen. Die Hervorhebung bleibt bis zum nächsten Öffnen sichtbar.
+        if (_items.Any(n => !n.IsRead))
+        {
+            await NotificationService.MarkAllReadAsync();
+            await Activity.RefreshAsync();
+        }
+    }
+
+    private async Task LoadMore()
+    {
+        _loadingMore = true;
+        var more = await NotificationService.GetNotificationsAsync(_page + 1);
+        _page++;
+        _hasMore = more.Count == INotificationService.PageSize;
+        _items!.AddRange(more.Where(n => _items.All(x => x.Id != n.Id)));
+        _loadingMore = false;
+    }
+
+    private static string Describe(NotificationType type) => type switch
+    {
+        NotificationType.Like => "liked your post.",
+        NotificationType.Comment => "commented on your post.",
+        NotificationType.Follow => "started following you.",
+        NotificationType.Mention => "mentioned you.",
+        NotificationType.Message => "sent you a message.",
+        _ => ""
+    };
+
+    private static string ProfileUrl(User user) => string.IsNullOrEmpty(user.Username) ? "profile" : $"u/{user.Username}";
+}

@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject IThemeService ThemeService
 @inject IAuthService AuthService
+@inject ActivityService Activity
 @inject NavigationManager Nav
 
 <MudLayout>
@@ -19,6 +20,12 @@
         </MudStack>
 
         <MudSpacer />
+
+        <MudBadge Content="@BadgeText(Activity.UnreadNotifications)" Visible="@(Activity.UnreadNotifications > 0)"
+                  Color="Color.Error" Overlap="true" Bordered="true">
+            <MudIconButton Icon="@Icons.Material.Outlined.FavoriteBorder" Href="notifications" Color="@GetColor("notifications", Color.Inherit)"
+                           aria-label="@($"Notifications ({Activity.UnreadNotifications} unread)")" />
+        </MudBadge>
 
         <MudIconButton Icon="@(ThemeService.IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                        Color="Color.Inherit"
@@ -42,7 +49,11 @@
         <MudSpacer />
         <MudIconButton Icon="@Icons.Material.Filled.VideoLibrary" Href="reels" Color="@GetColor("reels")" />
         <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.Send" Href="messages" Color="@GetColor("messages")" />
+        <MudBadge Content="@BadgeText(Activity.UnreadMessages)" Visible="@(Activity.UnreadMessages > 0)"
+                  Color="Color.Error" Overlap="true" Bordered="true">
+            <MudIconButton Icon="@Icons.Material.Filled.Send" Href="messages" Color="@GetColor("messages")"
+                           aria-label="@($"Messages ({Activity.UnreadMessages} unread)")" />
+        </MudBadge>
         <MudSpacer />
         <MudIconButton Icon="@Icons.Material.Filled.Search" Href="search" Color="@GetColor("search")" />
         <MudSpacer />
@@ -56,20 +67,29 @@
     protected override void OnInitialized()
     {
         Nav.LocationChanged += OnLocationChanged;
+        Activity.Changed += OnActivityChanged;
+        // Badges nur für eingeloggte User (MainLayout rendert z. B. auch die 404-Seite)
+        if (AuthService.CurrentUser is not null) Activity.Start();
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e) => StateHasChanged();
 
+    private void OnActivityChanged() => InvokeAsync(StateHasChanged);
+
+    private static string BadgeText(int count) => count > 99 ? "99+" : count.ToString();
+
     // Relative Pfade, damit die App auch unter /social/ (GitHub Pages) funktioniert
-    private Color GetColor(string href)
+    private Color GetColor(string href, Color inactive = Color.Default)
     {
         var current = Nav.ToBaseRelativePath(Nav.Uri).Split('?', '#')[0].TrimEnd('/');
         var isHome = href == "" && current is "" or "fyp";
-        return isHome || (href != "" && current == href) ? Color.Primary : Color.Default;
+        var isActive = isHome || (href != "" && (current == href || current.StartsWith(href + "/")));
+        return isActive ? Color.Primary : inactive;
     }
 
     private async Task Logout()
     {
+        Activity.Stop();
         var result = await AuthService.Logout();
         // Ohne Server-Antwort steckt die Session noch im Supabase-Client: per Reload sauber neu starten
         Nav.NavigateTo("login", forceLoad: !result.IsSuccess, replace: true);
@@ -78,5 +98,6 @@
     public void Dispose()
     {
         Nav.LocationChanged -= OnLocationChanged;
+        Activity.Changed -= OnActivityChanged;
     }
 }
