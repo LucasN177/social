@@ -153,6 +153,7 @@ Zum Einrichten genügt [`supabase/setup.sql`](../supabase/setup.sql) im Supabase
 | `014_social_graph.sql` | View `home_feed`, RPCs `search_hashtags`, `list_followers`, `list_following` |
 | `015_stories_reels.sql` | View `story_feed`, RPCs `mark_story_viewed`, `story_viewers`, `create_reel`, Bucket `reels`, Upload-Limits |
 | `016_notifications_messages.sql` | View `notification_feed`, Chat-Tabellen + RLS, Views/RPCs für Chatliste, Lesestand und Ungelesen-Zähler |
+| `017_users_cleanup.sql` | Bereinigung älterer `users`-Tabellen (Usernames, NULL-Werte), danach Checks validiert |
 
 Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als neues Skript mit der nächsten Nummer angelegt.
 

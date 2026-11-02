@@ -89,7 +89,10 @@ public class UserService(IUserRepository userRepository, IAuthService authServic
         {
             var upload = await userRepository.UploadAvatar(profile.Id, avatarData, avatarContentType ?? "image/jpeg");
             if (upload is not { IsSuccess: true, Data: not null })
-                return Response<User>.Failure("The profile picture could not be uploaded.");
+            {
+                Console.Error.WriteLine($"Avatar upload failed: {upload.Exception?.Message ?? upload.ErrorMessage}");
+                return Response<User>.Failure("The profile picture could not be uploaded. Please try a smaller JPG or PNG.");
+            }
 
             profile.ProfileImageUrl = upload.Data;
         }
@@ -102,7 +105,9 @@ public class UserService(IUserRepository userRepository, IAuthService authServic
             // Neues Bild wurde nicht übernommen – nicht als Datei-Leiche im Storage lassen
             if (avatarData is not null)
                 await userRepository.DeleteAvatar(profile.ProfileImageUrl);
-            return Response<User>.Failure("Your profile could not be saved. Please try again.");
+
+            Console.Error.WriteLine($"Profile update failed: {update.ErrorMessage}");
+            return Response<User>.Failure(DescribeProfileError(update.ErrorMessage));
         }
 
         // Altes Profilbild erst nach erfolgreichem Speichern entfernen (best effort, Fehler sind unkritisch)
@@ -112,4 +117,16 @@ public class UserService(IUserRepository userRepository, IAuthService authServic
         ProfileChanged?.Invoke(profile);
         return Response<User>.Success(profile);
     }
+
+    // Postgrest liefert die Postgres-Fehlermeldung im Exception-Text (Constraint-Namen aus 001/012)
+    private static string DescribeProfileError(string? error) => error switch
+    {
+        _ when error is null => "Your profile could not be saved. Please try again.",
+        _ when error.Contains("users_username_format") => "Usernames may only contain a–z, 0–9, . and _ (3–30 characters).",
+        _ when error.Contains("users_username_key") || error.Contains("duplicate key") => "This username is already taken.",
+        _ when error.Contains("users_bio_length") => "Your bio can have at most 160 characters.",
+        _ when error.Contains("permission denied") || error.Contains("row-level security") =>
+            "You don't have permission to change your profile. Please run supabase/setup.sql in Supabase.",
+        _ => "Your profile could not be saved. Please try again."
+    };
 }

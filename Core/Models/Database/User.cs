@@ -4,9 +4,18 @@ using Supabase.Postgrest.Models;
 
 namespace Social.Core.Models.Database;
 
+// NULL-tolerant: Ältere users-Tabellen (vor supabase/sql) können NULL in Text- und Zählerspalten enthalten.
+// Strings werden zu "", NULL bei Zahlen/Bool/Datum wird ignoriert (Standardwert bleibt) – sonst
+// scheitert das Laden bzw. das Bearbeiten des Profils (NullReferenceException bei Trim()).
 [Table("users")]
 public class User : BaseModel
 {
+    private string _displayName = string.Empty;
+    private string _vorname = string.Empty;
+    private string _nachname = string.Empty;
+    private string _bio = string.Empty;
+    private string _profileImageUrl = string.Empty;
+
     [PrimaryKey("id"), JsonProperty("id")]
     public string Id { get; set; } = string.Empty;
 
@@ -15,33 +24,33 @@ public class User : BaseModel
     public string? Username { get; set; }
 
     [Column("display_name"), JsonProperty("display_name")]
-    public string DisplayName { get; set; } = string.Empty;
+    public string DisplayName { get => _displayName; set => _displayName = value ?? string.Empty; }
 
     [Column("vorname"), JsonProperty("vorname")]
-    public string Vorname { get; set; } = string.Empty;
+    public string Vorname { get => _vorname; set => _vorname = value ?? string.Empty; }
 
     [Column("nachname"), JsonProperty("nachname")]
-    public string Nachname { get; set; } = string.Empty;
+    public string Nachname { get => _nachname; set => _nachname = value ?? string.Empty; }
 
     [Column("bio"), JsonProperty("bio")]
-    public string Bio { get; set; } = string.Empty;
+    public string Bio { get => _bio; set => _bio = value ?? string.Empty; }
 
     [Column("profile_image_url"), JsonProperty("profile_image_url")]
-    public string ProfileImageUrl { get; set; } = string.Empty;
+    public string ProfileImageUrl { get => _profileImageUrl; set => _profileImageUrl = value ?? string.Empty; }
 
-    [Column("followers_count"), JsonProperty("followers_count")]
+    [Column("followers_count", NullValueHandling.Ignore), JsonProperty("followers_count", NullValueHandling = NullValueHandling.Ignore)]
     public int FollowersCount { get; set; }
 
-    [Column("following_count"), JsonProperty("following_count")]
+    [Column("following_count", NullValueHandling.Ignore), JsonProperty("following_count", NullValueHandling = NullValueHandling.Ignore)]
     public int FollowingCount { get; set; }
 
-    [Column("posts_count"), JsonProperty("posts_count")]
+    [Column("posts_count", NullValueHandling.Ignore), JsonProperty("posts_count", NullValueHandling = NullValueHandling.Ignore)]
     public int PostsCount { get; set; }
 
-    [Column("is_verified"), JsonProperty("is_verified")]
+    [Column("is_verified", NullValueHandling.Ignore), JsonProperty("is_verified", NullValueHandling = NullValueHandling.Ignore)]
     public bool IsVerified { get; set; }
 
-    [Column("created_at"), JsonProperty("created_at")]
+    [Column("created_at", NullValueHandling.Ignore), JsonProperty("created_at", NullValueHandling = NullValueHandling.Ignore)]
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     [JsonIgnore]

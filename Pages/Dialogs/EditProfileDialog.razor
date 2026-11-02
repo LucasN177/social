@@ -96,7 +96,8 @@
             IsVerified = Profile.IsVerified,
             CreatedAt = Profile.CreatedAt
         };
-        _username = Profile.Username ?? "";
+        // Ältere Usernames können Großbuchstaben enthalten – sonst blockiert die Formatprüfung das Speichern
+        _username = (Profile.Username ?? "").Trim().ToLowerInvariant();
     }
 
     private static string? ValidateUsername(string value) =>
@@ -150,6 +151,12 @@
                 MudDialog.Close(DialogResult.Ok(result.Data));
             else
                 _errorMessage = result.ErrorMessage ?? "Your profile could not be saved.";
+        }
+        catch (Exception ex)
+        {
+            // Nie die ganze App abstürzen lassen – Details für die Fehlersuche in die Konsole
+            Console.Error.WriteLine($"Saving profile failed: {ex}");
+            _errorMessage = "Your profile could not be saved. Please try again.";
         }
         finally
         {

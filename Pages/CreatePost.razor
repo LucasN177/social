@@ -11,7 +11,7 @@
 
 <div class="create-page">
     <div class="d-flex align-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.Close" Href="" aria-label="Cancel" Disabled="_publishing" />
+        <MudIconButton Icon="@Icons.Material.Filled.Close" Href="./" aria-label="Cancel" Disabled="_publishing" />
         <MudText Typo="Typo.h6" Class="flex-grow-1 ml-2">@(_isReel ? "New reel" : "New post")</MudText>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Publish" Disabled="@(!CanPublish)">
             @if (_publishing)
