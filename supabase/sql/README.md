@@ -51,3 +51,4 @@ powershell -ExecutionPolicy Bypass -File supabase/build-setup.ps1
 | `013_posts_api.sql` | RPC `create_post` (Post + Bilder atomar), View `comment_details`, Feed um Vor-/Nachname erweitert |
 | `014_social_graph.sql` | View `home_feed` (eigene + gefolgte), RPCs `search_hashtags`, `list_followers`, `list_following` |
 | `015_stories_reels.sql` | View `story_feed`, RPCs `mark_story_viewed`, `story_viewers`, `create_reel`; Bucket `reels` (50 MB, nur Video), Größen-/Typ-Limits für Bild-Buckets |
+| `016_notifications_messages.sql` | View `notification_feed` + RPCs (Zähler, gelesen); Direktnachrichten: `conversations`, `conversation_members`, `messages` (RLS nur Mitglieder), `get_or_create_direct_conversation`, View `conversation_list`, `mark_conversation_read`, `unread_message_count` |

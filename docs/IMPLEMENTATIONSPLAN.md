@@ -25,10 +25,10 @@ Behoben in Phase 0:
 
 Offen:
 
-1. **Supabase-Realtime funktioniert im Browser nicht** mit Paket `Supabase` 1.1.1: Der Realtime-Client setzt WebSocket-Header, was in WebAssembly `PlatformNotSupported` wirft. `AutoConnectRealtime` ist deshalb aus. Für Phase 5 entweder ein neueres Paket prüfen oder Realtime über `supabase-js` per JS-Interop anbinden.
+1. **Supabase-Realtime funktioniert im Browser nicht** mit Paket `Supabase` 1.1.1: Der Realtime-Client setzt WebSocket-Header, was in WebAssembly `PlatformNotSupported` wirft. `AutoConnectRealtime` ist deshalb aus. Phase 5 nutzt daher **Polling** (`ActivityService`, Chat); Umstieg auf Realtime siehe Phase 5.
 2. **`SupabaseOptions.SessionHandler` wird in 1.1.1 ignoriert** → Persistenz wird in `Program.cs` explizit per `Auth.SetPersistence` gesetzt und per `LoadSession()` geladen.
 3. ~~Deployment nutzt Platzhalter aus `appsettings.json`~~ → der Workflow schreibt die Datei aus den Secrets `SUPABASE_URL` / `SUPABASE_KEY` (siehe README).
-   **Offline-Cache auf GitHub Pages defekt:** `service-worker.published.js` nutzt `base = "/"` statt `/social/`, und der Workflow ändert `index.html` (base href) erst nach dem Publish, sodass der Integritäts-Hash nicht mehr passt. Die App läuft trotzdem, nur ohne Offline-Cache. → in Phase 6 beheben (base href per MSBuild-Property `StaticWebAssetBasePath` bzw. vor dem Publish setzen).
+   ~~Offline-Cache auf GitHub Pages defekt~~ → Service Worker leitet die Basis aus seinem Scope ab, der Workflow setzt die base href vor dem Publish.
 4. ~~`ISocialNetworkService` mit `int`-IDs~~ → entfernt; Posts/Kommentare nutzen `long`.
 5. ~~`User` und `UserDto` mappen beide die Tabelle `users`~~ → zusammengeführt.
 6. ~~Der Feed zeigt alle Posts~~ → Home hat jetzt „Following“ (View `home_feed`) und „Explore“.
@@ -111,17 +111,24 @@ Supabase (Postgres + RLS, Auth, Storage, Realtime)
 - [ ] Mehrere Bilder/Videos pro Story, Story-Antworten
 
 ### Phase 5 – Benachrichtigungen & Nachrichten
-- [ ] Notifications per DB-Trigger (Like, Kommentar, Follow), Badge in AppBar
-- [ ] Supabase Realtime-Subscription auf `notifications` des aktuellen Users
-- [ ] Direktnachrichten `/messages`: `conversations`, `conversation_members`, `messages`, Realtime-Chat
+- [x] Notifications per DB-Trigger (Like, Kommentar, Follow) – seit 007
+- [x] Seite `/notifications` (View `notification_feed`): Auslöser, Post-Vorschau bzw. Follow-Button, ungelesene hervorgehoben, beim Öffnen gelesen (`mark_notifications_read`)
+- [x] Badges in AppBar (Herz) und unterer Navigation (Nachrichten) über `ActivityService` (Polling alle 30 s, `unread_notification_count` / `unread_message_count`)
+- [x] Direktnachrichten: `conversations`, `conversation_members`, `messages` mit RLS nur für Mitglieder; `get_or_create_direct_conversation`
+- [x] Chatliste `/messages` (View `conversation_list`, Ungelesen-Zähler) und Chat `/messages/{id}` (Polling alle 3 s, Tagestrenner, Auto-Scroll nur wenn unten)
+- [x] „Message“-Button im Profil
+- [ ] Echtes Realtime statt Polling: `supabase-js` per JS-Interop (Publication für `notifications` und `messages` ist schon eingerichtet), oder neueres C#-Paket prüfen
+- [ ] Gruppenchats, Nachrichten löschen/bearbeiten, Bilder im Chat, Erwähnungen (`@username` → Typ `mention`)
 
 ### Phase 6 – Qualität & Release
-- [ ] Loading-Skeletons (`MudSkeleton`) und leere Zustände auf allen Seiten
+- [x] Loading-Skeletons (`MudSkeleton`) und leere Zustände auf den Hauptseiten
 - [ ] Fehlerbehandlung über `IResponse` + zentrale Snackbar
 - [ ] Unit-Tests für Services (xUnit + Moq), bUnit für Komponenten
+- [ ] SQL-Tests (PGlite, Supabase-Umgebung nachgebaut) ins Repo und in CI übernehmen
 - [x] Supabase-Keys im Deploy-Workflow aus GitHub Secrets in `appsettings.json` schreiben
-- [ ] Service Worker / Offline-Cache für `/social/` korrigieren
-- [ ] PWA: Offline-Fallback, App-Icons im Markendesign
+- [x] Service Worker / Offline-Cache für `/social/`: Basis aus dem Scope, base href vor dem Publish, neue Versionen übernehmen sofort (`skipWaiting` / `clients.claim`)
+- [x] PWA: App-Icons im Markendesign
+- [ ] PWA: eigene Offline-Seite
 
 ## 4. Datenbank
 
@@ -145,6 +152,7 @@ Zum Einrichten genügt [`supabase/setup.sql`](../supabase/setup.sql) im Supabase
 | `013_posts_api.sql` | RPC `create_post`, View `comment_details`, Feed um Vor-/Nachname erweitert |
 | `014_social_graph.sql` | View `home_feed`, RPCs `search_hashtags`, `list_followers`, `list_following` |
 | `015_stories_reels.sql` | View `story_feed`, RPCs `mark_story_viewed`, `story_viewers`, `create_reel`, Bucket `reels`, Upload-Limits |
+| `016_notifications_messages.sql` | View `notification_feed`, Chat-Tabellen + RLS, Views/RPCs für Chatliste, Lesestand und Ungelesen-Zähler |
 
 Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als neues Skript mit der nächsten Nummer angelegt.
 

@@ -35,11 +35,15 @@ jobs:
         jq -n --arg url "$SUPABASE_URL" --arg key "$SUPABASE_KEY" \
           '{ Supabase: { Url: $url, AnonKey: $key } }' > wwwroot/appsettings.json
 
+    # Ebenfalls vor dem Publish: index.html ist im Service-Worker-Manifest mit Hash hinterlegt.
+    # Wird sie danach geändert, schlägt die Installation des Service Workers (Offline-Cache) fehl.
+    - name: Set base href for GitHub Pages
+      run: |
+        sed -i 's|<base href="/" />|<base href="/social/" />|' wwwroot/index.html
+        grep -q '<base href="/social/" />' wwwroot/index.html || { echo "::error::base href nicht gesetzt"; exit 1; }
+
     - name: Publish
       run: dotnet publish -c Release -o release
-
-    - name: Update base href
-      run: sed -i 's/<base href="\/" \/>/<base href="\/social\/" \/>/' release/wwwroot/index.html
 
     - name: Copy index.html to 404.html
       run: cp release/wwwroot/index.html release/wwwroot/404.html

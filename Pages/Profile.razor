@@ -4,6 +4,7 @@
 @implements IDisposable
 @inject IUserService UserService
 @inject IPostService PostService
+@inject IMessageService MessageService
 @inject IAuthService AuthService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -90,6 +91,10 @@ else
                 <div class="flex-grow-1">
                     <FollowButton @key="_profile.Id" Target="_profile" FullWidth="true" OnChanged="@(_ => StateHasChanged())" />
                 </div>
+                <div class="flex-grow-1">
+                    <MudButton Variant="Variant.Outlined" FullWidth="true" StartIcon="@Icons.Material.Outlined.ChatBubbleOutline"
+                               OnClick="StartChat" Disabled="_openingChat">Message</MudButton>
+                </div>
             }
         </div>
     </MudPaper>
@@ -166,6 +171,21 @@ else
             if (Username is not null && updated.Username != Username)
                 Navigation.NavigateTo($"u/{updated.Username}", replace: true);
         }
+    }
+
+    private bool _openingChat;
+
+    private async Task StartChat()
+    {
+        if (_profile is null) return;
+        _openingChat = true;
+        var conversationId = await MessageService.OpenConversationAsync(_profile);
+        _openingChat = false;
+
+        if (conversationId is { } id)
+            Navigation.NavigateTo($"messages/{id}");
+        else
+            Snackbar.Add("The chat could not be opened. Please try again.", Severity.Error);
     }
 
     private async Task OpenFollowList(bool followers)

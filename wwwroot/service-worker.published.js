@@ -11,13 +11,16 @@ const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
 const offlineAssetsInclude = [ /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/, /\.webmanifest$/ ];
 const offlineAssetsExclude = [ /^service-worker\.js$/ ];
 
-// Replace with your base path if you are hosting on a subfolder. Ensure there is a trailing '/'.
-const base = "/";
-const baseUrl = new URL(base, self.origin);
+// Basis aus dem Scope ableiten (z. B. /social/ auf GitHub Pages) statt fest "/"
+const baseUrl = new URL(self.registration.scope);
 const manifestUrlList = self.assetsManifest.assets.map(asset => new URL(asset.url, baseUrl).href);
 
 async function onInstall(event) {
     console.info('Service worker: Install');
+
+    // Neue Version sofort aktivieren, statt zu warten, bis alle Tabs geschlossen sind –
+    // sonst sehen Nutzer nach einem Deploy noch lange die alte, gecachte App.
+    self.skipWaiting();
 
     // Fetch and cache all matching items from the assets manifest
     const assetsRequests = self.assetsManifest.assets
@@ -35,6 +38,8 @@ async function onActivate(event) {
     await Promise.all(cacheKeys
         .filter(key => key.startsWith(cacheNamePrefix) && key !== cacheName)
         .map(key => caches.delete(key)));
+
+    await self.clients.claim();
 }
 
 async function onFetch(event) {

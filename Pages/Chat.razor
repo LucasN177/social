@@ -1,0 +1,194 @@
+@page "/messages/{Id:long}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@implements IAsyncDisposable
+@inject IMessageService MessageService
+@inject ActivityService Activity
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>@(_partner is null ? "Chat" : $"Chat with {_partner.DisplayName}") - Social</PageTitle>
+
+<div class="chat">
+    <div class="chat-header">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="messages" aria-label="Back to messages" />
+        @if (_partner is not null)
+        {
+            <a href="@($"u/{_partner.Username}")" class="chat-partner">
+                <UserAvatar User="_partner" Size="36" />
+                <div>
+                    <div class="font-weight-bold">@(string.IsNullOrWhiteSpace(_partner.DisplayName) ? _partner.Username : _partner.DisplayName)</div>
+                    <div class="mud-text-secondary" style="font-size: 0.8rem">@("@" + _partner.Username)</div>
+                </div>
+            </a>
+        }
+    </div>
+
+    <div class="chat-messages" @ref="_scroller">
+        @if (_loading)
+        {
+            <div class="d-flex justify-center pa-6"><MudProgressCircular Indeterminate="true" Color="Color.Primary" /></div>
+        }
+        else if (_notFound)
+        {
+            <div class="pa-8 text-center mud-text-secondary">This conversation isn't available.</div>
+        }
+        else if (_messages.Count == 0)
+        {
+            <div class="chat-empty">
+                <UserAvatar User="_partner" Size="72" />
+                <MudText Typo="Typo.subtitle1" Class="mt-2">Say hi to @(_partner?.DisplayName) 👋</MudText>
+            </div>
+        }
+        else
+        {
+            @for (var i = 0; i < _messages.Count; i++)
+            {
+                var message = _messages[i];
+                var showDay = i == 0 || _messages[i - 1].CreatedAt.Date != message.CreatedAt.Date;
+                @if (showDay)
+                {
+                    <div class="chat-day">@DayLabel(message.CreatedAt)</div>
+                }
+                <div class="chat-row @(message.IsMine ? "chat-row--mine" : null)" @key="message.Id">
+                    <div class="chat-bubble" title="@message.CreatedAt.ToString("g")">
+                        <span>@message.Content</span>
+                        <span class="chat-time">@message.CreatedAt.ToString("HH:mm")</span>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    @if (!_notFound && !_loading)
+    {
+        <div class="chat-input" @onkeydown="OnKeyDown">
+            <MudTextField T="string" @bind-Value="_draft" Immediate="true" Placeholder="Message…" Variant="Variant.Outlined"
+                          Margin="Margin.Dense" MaxLength="2000" Class="flex-grow-1 mt-0" Disabled="_sending" AutoFocus="true" />
+            <MudIconButton Icon="@Icons.Material.Filled.Send" Color="Color.Primary" OnClick="Send"
+                           Disabled="@(string.IsNullOrWhiteSpace(_draft) || _sending)" aria-label="Send" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public long Id { get; set; }
+
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(3);
+
+    private User? _partner;
+    private List<ChatMessage> _messages = new();
+    private ElementReference _scroller;
+    private bool _loading = true;
+    private bool _notFound;
+    private string _draft = "";
+    private bool _sending;
+    private bool _scrollToEnd;
+    private CancellationTokenSource? _pollCts;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _pollCts?.Cancel();
+        _loading = true;
+
+        var partnerTask = MessageService.GetPartnerAsync(Id);
+        var messagesTask = MessageService.GetLatestMessagesAsync(Id);
+        await Task.WhenAll(partnerTask, messagesTask);
+
+        _partner = partnerTask.Result;
+        _notFound = _partner is null;
+        _messages = messagesTask.Result;
+        _loading = false;
+        _scrollToEnd = true;
+
+        if (_notFound) return;
+
+        await MarkRead();
+        _pollCts = new CancellationTokenSource();
+        _ = PollAsync(_pollCts.Token);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_scrollToEnd) return;
+        _scrollToEnd = false;
+        await JS.InvokeVoidAsync("socialUi.scrollToBottom", _scroller);
+    }
+
+    private async Task PollAsync(CancellationToken token)
+    {
+        using var timer = new PeriodicTimer(PollInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(token))
+            {
+                var lastId = _messages.Count > 0 ? _messages[^1].Id : 0;
+                var fresh = await MessageService.GetMessagesAfterAsync(Id, lastId);
+                if (fresh.Count == 0 || token.IsCancellationRequested) continue;
+
+                var nearBottom = await JS.InvokeAsync<bool>("socialUi.isNearBottom", token, _scroller, 120);
+                AppendUnique(fresh);
+                _scrollToEnd = nearBottom;
+                await InvokeAsync(StateHasChanged);
+
+                if (fresh.Any(m => !m.IsMine)) await MarkRead();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Chat verlassen
+        }
+        catch (JSDisconnectedException)
+        {
+            // Seite geschlossen
+        }
+    }
+
+    private async Task Send()
+    {
+        if (string.IsNullOrWhiteSpace(_draft) || _sending) return;
+        _sending = true;
+
+        var message = await MessageService.SendAsync(Id, _draft);
+        _sending = false;
+
+        if (message is null)
+        {
+            Snackbar.Add("Your message could not be sent.", Severity.Error);
+            return;
+        }
+
+        AppendUnique(new List<ChatMessage> { message });
+        _draft = "";
+        _scrollToEnd = true;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey) await Send();
+    }
+
+    // Polling und eigenes Senden können dieselbe Nachricht liefern
+    private void AppendUnique(List<ChatMessage> messages)
+    {
+        foreach (var message in messages.Where(m => _messages.All(x => x.Id != m.Id)))
+            _messages.Add(message);
+        _messages.Sort((a, b) => a.Id.CompareTo(b.Id));
+    }
+
+    private async Task MarkRead()
+    {
+        await MessageService.MarkReadAsync(Id);
+        await Activity.RefreshAsync();
+    }
+
+    private static string DayLabel(DateTime date) =>
+        date.Date == DateTime.Today ? "Today"
+        : date.Date == DateTime.Today.AddDays(-1) ? "Yesterday"
+        : date.ToString(date.Year == DateTime.Today.Year ? "d MMMM" : "d MMMM yyyy");
+
+    public ValueTask DisposeAsync()
+    {
+        _pollCts?.Cancel();
+        return ValueTask.CompletedTask;
+    }
+}
