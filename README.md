@@ -19,9 +19,10 @@
 | Session bleibt nach Reload erhalten | ✅ |
 | Hell-/Dunkelmodus (folgt dem System, Wahl wird gespeichert) | ✅ |
 | Vorschläge „Suggestions for you“ (RPC `suggested_users`) | ✅ |
-| Beiträge mit bis zu 10 Fotos, Hashtags, Ort erstellen und löschen | ✅ |
-| Feed, Likes, Lesezeichen, Kommentare | ✅ |
-| Stories (24 h) mit Viewer, Gesehen-Status und Aufrufen | ✅ |
+| Beiträge mit bis zu 10 Fotos, Hashtags, Ort erstellen, bearbeiten und löschen | ✅ |
+| Feed mit Infinite Scroll, Likes, Lesezeichen, Kommentare mit Likes | ✅ |
+| Stories (24 h, Fotos und Videos, mehrere auf einmal) mit Viewer, Gesehen-Status, Aufrufen und Antworten per Nachricht | ✅ |
+| Abgelaufene Stories inkl. Dateien automatisch löschen (Edge Function + pg_cron) | ✅ (einmalige Einrichtung, siehe unten) |
 | Reels: Videos hochladen, Snap-Scroll mit Autoplay | ✅ |
 | Profil ansehen & bearbeiten, Profilbild hochladen | ✅ |
 | Folgen / Entfolgen, Follower-Listen, Feed „Following“ / „Explore“ | ✅ |
@@ -81,6 +82,24 @@ Voraussetzung: [.NET 10 SDK](https://dotnet.microsoft.com/download).
 Den kompletten Inhalt von [`supabase/setup.sql`](supabase/setup.sql) im Supabase **SQL Editor** einfügen und ausführen – fertig. Das Skript läuft in einer Transaktion, ist idempotent und kann nach jedem Update einfach erneut ausgeführt werden.
 
 `setup.sql` wird aus den nummerierten Skripten in [`supabase/sql`](supabase/sql/README.md) erzeugt (`supabase/build-setup.ps1`). Neue Datenbankänderungen kommen immer als neues nummeriertes Skript dazu; danach `setup.sql` neu erzeugen.
+
+### Abgelaufene Stories automatisch löschen
+
+Stories verschwinden nach 24 h aus der App. Damit auch Zeilen und Dateien im Bucket `stories` gelöscht werden, ruft `pg_cron` stündlich die Edge Function [`cleanup-expired-stories`](supabase/functions/cleanup-expired-stories/index.ts) auf (eingerichtet von `019_stories_media_replies_cleanup.sql`). Einmalig nötig:
+
+1. Edge Function deployen – entweder automatisch über [`.github/workflows/supabase-functions.yml`](.github/workflows/supabase-functions.yml) (Repository-Secrets `SUPABASE_ACCESS_TOKEN` und `SUPABASE_PROJECT_REF` setzen, dann den Workflow einmal manuell starten) oder lokal mit der Supabase CLI:
+
+   ```bash
+   supabase functions deploy cleanup-expired-stories --project-ref <projekt-ref> --no-verify-jwt
+   ```
+
+2. Projekt-URL im Vault hinterlegen (SQL Editor):
+
+   ```sql
+   select vault.create_secret('https://<projekt-ref>.supabase.co', 'project_url');
+   ```
+
+Ohne Secret überspringt der Job das Aufräumen. Die Funktion löscht ausschließlich bereits abgelaufene Stories, deshalb läuft sie ohne JWT-Prüfung.
 
 In den Supabase Auth-Einstellungen unter *URL Configuration* die Site-URL (z. B. `https://<user>.github.io/social/`) und `http://localhost:5046` als Redirect-URL eintragen.
 

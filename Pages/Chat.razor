@@ -51,6 +51,24 @@
                 }
                 <div class="chat-row @(message.IsMine ? "chat-row--mine" : null)" @key="message.Id">
                     <div class="chat-bubble" title="@message.CreatedAt.ToString("g")">
+                        @if (message.IsStoryReply)
+                        {
+                            <div class="chat-story">
+                                <span class="chat-story-label">@(message.IsMine ? "You replied to their story" : "Replied to your story")</span>
+                                @if (message.StoryAvailable && message.StoryIsVideo)
+                                {
+                                    <video src="@($"{message.StoryUrl}#t=0.1")" muted playsinline preload="metadata" aria-label="Story"></video>
+                                }
+                                else if (message.StoryAvailable)
+                                {
+                                    <img src="@message.StoryUrl" alt="Story" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="chat-story-expired">Story no longer available</span>
+                                }
+                            </div>
+                        }
                         <span>@message.Content</span>
                         <span class="chat-time">@message.CreatedAt.ToString("HH:mm")</span>
                     </div>

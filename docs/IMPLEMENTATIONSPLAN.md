@@ -107,8 +107,9 @@ Supabase (Postgres + RLS, Auth, Storage, Realtime)
 - [x] Reels `/reels`: Video-Posts (`media_type = 'video'`), vertikaler Snap-Scroll, Autoplay des sichtbaren Videos (IntersectionObserver, `wwwroot/js/media.js`), Ton an/aus, Tippen = Pause, Like (auch Doppeltipp), Kommentare, Link kopieren, Folgen
 - [x] Reel erstellen über `/create` (Umschalter Post/Reel bzw. `create?type=reel`): MP4/WebM/MOV bis 50 MB, Vorschau, RPC `create_reel`, Bucket `reels` mit Größen-/Typ-Limit
 - [x] Videos auch im Feed (PostCard) und im Profil-Raster (Vorschaubild + Play-Symbol)
-- [ ] Abgelaufene Story-Bilder automatisch aus dem Storage löschen (z. B. Supabase Cron / Edge Function)
-- [ ] Mehrere Bilder/Videos pro Story, Story-Antworten
+- [x] Abgelaufene Stories automatisch löschen: Edge Function `cleanup-expired-stories` (Dateien über die Storage-API, dann Zeilen), stündlich per `pg_cron` + `pg_net`; Projekt-URL im Vault (`project_url`), Deploy per Workflow `supabase-functions.yml` oder CLI
+- [x] Mehrere Bilder/Videos pro Story: Mehrfachauswahl (bis 10), Videos bis 50 MB (`stories.media_type`), Viewer spielt Videos mit Ton an/aus und richtet den Fortschritt nach der Videolänge (max. 60 s)
+- [x] Story-Antworten: Eingabefeld im Viewer (pausiert beim Tippen), RPC `reply_to_story` schickt eine Direktnachricht mit Story-Bezug; im Chat mit Vorschau bzw. „Story no longer available“
 
 ### Phase 5 – Benachrichtigungen & Nachrichten
 - [x] Notifications per DB-Trigger (Like, Kommentar, Follow) – seit 007
@@ -155,6 +156,7 @@ Zum Einrichten genügt [`supabase/setup.sql`](../supabase/setup.sql) im Supabase
 | `016_notifications_messages.sql` | View `notification_feed`, Chat-Tabellen + RLS, Views/RPCs für Chatliste, Lesestand und Ungelesen-Zähler |
 | `017_users_cleanup.sql` | Bereinigung älterer `users`-Tabellen (Usernames, NULL-Werte), danach Checks validiert |
 | `018_post_edit_comment_likes.sql` | `posts.edited_at`, Spaltenrechte auf `posts`, RPC `update_post`, `feed_posts`/`home_feed` um `edited_at`, `comment_details` um `is_liked` erweitert |
+| `019_stories_media_replies_cleanup.sql` | `stories.media_type` (Bild/Video), Bucket `stories` bis 50 MB inkl. Video, `messages.story_id`/`story_url` + RPC `reply_to_story`, `invoke_story_cleanup` + stündlicher `pg_cron`-Job |
 
 Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als neues Skript mit der nächsten Nummer angelegt.
 

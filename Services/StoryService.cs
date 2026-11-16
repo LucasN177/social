@@ -29,23 +29,41 @@ public class StoryService(IStoryRepository storyRepository, IAuthService authSer
             .ToList();
     }
 
-    public async Task<IResponse> AddStoryAsync(byte[] imageData)
+    public async Task<IResponse<int>> AddStoriesAsync(IReadOnlyList<StoryUpload> uploads)
     {
-        if (CurrentUserId is not { } userId) return Response.Failure("Please sign in again.", null);
+        if (CurrentUserId is not { } userId) return Response<int>.Failure("Please sign in again.");
+        if (uploads.Count == 0) return Response<int>.Failure("Choose a photo or video.");
+        if (uploads.Count > IStoryService.MaxItemsPerUpload)
+            return Response<int>.Failure($"You can add up to {IStoryService.MaxItemsPerUpload} photos or videos at once.");
+        if (uploads.Any(u => u.Data.Length == 0 || u.Data.Length > IStoryService.MaxVideoBytes))
+            return Response<int>.Failure("Videos can be up to 50 MB.");
 
-        var upload = await storyRepository.UploadStoryImage(userId, imageData, "image/jpeg");
-        if (upload is not { IsSuccess: true, Data: not null })
-            return Response.Failure("Your story could not be uploaded.", upload.Exception);
-
-        var created = await storyRepository.CreateStory(userId, upload.Data);
-        if (!created.IsSuccess)
+        // Nacheinander, damit die Reihenfolge der Auswahl erhalten bleibt (created_at)
+        var published = 0;
+        string? error = null;
+        foreach (var upload in uploads)
         {
-            await storyRepository.DeleteStoryImage(upload.Data);
-            return Response.Failure("Your story could not be published.", created.Exception);
+            var stored = await storyRepository.UploadStoryMedia(userId, upload.Data, upload.ContentType);
+            if (stored is not { IsSuccess: true, Data: not null })
+            {
+                error = upload.IsVideo ? "A video could not be uploaded." : "A photo could not be uploaded.";
+                break;
+            }
+
+            var created = await storyRepository.CreateStory(userId, stored.Data, upload.IsVideo ? "video" : "image");
+            if (!created.IsSuccess)
+            {
+                await storyRepository.DeleteStoryMedia(stored.Data);
+                error = "Your story could not be published.";
+                break;
+            }
+            published++;
         }
 
-        StoriesChanged?.Invoke();
-        return Response.Success();
+        if (published > 0) StoriesChanged?.Invoke();
+
+        if (error is null) return Response<int>.Success(published);
+        return Response<int>.Failure(published > 0 ? $"{error} {published} of {uploads.Count} were added." : error);
     }
 
     public async Task<IResponse> DeleteStoryAsync(Story story)
@@ -54,7 +72,7 @@ public class StoryService(IStoryRepository storyRepository, IAuthService authSer
         if (!result.IsSuccess)
             return Response.Failure("The story could not be deleted.", result.Exception);
 
-        await storyRepository.DeleteStoryImage(story.ImageUrl);
+        await storyRepository.DeleteStoryMedia(story.ImageUrl);
         StoriesChanged?.Invoke();
         return Response.Success();
     }
@@ -70,6 +88,16 @@ public class StoryService(IStoryRepository storyRepository, IAuthService authSer
     {
         var result = await storyRepository.GetViewers(story.Id);
         return result is { IsSuccess: true, Data: not null } ? result.Data : new List<User>();
+    }
+
+    public async Task<IResponse<long>> ReplyAsync(Story story, string content)
+    {
+        content = content.Trim();
+        if (IsOwn(story)) return Response<long>.Failure("You can't reply to your own story.");
+        if (content.Length is 0 or > 2000) return Response<long>.Failure("Replies can have 1 to 2000 characters.");
+
+        var result = await storyRepository.ReplyToStory(story.Id, content);
+        return result.IsSuccess ? result : Response<long>.Failure("Your reply could not be sent.");
     }
 
     public bool IsOwn(Story story) => story.User.Id == CurrentUserId;

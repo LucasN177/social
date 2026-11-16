@@ -64,3 +64,36 @@ window.socialMedia = {
         if (video.paused) video.play().catch(() => { }); else video.pause();
     }
 };
+
+// Videos im Story-Viewer
+window.socialStory = {
+    // Mit Ton starten; blockiert der Browser das, stumm abspielen
+    play: (video, muted) => {
+        if (!video) return;
+        video.muted = muted;
+        video.play().catch(() => {
+            video.muted = true;
+            video.play().catch(() => { /* Nutzer kann tippen */ });
+        });
+    },
+
+    setPlaying: (video, playing) => {
+        if (!video) return;
+        if (playing) video.play().catch(() => { }); else video.pause();
+    },
+
+    setMuted: (video, muted) => {
+        if (video) video.muted = muted;
+    },
+
+    // Fortschritt für die Balken; null, solange das Element nicht im DOM ist
+    state: (video) => {
+        if (!video || !video.isConnected) return null;
+        return {
+            time: video.currentTime || 0,
+            duration: Number.isFinite(video.duration) ? video.duration : 0,
+            ended: video.ended,
+            muted: video.muted
+        };
+    }
+};

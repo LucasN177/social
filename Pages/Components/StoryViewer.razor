@@ -2,6 +2,7 @@
 @inject IStoryService StoryService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IJSRuntime JS
 
 <div class="story-viewer" tabindex="0" @ref="_root" @onkeydown="OnKeyDown" role="dialog" aria-modal="true"
      aria-label="@($"Story by {Group.User.Username}")">
@@ -22,6 +23,11 @@
                 <span class="story-time">@PostCard.TimeAgo(Current.CreatedAt)</span>
             </a>
             <div class="d-flex align-center">
+                @if (Current.IsVideo)
+                {
+                    <MudIconButton Icon="@(_muted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)" Size="Size.Small" Style="color: #fff"
+                                   OnClick="ToggleMute" aria-label="@(_muted ? "Unmute" : "Mute")" />
+                }
                 @if (StoryService.IsOwn(Current))
                 {
                     <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Style="color: #fff" OnClick="DeleteCurrent" aria-label="Delete story" />
@@ -32,7 +38,15 @@
             </div>
         </div>
 
-        <img src="@Current.ImageUrl" alt="Story" class="story-image" @key="Current.Id" draggable="false" />
+        @if (Current.IsVideo)
+        {
+            <video @ref="_video" @key="Current.Id" src="@Current.ImageUrl" class="story-image" playsinline preload="auto"
+                   aria-label="Story video"></video>
+        }
+        else
+        {
+            <img src="@Current.ImageUrl" alt="Story" class="story-image" @key="Current.Id" draggable="false" />
+        }
 
         @* Tippen links = zurück, rechts = weiter; gedrückt halten = Pause *@
         <div class="story-tap story-tap--prev" @onclick="() => Tap(Previous)" @onpointerdown="HoldStart" @onpointerup="HoldEnd" @onpointerleave="HoldEnd"></div>
@@ -63,6 +77,17 @@
                 </div>
             }
         }
+        else
+        {
+            @* Antwort geht als Direktnachricht an den Autor; während des Tippens pausiert die Story *@
+            <div class="story-reply" @onkeydown:stopPropagation="true" @onkeydown="OnReplyKeyDown">
+                <input type="text" @bind="_reply" @bind:event="oninput" maxlength="2000" disabled="@_sendingReply"
+                       placeholder="@($"Reply to {Group.User.Username ?? Group.User.DisplayName}…")" aria-label="Reply to story"
+                       @onfocus="() => _replyFocused = true" @onblur="() => _replyFocused = false" />
+                <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Style="color: #fff" OnClick="SendReply"
+                               Disabled="@(string.IsNullOrWhiteSpace(_reply) || _sendingReply)" aria-label="Send reply" />
+            </div>
+        }
     </div>
 </div>
 
@@ -71,20 +96,34 @@
     [Parameter, EditorRequired] public StoryGroup StartGroup { get; set; } = null!;
     [Parameter] public EventCallback OnClose { get; set; }
 
-    private const int DurationMs = 5000;
+    private const int ImageDurationMs = 5000;
+    /// <summary>Lädt ein Video so lange nicht, wird weitergeblättert.</summary>
+    private const int VideoLoadTimeoutMs = 15000;
     private const int TickMs = 50;
 
     private ElementReference _root;
+    private ElementReference _video;
     private int _groupIndex;
     private int _storyIndex;
     private int _elapsedMs;
+    private double _progress;
     private bool _paused;
     private bool _holding;
+    private bool _replyFocused;
     private List<User>? _viewers;
     private readonly CancellationTokenSource _cts = new();
 
+    // Video-Zustand
+    private bool _muted;
+    private long? _startedVideoId;
+    private bool _videoPlaying;
+
+    private string _reply = "";
+    private bool _sendingReply;
+
     private StoryGroup Group => Groups[_groupIndex];
     private Story Current => Group.Stories[_storyIndex];
+    private bool IsRunning => !_paused && !_holding && !_replyFocused && _viewers is null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -98,6 +137,15 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender) await _root.FocusAsync();
+
+        // Neues Video erst starten, wenn das Element gerendert ist
+        if (Current.IsVideo && _startedVideoId != Current.Id)
+        {
+            _startedVideoId = Current.Id;
+            _videoPlaying = IsRunning;
+            if (_videoPlaying)
+                await JS.InvokeVoidAsync("socialStory.play", _video, _muted);
+        }
     }
 
     private async Task RunTimerAsync()
@@ -106,14 +154,7 @@
         try
         {
             while (await timer.WaitForNextTickAsync(_cts.Token))
-            {
-                if (_paused || _holding || _viewers is not null) continue;
-                _elapsedMs += TickMs;
-                if (_elapsedMs >= DurationMs)
-                    await InvokeAsync(Next);
-                else
-                    await InvokeAsync(StateHasChanged);
-            }
+                await InvokeAsync(TickAsync);
         }
         catch (OperationCanceledException)
         {
@@ -121,8 +162,61 @@
         }
     }
 
+    private async Task TickAsync()
+    {
+        if (_cts.IsCancellationRequested) return;
+
+        if (Current.IsVideo)
+        {
+            await TickVideoAsync();
+            return;
+        }
+
+        if (!IsRunning) return;
+        _elapsedMs += TickMs;
+        _progress = Math.Min(1, (double)_elapsedMs / ImageDurationMs);
+        if (_elapsedMs >= ImageDurationMs)
+            await Next();
+        else
+            StateHasChanged();
+    }
+
+    private async Task TickVideoAsync()
+    {
+        // Erst nach dem ersten Rendern des Videos (OnAfterRenderAsync)
+        if (_startedVideoId != Current.Id) return;
+
+        if (IsRunning != _videoPlaying)
+        {
+            _videoPlaying = IsRunning;
+            await JS.InvokeVoidAsync("socialStory.setPlaying", _video, _videoPlaying);
+        }
+        if (!IsRunning) return;
+
+        _elapsedMs += TickMs;
+        var state = await JS.InvokeAsync<VideoState?>("socialStory.state", _video);
+        if (state is null) return;
+
+        // Stumm geschaltet, weil der Browser Autoplay mit Ton blockiert hat
+        _muted = state.Muted;
+
+        if (state.Duration <= 0)
+        {
+            if (_elapsedMs >= VideoLoadTimeoutMs) await Next();
+            else StateHasChanged();
+            return;
+        }
+
+        var duration = Math.Min(state.Duration, IStoryService.MaxVideoSeconds);
+        _progress = Math.Min(1, state.Time / duration);
+        if (state.Ended || state.Time >= duration)
+            await Next();
+        else
+            StateHasChanged();
+    }
+
     private double BarWidth(int index) =>
-        index < _storyIndex ? 100 : index > _storyIndex ? 0 : Math.Min(100, _elapsedMs * 100.0 / DurationMs);
+        index < _storyIndex ? 100 : index > _storyIndex ? 0 : _progress * 100;
 
     private async Task Next()
     {
@@ -144,18 +238,28 @@
             _storyIndex--;
         else if (_groupIndex > 0)
             (_groupIndex, _storyIndex) = (_groupIndex - 1, Groups[_groupIndex - 1].Stories.Count - 1);
+        else
+            _startedVideoId = null; // erstes Video von vorn
         await ShowCurrent();
     }
 
     private async Task ShowCurrent()
     {
         _elapsedMs = 0;
+        _progress = 0;
         _viewers = null;
+        _reply = "";
         StateHasChanged();
         await StoryService.MarkViewedAsync(Current);
     }
 
     private void TogglePause() => _paused = !_paused;
+
+    private async Task ToggleMute()
+    {
+        _muted = !_muted;
+        await JS.InvokeVoidAsync("socialStory.setMuted", _video, _muted);
+    }
 
     private DateTime _holdStartedAt;
 
@@ -177,6 +281,37 @@
     private async Task ToggleViewers()
     {
         _viewers = _viewers is null ? await StoryService.GetViewersAsync(Current) : null;
+    }
+
+    private async Task SendReply()
+    {
+        if (string.IsNullOrWhiteSpace(_reply) || _sendingReply) return;
+
+        _sendingReply = true;
+        var story = Current;
+        var result = await StoryService.ReplyAsync(story, _reply);
+        _sendingReply = false;
+
+        if (result.IsSuccess)
+        {
+            _reply = "";
+            Snackbar.Add($"Reply sent to {story.User.Username ?? story.User.DisplayName}", Severity.Success);
+            // Zurück zur Story, damit sie weiterläuft
+            await _root.FocusAsync();
+        }
+        else
+        {
+            Snackbar.Add(result.ErrorMessage ?? "Your reply could not be sent.", Severity.Error);
+        }
+    }
+
+    private async Task OnReplyKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "Enter": await SendReply(); break;
+            case "Escape": await _root.FocusAsync(); break;
+        }
     }
 
     private async Task DeleteCurrent()
@@ -226,4 +361,6 @@
         _cts.Dispose();
         return ValueTask.CompletedTask;
     }
+
+    private sealed record VideoState(double Time, double Duration, bool Ended, bool Muted);
 }

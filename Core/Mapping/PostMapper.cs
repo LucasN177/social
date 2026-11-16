@@ -46,6 +46,7 @@ public static class PostMapper
             IsVerified = record.IsVerified
         },
         ImageUrl = record.ImageUrl,
+        MediaType = record.MediaType,
         CreatedAt = record.CreatedAt.ToLocalTime(),
         ExpiresAt = record.ExpiresAt.ToLocalTime(),
         IsViewed = record.IsViewed,

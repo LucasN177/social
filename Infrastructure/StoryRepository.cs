@@ -26,12 +26,21 @@ public class StoryRepository(Supabase.Client client) : IStoryRepository
         }
     }
 
-    public async Task<IResponse<string>> UploadStoryImage(string userId, byte[] data, string contentType)
+    public async Task<IResponse<string>> UploadStoryMedia(string userId, byte[] data, string contentType)
     {
         try
         {
             // Pfad muss mit der User-ID beginnen (Policy media_insert_own_folder in 010_storage.sql)
-            var path = $"{userId}/{Guid.NewGuid():N}.jpg";
+            var extension = contentType switch
+            {
+                "video/mp4" => "mp4",
+                "video/webm" => "webm",
+                "video/quicktime" => "mov",
+                "image/png" => "png",
+                "image/webp" => "webp",
+                _ => "jpg"
+            };
+            var path = $"{userId}/{Guid.NewGuid():N}.{extension}";
             var bucket = client.Storage.From(Bucket);
             await bucket.Upload(data, path, new FileOptions { ContentType = contentType });
             return Response<string>.Success(bucket.GetPublicUrl(path));
@@ -42,10 +51,10 @@ public class StoryRepository(Supabase.Client client) : IStoryRepository
         }
     }
 
-    public async Task<IResponse> DeleteStoryImage(string publicUrl)
+    public async Task<IResponse> DeleteStoryMedia(string publicUrl)
     {
         if (!StorageUrl.TryGetPath(publicUrl, Bucket, out var path))
-            return Response.Failure("Not a story image in our storage", null);
+            return Response.Failure("Not a story file in our storage", null);
 
         try
         {
@@ -58,12 +67,13 @@ public class StoryRepository(Supabase.Client client) : IStoryRepository
         }
     }
 
-    public async Task<IResponse<StoryRecord>> CreateStory(string userId, string imageUrl)
+    public async Task<IResponse<StoryRecord>> CreateStory(string userId, string mediaUrl, string mediaType)
     {
         try
         {
             // expires_at setzt die Datenbank (Default: jetzt + 24 h)
-            var result = await client.From<StoryRecord>().Insert(new StoryRecord { UserId = userId, ImageUrl = imageUrl });
+            var result = await client.From<StoryRecord>()
+                .Insert(new StoryRecord { UserId = userId, ImageUrl = mediaUrl, MediaType = mediaType });
             return result.Model is not null ? Response<StoryRecord>.Success(result.Model) : Response<StoryRecord>.Failure("Story not saved");
         }
         catch (Exception ex)
@@ -108,6 +118,23 @@ public class StoryRepository(Supabase.Client client) : IStoryRepository
         catch (Exception ex)
         {
             return Response<List<User>>.Failure(ex);
+        }
+    }
+
+    public async Task<IResponse<long>> ReplyToStory(long storyId, string content)
+    {
+        try
+        {
+            var conversationId = await client.Rpc<long>("reply_to_story", new Dictionary<string, object>
+            {
+                ["p_story_id"] = storyId,
+                ["p_content"] = content
+            });
+            return Response<long>.Success(conversationId);
+        }
+        catch (Exception ex)
+        {
+            return Response<long>.Failure(ex);
         }
     }
 }

@@ -7,8 +7,10 @@
     <div class="stories-strip">
         @* Eigene Story: ansehen (falls vorhanden) oder hinzufügen *@
         <div class="story-item">
-            <MudFileUpload T="IBrowserFile" Accept="image/png, image/jpeg, image/webp" FilesChanged="AddStory"
-                           MaxFileSize="MaxUploadBytes" Disabled="_uploading">
+            @* Mehrere Bilder/Videos auf einmal – jede Datei wird eine eigene Story *@
+            <MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept="image/png, image/jpeg, image/webp, video/mp4, video/webm, video/quicktime"
+                           FilesChanged="AddStories" MaxFileSize="IStoryService.MaxVideoBytes"
+                           MaximumFileCount="IStoryService.MaxItemsPerUpload" Disabled="_uploading">
                 <SelectedTemplate />
                 <CustomContent>
                     <div class="story-own">
@@ -64,7 +66,8 @@
 }
 
 @code {
-    private const long MaxUploadBytes = 20 * 1024 * 1024;
+    /// <summary>Für das bereits verkleinerte JPEG.</summary>
+    private const long MaxImageBytes = 20 * 1024 * 1024;
 
     private List<StoryGroup>? _groups;
     private StoryGroup? _ownGroup;
@@ -99,7 +102,7 @@
     private void Open(StoryGroup group) => _viewerStart = group;
 
     // Ohne eigene Story öffnet der Klick direkt die Dateiauswahl
-    private async Task OnOwnStoryClick(MudFileUpload<IBrowserFile> upload)
+    private async Task OnOwnStoryClick(MudFileUpload<IReadOnlyList<IBrowserFile>> upload)
     {
         if (_ownGroup is null)
             await upload.OpenFilePickerAsync();
@@ -118,34 +121,70 @@
         await Task.CompletedTask;
     }
 
-    private async Task AddStory(IBrowserFile? file)
+    private async Task AddStories(IReadOnlyList<IBrowserFile>? files)
     {
-        if (file is null) return;
+        if (files is not { Count: > 0 }) return;
+        if (files.Count > IStoryService.MaxItemsPerUpload)
+        {
+            Snackbar.Add($"You can add up to {IStoryService.MaxItemsPerUpload} photos or videos at once.", Severity.Warning);
+            return;
+        }
+
         _uploading = true;
         StateHasChanged();
 
         try
         {
-            // Hochformat, max. 1080 × 1920 – im Browser verkleinert
-            var resized = await file.RequestImageFileAsync("image/jpeg", 1080, 1920);
-            await using var stream = resized.OpenReadStream(MaxUploadBytes);
-            using var buffer = new MemoryStream();
-            await stream.CopyToAsync(buffer);
+            var uploads = new List<StoryUpload>();
+            foreach (var file in files)
+            {
+                var upload = await ReadFile(file);
+                if (upload is null)
+                {
+                    Snackbar.Add($"\"{file.Name}\" could not be read. Use JPG, PNG, WebP or MP4, WebM, MOV up to 50 MB.", Severity.Error);
+                    return;
+                }
+                uploads.Add(upload);
+            }
 
-            var result = await StoryService.AddStoryAsync(buffer.ToArray());
+            var result = await StoryService.AddStoriesAsync(uploads);
             if (result.IsSuccess)
-                Snackbar.Add("Added to your story", Severity.Success);
+                Snackbar.Add(result.Data == 1 ? "Added to your story" : $"{result.Data} items added to your story", Severity.Success);
             else
                 Snackbar.Add(result.ErrorMessage ?? "Your story could not be published.", Severity.Error);
-        }
-        catch (Exception)
-        {
-            Snackbar.Add("This image could not be read. Please choose a JPG, PNG or WebP.", Severity.Error);
         }
         finally
         {
             _uploading = false;
         }
+    }
+
+    private static async Task<StoryUpload?> ReadFile(IBrowserFile file)
+    {
+        try
+        {
+            if (file.ContentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
+            {
+                if (file.Size > IStoryService.MaxVideoBytes) return null;
+                return new StoryUpload(await ReadAll(file, IStoryService.MaxVideoBytes), file.ContentType);
+            }
+
+            // Hochformat, max. 1080 × 1920 – im Browser verkleinert
+            var resized = await file.RequestImageFileAsync("image/jpeg", 1080, 1920);
+            return new StoryUpload(await ReadAll(resized, MaxImageBytes), "image/jpeg");
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private static async Task<byte[]> ReadAll(IBrowserFile file, long maxBytes)
+    {
+        await using var stream = file.OpenReadStream(maxBytes);
+        using var buffer = new MemoryStream();
+        await stream.CopyToAsync(buffer);
+        return buffer.ToArray();
     }
 
     private void OnStoriesChanged() => InvokeAsync(async () =>

@@ -20,4 +20,12 @@ public class ChatMessage
     public string Content { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public bool IsMine { get; set; }
+    /// <summary>Antwort auf eine Story (story_url gesetzt).</summary>
+    public bool IsStoryReply => StoryUrl is not null;
+    /// <summary>URL des Story-Bilds/-Videos; nur anzeigen, solange <see cref="StoryAvailable"/> gilt.</summary>
+    public string? StoryUrl { get; set; }
+    /// <summary>false, sobald die Story gelöscht oder aufgeräumt wurde (story_id ist dann NULL).</summary>
+    public bool StoryAvailable { get; set; }
+    public bool StoryIsVideo =>
+        StoryUrl is not null && (StoryUrl.EndsWith(".mp4") || StoryUrl.EndsWith(".webm") || StoryUrl.EndsWith(".mov"));
 }

@@ -113,6 +113,7 @@ public class StoryFeedRecord : BaseModel
     [Column("is_verified")] public bool IsVerified { get; set; }
     [Column("is_viewed")] public bool IsViewed { get; set; }
     [Column("view_count")] public int ViewCount { get; set; }
+    [Column("media_type")] public string MediaType { get; set; } = "image";
 }
 
 /// <summary>Zeile der Tabelle stories – zum Anlegen und Löschen.</summary>
@@ -122,6 +123,7 @@ public class StoryRecord : BaseModel
     [PrimaryKey("id", false)] public long Id { get; set; }
     [Column("user_id")] public string UserId { get; set; } = string.Empty;
     [Column("image_url")] public string ImageUrl { get; set; } = string.Empty;
+    [Column("media_type")] public string MediaType { get; set; } = "image";
 }
 
 [Table("likes")]

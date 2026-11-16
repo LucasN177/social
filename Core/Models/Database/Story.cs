@@ -5,7 +5,11 @@ public class Story
 {
     public long Id { get; set; }
     public User User { get; set; } = new();
+    /// <summary>Bild- bzw. bei Videos die Video-URL.</summary>
     public string ImageUrl { get; set; } = string.Empty;
+    /// <summary>"image" oder "video".</summary>
+    public string MediaType { get; set; } = "image";
+    public bool IsVideo => MediaType == "video";
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime ExpiresAt { get; set; }
     public bool IsViewed { get; set; }

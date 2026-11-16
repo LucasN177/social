@@ -59,4 +59,7 @@ public class MessageRecord : BaseModel
     [Column("sender_id")] public string SenderId { get; set; } = string.Empty;
     [Column("content")] public string Content { get; set; } = string.Empty;
     [Column("created_at", ignoreOnInsert: true, ignoreOnUpdate: true)] public DateTime CreatedAt { get; set; }
+    // Nur über die RPC reply_to_story (019) gesetzt; die Insert-Policy verlangt sonst NULL
+    [Column("story_id", ignoreOnInsert: true, ignoreOnUpdate: true)] public long? StoryId { get; set; }
+    [Column("story_url", ignoreOnInsert: true, ignoreOnUpdate: true)] public string? StoryUrl { get; set; }
 }

@@ -93,3 +93,32 @@
     padding: 8px 8px 8px 12px;
     border-top: 1px solid var(--mud-palette-lines-default);
 }
+
+/* Antwort auf eine Story: Hinweis + Vorschau über dem Text */
+.chat-story {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 6px;
+    white-space: normal;
+}
+
+.chat-story-label {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.chat-story img,
+.chat-story video {
+    width: 96px;
+    aspect-ratio: 9 / 16;
+    object-fit: cover;
+    border-radius: 10px;
+    background: #000;
+}
+
+.chat-story-expired {
+    font-size: 0.8rem;
+    font-style: italic;
+    opacity: 0.75;
+}

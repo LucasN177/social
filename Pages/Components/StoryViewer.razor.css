@@ -153,3 +153,37 @@
     .story-viewer { animation: none; }
     .story-progress-bar { transition: none; }
 }
+
+/* Antworten auf fremde Stories */
+.story-reply {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.story-reply input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 999px;
+    font: inherit;
+    font-size: 0.9rem;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.35);
+    outline: none;
+}
+
+.story-reply input::placeholder {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.story-reply input:focus-visible {
+    border-color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+}

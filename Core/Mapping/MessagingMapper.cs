@@ -53,6 +53,8 @@ public static class MessagingMapper
         SenderId = record.SenderId,
         Content = record.Content,
         CreatedAt = record.CreatedAt.ToLocalTime(),
-        IsMine = record.SenderId == currentUserId
+        IsMine = record.SenderId == currentUserId,
+        StoryUrl = record.StoryUrl,
+        StoryAvailable = record.StoryId is not null
     };
 }
