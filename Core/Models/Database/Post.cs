@@ -19,4 +19,6 @@ public class Post
     /// <summary>"image", "text" oder "video" (Reel; die Video-URL steht dann in ImageUrls[0]).</summary>
     public string MediaType { get; set; } = "image";
     public bool IsVideo => MediaType == "video";
+    /// <summary>Zeitpunkt der letzten Bearbeitung, null = nie bearbeitet.</summary>
+    public DateTime? EditedAt { get; set; }
 }

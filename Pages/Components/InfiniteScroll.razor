@@ -1,0 +1,67 @@
+@* Infinite Scroll: lädt die nächste Seite, sobald dieses Element in die Nähe des sichtbaren Bereichs kommt.
+   Nur rendern, solange es noch weitere Seiten gibt – danach entfernt die Seite die Komponente. *@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div @ref="_sentinel" class="@($"d-flex justify-center align-center {Class}")" style="min-height: 48px" aria-live="polite">
+    @if (_loading)
+    {
+        <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="@Color" aria-label="Loading more" />
+    }
+</div>
+
+@code {
+    /// <summary>Lädt die nächste Seite. Als EventCallback, damit die Seite danach neu rendert.</summary>
+    [Parameter, EditorRequired] public EventCallback OnLoadMore { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public Color Color { get; set; } = Color.Primary;
+    /// <summary>Wie weit vor dem sichtbaren Bereich bereits nachgeladen wird (CSS-Margin).</summary>
+    [Parameter] public string RootMargin { get; set; } = "600px 0px";
+
+    private ElementReference _sentinel;
+    private DotNetObjectReference<InfiniteScroll>? _selfRef;
+    private bool _loading;
+    private bool _observe = true;
+    private bool _disposed;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_observe || _disposed) return;
+        _observe = false;
+        _selfRef ??= DotNetObjectReference.Create(this);
+        // Neu beobachten meldet sofort, ob das Element noch sichtbar ist – dann direkt weiterladen
+        await JS.InvokeVoidAsync("socialUi.observeSentinel", _sentinel, _selfRef, RootMargin);
+    }
+
+    [JSInvokable]
+    public async Task OnSentinelVisible()
+    {
+        if (_loading || _disposed) return;
+
+        _loading = true;
+        StateHasChanged();
+        try
+        {
+            await OnLoadMore.InvokeAsync();
+        }
+        finally
+        {
+            _loading = false;
+            _observe = true;
+            if (!_disposed) StateHasChanged();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+        try
+        {
+            await JS.InvokeVoidAsync("socialUi.disposeSentinel", _sentinel);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        _selfRef?.Dispose();
+    }
+}

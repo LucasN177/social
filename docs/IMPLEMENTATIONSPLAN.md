@@ -86,9 +86,9 @@ Supabase (Postgres + RLS, Auth, Storage, Realtime)
 - [x] Beitrag löschen (nur eigene, RLS) inkl. Bilder im Storage; Link kopieren
 - [x] Detailseite `/p/{id}`, Profil-Raster für „Posts“ und „Saved“
 - [x] Alte Avatar-Datei wird beim Ersetzen gelöscht
-- [ ] Beitrag bearbeiten
-- [ ] Kommentar-Likes (Tabelle `comment_likes` existiert bereits)
-- [ ] Infinite Scroll statt „Load more“
+- [x] Beitrag bearbeiten (`EditPostDialog`): Text und Ort, Hashtags werden neu erkannt, Hinweis „edited“; RPC `update_post`, Clients dürfen an `posts` nur noch Inhaltsspalten ändern
+- [x] Kommentar-Likes: Herz neben jedem Kommentar, optimistisch, Zähler per Trigger (`comment_details.is_liked`)
+- [x] Infinite Scroll statt „Load more“ (`InfiniteScroll`-Komponente mit IntersectionObserver) in Home, Profil-/Hashtag-Raster, Benachrichtigungen und Reels
 
 ### Phase 3 – Social Graph & Suche
 - [x] Folgen/Entfolgen (`FollowButton`, im Profil, in Vorschlägen, in Listen – bleibt überall synchron), Zähler per Trigger
@@ -154,6 +154,7 @@ Zum Einrichten genügt [`supabase/setup.sql`](../supabase/setup.sql) im Supabase
 | `015_stories_reels.sql` | View `story_feed`, RPCs `mark_story_viewed`, `story_viewers`, `create_reel`, Bucket `reels`, Upload-Limits |
 | `016_notifications_messages.sql` | View `notification_feed`, Chat-Tabellen + RLS, Views/RPCs für Chatliste, Lesestand und Ungelesen-Zähler |
 | `017_users_cleanup.sql` | Bereinigung älterer `users`-Tabellen (Usernames, NULL-Werte), danach Checks validiert |
+| `018_post_edit_comment_likes.sql` | `posts.edited_at`, Spaltenrechte auf `posts`, RPC `update_post`, `feed_posts`/`home_feed` um `edited_at`, `comment_details` um `is_liked` erweitert |
 
 Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als neues Skript mit der nächsten Nummer angelegt.
 

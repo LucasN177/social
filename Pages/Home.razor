@@ -63,15 +63,7 @@
 
             @if (_hasMore)
             {
-                <div class="d-flex justify-center my-4">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="LoadMore" Disabled="_loadingMore">
-                        @if (_loadingMore)
-                        {
-                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                        }
-                        Load more
-                    </MudButton>
-                </div>
+                <InfiniteScroll @key="_explore" OnLoadMore="LoadMore" Class="my-4" />
             }
             else
             {
@@ -152,7 +144,6 @@
     private List<User>? _suggestedUsers;
     private int _page;
     private bool _hasMore;
-    private bool _loadingMore;
     // false = "Following" (eigene + gefolgte Accounts), true = "Explore" (alle Posts)
     private bool _explore;
 
@@ -169,6 +160,7 @@
     {
         PostService.PostCreated += OnPostCreated;
         PostService.PostDeleted += OnPostDeleted;
+        PostService.PostUpdated += OnPostUpdated;
         UserService.ProfileChanged += OnProfileChanged;
         UserService.FollowChanged += OnFollowChanged;
 
@@ -196,14 +188,15 @@
 
     private async Task LoadMore()
     {
-        _loadingMore = true;
+        var explore = _explore;
         var posts = await LoadPage(_page + 1);
+        // Inzwischen auf den anderen Feed gewechselt – Ergebnis verwerfen
+        if (explore != _explore || _posts is null) return;
         _page++;
         _hasMore = posts.Count == IPostService.PageSize;
         // Doppelte vermeiden, falls zwischendurch neue Posts dazugekommen sind
         var known = _posts!.Select(p => p.Id).ToHashSet();
         _posts!.AddRange(posts.Where(p => !known.Contains(p.Id)));
-        _loadingMore = false;
     }
 
     private async Task LoadCurrentUser() => _currentUser = await UserService.GetCurrentUserAsync();
@@ -225,6 +218,9 @@
         StateHasChanged();
     });
 
+    // Bearbeitete Hashtags fließen in "Popular in your feed" ein
+    private void OnPostUpdated(Post _) => InvokeAsync(StateHasChanged);
+
     private void OnProfileChanged(User user) => InvokeAsync(() =>
     {
         _currentUser = user;
@@ -243,6 +239,7 @@
     {
         PostService.PostCreated -= OnPostCreated;
         PostService.PostDeleted -= OnPostDeleted;
+        PostService.PostUpdated -= OnPostUpdated;
         UserService.ProfileChanged -= OnProfileChanged;
         UserService.FollowChanged -= OnFollowChanged;
     }

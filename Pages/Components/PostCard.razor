@@ -19,6 +19,10 @@
             </a>
             <div class="post-sub">
                 <span title="@Post.CreatedAt.ToString("g")">@TimeAgo(Post.CreatedAt)</span>
+                @if (Post.EditedAt is { } editedAt)
+                {
+                    <span title="@($"Edited {editedAt:g}")"> · edited</span>
+                }
                 @if (!string.IsNullOrEmpty(Post.Location))
                 {
                     <span> · <MudIcon Icon="@Icons.Material.Outlined.Place" Style="font-size: 14px; vertical-align: -2px" /> @Post.Location</span>
@@ -29,6 +33,7 @@
             <MudMenuItem Icon="@Icons.Material.Outlined.Link" OnClick="CopyLink">Copy link</MudMenuItem>
             @if (PostService.IsOwnPost(Post))
             {
+                <MudMenuItem Icon="@Icons.Material.Outlined.Edit" OnClick="EditPost">Edit</MudMenuItem>
                 <MudMenuItem Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" OnClick="DeletePost">Delete</MudMenuItem>
             }
         </MudMenu>
@@ -115,8 +120,17 @@
                             <a href="@ProfileUrl(comment.User)"><UserAvatar User="comment.User" Size="28" /></a>
                             <div class="flex-grow-1">
                                 <span><a href="@ProfileUrl(comment.User)" class="post-author-inline">@(comment.User.Username ?? AuthorName(comment.User))</a> @comment.Content</span>
-                                <div class="post-sub">@TimeAgo(comment.CreatedAt)</div>
+                                <div class="post-sub">
+                                    @TimeAgo(comment.CreatedAt)
+                                    @if (comment.LikesCount > 0)
+                                    {
+                                        <span> · @comment.LikesCount.ToString("N0") @(comment.LikesCount == 1 ? "like" : "likes")</span>
+                                    }
+                                </div>
                             </div>
+                            <MudIconButton Icon="@(comment.IsLiked ? Icons.Material.Filled.Favorite : Icons.Material.Outlined.FavoriteBorder)"
+                                           Color="@(comment.IsLiked ? Color.Error : Color.Default)" Size="Size.Small" Class="comment-like"
+                                           OnClick="() => ToggleCommentLike(comment)" aria-label="@(comment.IsLiked ? "Unlike comment" : "Like comment")" />
                             @if (PostService.IsOwnComment(comment) || PostService.IsOwnPost(Post))
                             {
                                 <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" OnClick="() => DeleteComment(comment)" aria-label="Delete comment" />
@@ -219,6 +233,22 @@
             _comments?.Remove(comment);
         else
             Snackbar.Add("The comment could not be deleted.", Severity.Error);
+    }
+
+    private async Task ToggleCommentLike(Comment comment)
+    {
+        var result = await PostService.ToggleCommentLikeAsync(comment);
+        if (!result.IsSuccess) Snackbar.Add("That didn't work. Please try again.", Severity.Error);
+    }
+
+    private async Task EditPost()
+    {
+        var parameters = new DialogParameters<EditPostDialog> { { x => x.Post, Post } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<EditPostDialog>("Edit post", parameters, options);
+        var result = await dialog.Result;
+        if (result is { Canceled: false })
+            Snackbar.Add("Post updated", Severity.Success);
     }
 
     private async Task DeletePost()

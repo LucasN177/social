@@ -8,5 +8,25 @@ window.socialUi = {
     isNearBottom: (element, threshold) => {
         if (!element) return true;
         return element.scrollHeight - element.scrollTop - element.clientHeight <= (threshold ?? 80);
+    },
+
+    // Infinite Scroll: ruft dotNetRef.OnSentinelVisible auf, sobald das Element in die Nähe
+    // des sichtbaren Bereichs kommt. Erneutes Aufrufen beobachtet neu – der Observer meldet
+    // dann sofort den aktuellen Stand, auch wenn das Element nach dem Nachladen noch sichtbar ist.
+    observeSentinel: (element, dotNetRef, rootMargin) => {
+        if (!element) return;
+        element.__sentinelObserver?.disconnect();
+        const observer = new IntersectionObserver((entries) => {
+            if (entries.some(e => e.isIntersecting)) {
+                dotNetRef.invokeMethodAsync('OnSentinelVisible').catch(() => { /* Komponente bereits entfernt */ });
+            }
+        }, { rootMargin: rootMargin || '600px 0px' });
+        observer.observe(element);
+        element.__sentinelObserver = observer;
+    },
+
+    disposeSentinel: (element) => {
+        element?.__sentinelObserver?.disconnect();
+        if (element) element.__sentinelObserver = null;
     }
 };

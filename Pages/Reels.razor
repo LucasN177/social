@@ -72,10 +72,9 @@ else
 
         @if (_hasMore)
         {
+            @* Kommt der Platzhalter ins Bild, wird die nächste Seite geladen *@
             <section class="reel reel--more">
-                <MudButton Variant="Variant.Outlined" Style="color: #fff; border-color: #fff" OnClick="LoadMore" Disabled="_loadingMore">
-                    Load more reels
-                </MudButton>
+                <InfiniteScroll OnLoadMore="LoadMore" Color="Color.Inherit" RootMargin="0px" />
             </section>
         }
     </div>
@@ -91,7 +90,6 @@ else
     private bool _muted = true;
     private int _page;
     private bool _hasMore;
-    private bool _loadingMore;
 
     protected override async Task OnInitializedAsync()
     {
@@ -112,13 +110,11 @@ else
 
     private async Task LoadMore()
     {
-        _loadingMore = true;
         var reels = await PostService.GetReelsAsync(_page + 1);
         _page++;
         _hasMore = reels.Count == IPostService.PageSize;
         var known = _reels!.Select(r => r.Id).ToHashSet();
         _reels!.AddRange(reels.Where(r => !known.Contains(r.Id)));
-        _loadingMore = false;
     }
 
     private async Task ToggleMute()

@@ -29,6 +29,8 @@ public class FeedPostRecord : BaseModel
     [Column("image_urls")] public List<string> ImageUrls { get; set; } = new();
     [Column("is_liked")] public bool IsLiked { get; set; }
     [Column("is_bookmarked")] public bool IsBookmarked { get; set; }
+    /// <summary>Zeitpunkt der letzten Bearbeitung (018), null = nie bearbeitet.</summary>
+    [Column("edited_at")] public DateTime? EditedAt { get; set; }
 }
 
 /// <summary>Zeile der View home_feed (014): eigene Posts + Posts gefolgter Accounts.</summary>
@@ -73,6 +75,14 @@ public class CommentDetailRecord : BaseModel
     [Column("nachname")] public string Nachname { get; set; } = string.Empty;
     [Column("profile_image_url")] public string ProfileImageUrl { get; set; } = string.Empty;
     [Column("is_verified")] public bool IsVerified { get; set; }
+    [Column("is_liked")] public bool IsLiked { get; set; }
+}
+
+[Table("comment_likes")]
+public class CommentLikeRecord : BaseModel
+{
+    [PrimaryKey("comment_id", true)] public long CommentId { get; set; }
+    [PrimaryKey("user_id", true)] public string UserId { get; set; } = string.Empty;
 }
 
 /// <summary>Zeile der Tabelle comments – zum Anlegen und Löschen.</summary>

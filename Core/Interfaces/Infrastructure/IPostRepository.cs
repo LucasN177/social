@@ -33,6 +33,9 @@ public interface IPostRepository
     /// <summary>Legt Post und Bilder über die RPC create_post (013_posts_api.sql) atomar an.</summary>
     public Task<IResponse<long>> CreatePost(string content, string location, List<string> tags, List<string> imageUrls);
 
+    /// <summary>Ändert Text, Ort und Hashtags über die RPC update_post (018_post_edit_comment_likes.sql).</summary>
+    public Task<IResponse> UpdatePost(long id, string content, string location, List<string> tags);
+
     public Task<IResponse> DeletePost(long id);
 
     public Task<IResponse<string>> UploadPostImage(string userId, byte[] data, string contentType);
@@ -49,4 +52,6 @@ public interface IPostRepository
     public Task<IResponse<CommentRecord>> AddComment(long postId, string userId, string content);
 
     public Task<IResponse> DeleteComment(long commentId);
+
+    public Task<IResponse> SetCommentLike(long commentId, string userId, bool liked);
 }

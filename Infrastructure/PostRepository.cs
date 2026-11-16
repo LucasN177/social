@@ -144,6 +144,25 @@ public class PostRepository(Supabase.Client client) : IPostRepository
         }
     }
 
+    public async Task<IResponse> UpdatePost(long id, string content, string location, List<string> tags)
+    {
+        try
+        {
+            await client.Rpc("update_post", new Dictionary<string, object>
+            {
+                ["p_post_id"] = id,
+                ["p_content"] = content,
+                ["p_location"] = location,
+                ["p_tags"] = tags
+            });
+            return Response.Success();
+        }
+        catch (Exception ex)
+        {
+            return Response.Failure(ex.Message, ex);
+        }
+    }
+
     public async Task<IResponse> DeletePost(long id)
     {
         try
@@ -308,6 +327,22 @@ public class PostRepository(Supabase.Client client) : IPostRepository
         catch (Exception ex)
         {
             return Response<CommentRecord>.Failure(ex);
+        }
+    }
+
+    public async Task<IResponse> SetCommentLike(long commentId, string userId, bool liked)
+    {
+        try
+        {
+            if (liked)
+                await client.From<CommentLikeRecord>().Insert(new CommentLikeRecord { CommentId = commentId, UserId = userId });
+            else
+                await client.From<CommentLikeRecord>().Where(x => x.CommentId == commentId && x.UserId == userId).Delete();
+            return Response.Success();
+        }
+        catch (Exception ex)
+        {
+            return Response.Failure(ex.Message, ex);
         }
     }
 

@@ -14,6 +14,7 @@ public class PostService(IPostRepository postRepository, IAuthService authServic
 
     public event Action<long>? PostCreated;
     public event Action<long>? PostDeleted;
+    public event Action<Post>? PostUpdated;
 
     private string? CurrentUserId => authService.CurrentUser?.Id;
 
@@ -153,6 +154,30 @@ public class PostService(IPostRepository postRepository, IAuthService authServic
         return Response.Success();
     }
 
+    public async Task<IResponse> UpdatePostAsync(Post post, string content, string location)
+    {
+        if (!IsOwnPost(post)) return Response.Failure("You can only edit your own posts.", null);
+
+        content = content.Trim();
+        location = location.Trim();
+        if (content.Length == 0 && post.ImageUrls.Count == 0)
+            return Response.Failure("Write something.", null);
+        if (content.Length > IPostService.MaxContentLength)
+            return Response.Failure($"Your post is too long (max. {IPostService.MaxContentLength} characters).", null);
+
+        var tags = ExtractTags(content);
+        var result = await postRepository.UpdatePost(post.Id, content, location, tags);
+        if (!result.IsSuccess)
+            return Response.Failure("Your changes could not be saved. Please try again.", result.Exception);
+
+        post.Content = content;
+        post.Location = location;
+        post.Tags = tags;
+        post.EditedAt = DateTime.Now;
+        PostUpdated?.Invoke(post);
+        return Response.Success();
+    }
+
     public async Task<IResponse> ToggleLikeAsync(Post post)
     {
         if (CurrentUserId is not { } userId) return Response.Failure("Please sign in again.", null);
@@ -215,6 +240,22 @@ public class PostService(IPostRepository postRepository, IAuthService authServic
         var result = await postRepository.DeleteComment(comment.Id);
         if (result.IsSuccess)
             post.CommentsCount = Math.Max(0, post.CommentsCount - 1);
+        return result;
+    }
+
+    public async Task<IResponse> ToggleCommentLikeAsync(Comment comment)
+    {
+        if (CurrentUserId is not { } userId) return Response.Failure("Please sign in again.", null);
+
+        comment.IsLiked = !comment.IsLiked;
+        comment.LikesCount = Math.Max(0, comment.LikesCount + (comment.IsLiked ? 1 : -1));
+
+        var result = await postRepository.SetCommentLike(comment.Id, userId, comment.IsLiked);
+        if (!result.IsSuccess)
+        {
+            comment.IsLiked = !comment.IsLiked;
+            comment.LikesCount = Math.Max(0, comment.LikesCount + (comment.IsLiked ? 1 : -1));
+        }
         return result;
     }
 

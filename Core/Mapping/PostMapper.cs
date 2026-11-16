@@ -28,7 +28,8 @@ public static class PostMapper
         SharesCount = record.SharesCount,
         IsLiked = record.IsLiked,
         IsBookmarked = record.IsBookmarked,
-        CreatedAt = record.CreatedAt.ToLocalTime()
+        CreatedAt = record.CreatedAt.ToLocalTime(),
+        EditedAt = record.EditedAt?.ToLocalTime()
     };
 
     public static Story ToStory(this StoryFeedRecord record) => new()
@@ -67,6 +68,7 @@ public static class PostMapper
         },
         Content = record.Content,
         LikesCount = record.LikesCount,
+        IsLiked = record.IsLiked,
         CreatedAt = record.CreatedAt.ToLocalTime()
     };
 }

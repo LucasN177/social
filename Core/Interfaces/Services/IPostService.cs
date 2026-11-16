@@ -13,6 +13,8 @@ public interface IPostService
 
     event Action<long>? PostCreated;
     event Action<long>? PostDeleted;
+    /// <summary>Nach dem Bearbeiten eines Posts (Text, Ort, Hashtags).</summary>
+    event Action<Post>? PostUpdated;
 
     /// <summary>Alle Posts (Explore).</summary>
     Task<List<Post>> GetFeedAsync(int page);
@@ -32,6 +34,9 @@ public interface IPostService
     Task<IResponse<long>> CreatePostAsync(string content, string location, IReadOnlyList<PostImageUpload> images);
     Task<IResponse> DeletePostAsync(Post post);
 
+    /// <summary>Ändert Text und Ort eines eigenen Posts, Hashtags werden neu erkannt. Aktualisiert den Post bei Erfolg.</summary>
+    Task<IResponse> UpdatePostAsync(Post post, string content, string location);
+
     /// <summary>Schaltet sofort um (optimistisch) und setzt bei Fehler zurück.</summary>
     Task<IResponse> ToggleLikeAsync(Post post);
     Task<IResponse> ToggleBookmarkAsync(Post post);
@@ -39,6 +44,8 @@ public interface IPostService
     Task<List<Comment>> GetCommentsAsync(long postId);
     Task<IResponse<Comment>> AddCommentAsync(Post post, string content);
     Task<IResponse> DeleteCommentAsync(Post post, Comment comment);
+    /// <summary>Schaltet sofort um (optimistisch) und setzt bei Fehler zurück.</summary>
+    Task<IResponse> ToggleCommentLikeAsync(Comment comment);
 
     bool IsOwnPost(Post post);
     bool IsOwnComment(Comment comment);

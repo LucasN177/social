@@ -65,9 +65,7 @@
 
             @if (_hasMore)
             {
-                <div class="d-flex justify-center pa-3">
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="LoadMore" Disabled="_loadingMore">Load more</MudButton>
-                </div>
+                <InfiniteScroll OnLoadMore="LoadMore" Class="pa-3" />
             }
         }
     </MudPaper>
@@ -77,7 +75,6 @@
     private List<Notification>? _items;
     private int _page;
     private bool _hasMore;
-    private bool _loadingMore;
 
     protected override async Task OnInitializedAsync()
     {
@@ -94,12 +91,10 @@
 
     private async Task LoadMore()
     {
-        _loadingMore = true;
         var more = await NotificationService.GetNotificationsAsync(_page + 1);
         _page++;
         _hasMore = more.Count == INotificationService.PageSize;
         _items!.AddRange(more.Where(n => _items.All(x => x.Id != n.Id)));
-        _loadingMore = false;
     }
 
     private static string Describe(NotificationType type) => type switch

@@ -53,3 +53,4 @@ powershell -ExecutionPolicy Bypass -File supabase/build-setup.ps1
 | `015_stories_reels.sql` | View `story_feed`, RPCs `mark_story_viewed`, `story_viewers`, `create_reel`; Bucket `reels` (50 MB, nur Video), Größen-/Typ-Limits für Bild-Buckets |
 | `016_notifications_messages.sql` | View `notification_feed` + RPCs (Zähler, gelesen); Direktnachrichten: `conversations`, `conversation_members`, `messages` (RLS nur Mitglieder), `get_or_create_direct_conversation`, View `conversation_list`, `mark_conversation_read`, `unread_message_count` |
 | `017_users_cleanup.sql` | Bereinigt ältere `users`-Tabellen: ungültige Usernames reparieren bzw. leeren, NULL → ""/0, Spalten NOT NULL, Checks aus 012 validieren |
+| `018_post_edit_comment_likes.sql` | `posts.edited_at`; Clients dürfen an `posts` nur Inhalt/Ort/Tags ändern; RPC `update_post`; `feed_posts`/`home_feed` um `edited_at`, `comment_details` um `is_liked` erweitert |

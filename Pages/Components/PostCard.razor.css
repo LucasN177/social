@@ -152,3 +152,13 @@
 @media (prefers-reduced-motion: reduce) {
     .post-actions ::deep .like-pulse { animation: none; }
 }
+
+/* Herz neben Kommentaren: kompakt und an der ersten Zeile ausgerichtet */
+.post-comment ::deep .comment-like {
+    margin-top: -6px;
+    padding: 4px;
+}
+
+.post-comment ::deep .comment-like .mud-icon-root {
+    font-size: 16px;
+}

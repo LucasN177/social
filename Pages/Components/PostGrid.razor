@@ -1,4 +1,4 @@
-@* Raster aus Post-Vorschaubildern mit "Load more"; die Datenquelle kommt von außen *@
+@* Raster aus Post-Vorschaubildern mit Infinite Scroll; die Datenquelle kommt von außen *@
 
 @if (_posts is null)
 {
@@ -55,9 +55,7 @@ else
 
     @if (_hasMore)
     {
-        <div class="d-flex justify-center my-4">
-            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="LoadMore" Disabled="_loadingMore">Load more</MudButton>
-        </div>
+        <InfiniteScroll OnLoadMore="LoadMore" Class="my-4" />
     }
 }
 
@@ -72,7 +70,6 @@ else
     private List<Post>? _posts;
     private int _page;
     private bool _hasMore;
-    private bool _loadingMore;
 
     protected override async Task OnInitializedAsync()
     {
@@ -83,13 +80,11 @@ else
 
     private async Task LoadMore()
     {
-        _loadingMore = true;
         var posts = await LoadPage(_page + 1);
         _page++;
         _hasMore = posts.Count == IPostService.PageSize;
         var known = _posts!.Select(p => p.Id).ToHashSet();
         _posts!.AddRange(posts.Where(p => !known.Contains(p.Id)));
-        _loadingMore = false;
     }
 
     private static string Preview(Post post) =>
