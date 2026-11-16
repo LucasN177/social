@@ -3,7 +3,7 @@ using Social.Pages.Components;
 
 namespace Social.Tests.Components;
 
-public class RichTextTests : BunitContext
+public class RichTextTests : ComponentTestBase
 {
     private IReadOnlyList<(string Href, string Text)> Links(string text) =>
         Render<RichText>(p => p.Add(c => c.Text, text))

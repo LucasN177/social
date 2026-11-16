@@ -1,0 +1,971 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Deutsche UI-Texte. Schlüssel = englischer Text (siehe Resources/SharedResource.cs). -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="&quot;{0}&quot; could not be read. Use JPG, PNG, WebP or MP4, WebM, MOV up to 50 MB." xml:space="preserve">
+    <value>„{0}“ konnte nicht gelesen werden. Verwende JPG, PNG, WebP oder MP4, WebM, MOV bis 50 MB.</value>
+  </data>
+  <data name="{0} followers" xml:space="preserve">
+    <value>{0} Follower</value>
+  </data>
+  <data name="{0} items added to your story" xml:space="preserve">
+    <value>{0} Elemente zu deiner Story hinzugefügt</value>
+  </data>
+  <data name="{0} likes" xml:space="preserve">
+    <value>{0} „Gefällt mir“-Angaben</value>
+  </data>
+  <data name="{0} members" xml:space="preserve">
+    <value>{0} Mitglieder</value>
+  </data>
+  <data name="{0} members · say hi 👋" xml:space="preserve">
+    <value>{0} Mitglieder · sag Hallo 👋</value>
+  </data>
+  <data name="{0} photos were skipped (unsupported, too large or over the limit)." xml:space="preserve">
+    <value>{0} Fotos wurden übersprungen (nicht unterstützt, zu groß oder über dem Limit).</value>
+  </data>
+  <data name="{0} posts" xml:space="preserve">
+    <value>{0} Beiträge</value>
+  </data>
+  <data name="{0} views" xml:space="preserve">
+    <value>{0} Aufrufe</value>
+  </data>
+  <data name="{0}d" xml:space="preserve">
+    <value>{0} T.</value>
+  </data>
+  <data name="{0}h" xml:space="preserve">
+    <value>{0} Std.</value>
+  </data>
+  <data name="{0}m" xml:space="preserve">
+    <value>{0} Min.</value>
+  </data>
+  <data name="📷 Photo" xml:space="preserve">
+    <value>📷 Foto</value>
+  </data>
+  <data name="1 like" xml:space="preserve">
+    <value>1 „Gefällt mir“</value>
+  </data>
+  <data name="1 post" xml:space="preserve">
+    <value>1 Beitrag</value>
+  </data>
+  <data name="1 view" xml:space="preserve">
+    <value>1 Aufruf</value>
+  </data>
+  <data name="3–30 characters: a–z, 0–9, . and _" xml:space="preserve">
+    <value>3–30 Zeichen: a–z, 0–9, . und _</value>
+  </data>
+  <data name="A message can't be empty." xml:space="preserve">
+    <value>Eine Nachricht darf nicht leer sein.</value>
+  </data>
+  <data name="A photo could not be uploaded." xml:space="preserve">
+    <value>Ein Foto konnte nicht hochgeladen werden.</value>
+  </data>
+  <data name="A photo could not be uploaded. Please try again." xml:space="preserve">
+    <value>Ein Foto konnte nicht hochgeladen werden. Bitte versuch es noch einmal.</value>
+  </data>
+  <data name="A video could not be uploaded." xml:space="preserve">
+    <value>Ein Video konnte nicht hochgeladen werden.</value>
+  </data>
+  <data name="Account" xml:space="preserve">
+    <value>Konto</value>
+  </data>
+  <data name="Accounts" xml:space="preserve">
+    <value>Accounts</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Hinzufügen</value>
+  </data>
+  <data name="Add a comment…" xml:space="preserve">
+    <value>Kommentieren …</value>
+  </data>
+  <data name="Add a photo or write something." xml:space="preserve">
+    <value>Füge ein Foto hinzu oder schreib etwas.</value>
+  </data>
+  <data name="Add a video" xml:space="preserve">
+    <value>Video hinzufügen</value>
+  </data>
+  <data name="Add at least two people." xml:space="preserve">
+    <value>Füge mindestens zwei Personen hinzu.</value>
+  </data>
+  <data name="Add location" xml:space="preserve">
+    <value>Ort hinzufügen</value>
+  </data>
+  <data name="Add people" xml:space="preserve">
+    <value>Personen hinzufügen</value>
+  </data>
+  <data name="Add photo" xml:space="preserve">
+    <value>Foto hinzufügen</value>
+  </data>
+  <data name="Add photos" xml:space="preserve">
+    <value>Fotos hinzufügen</value>
+  </data>
+  <data name="Add to your story" xml:space="preserve">
+    <value>Zu deiner Story hinzufügen</value>
+  </data>
+  <data name="Added to your story" xml:space="preserve">
+    <value>Zu deiner Story hinzugefügt</value>
+  </data>
+  <data name="Almost done! Check your inbox and confirm your email, then sign in." xml:space="preserve">
+    <value>Fast geschafft! Prüf dein Postfach, bestätige deine E-Mail-Adresse und melde dich dann an.</value>
+  </data>
+  <data name="An account with this email already exists." xml:space="preserve">
+    <value>Es gibt bereits ein Konto mit dieser E-Mail-Adresse.</value>
+  </data>
+  <data name="Appearance" xml:space="preserve">
+    <value>Darstellung</value>
+  </data>
+  <data name="At least 8 characters" xml:space="preserve">
+    <value>Mindestens 8 Zeichen</value>
+  </data>
+  <data name="At least 8 characters." xml:space="preserve">
+    <value>Mindestens 8 Zeichen.</value>
+  </data>
+  <data name="Avatar" xml:space="preserve">
+    <value>Profilbild</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Zurück</value>
+  </data>
+  <data name="Back to feed" xml:space="preserve">
+    <value>Zurück zum Feed</value>
+  </data>
+  <data name="Back to home" xml:space="preserve">
+    <value>Zurück zur Startseite</value>
+  </data>
+  <data name="Back to messages" xml:space="preserve">
+    <value>Zurück zu den Nachrichten</value>
+  </data>
+  <data name="Be the first to share something." xml:space="preserve">
+    <value>Teile jetzt den ersten Beitrag.</value>
+  </data>
+  <data name="Bio" xml:space="preserve">
+    <value>Bio</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="Cancel editing" xml:space="preserve">
+    <value>Bearbeiten abbrechen</value>
+  </data>
+  <data name="Caption" xml:space="preserve">
+    <value>Bildunterschrift</value>
+  </data>
+  <data name="Change photo" xml:space="preserve">
+    <value>Foto ändern</value>
+  </data>
+  <data name="Chat" xml:space="preserve">
+    <value>Chat</value>
+  </data>
+  <data name="Chat with {0}" xml:space="preserve">
+    <value>Chat mit {0}</value>
+  </data>
+  <data name="Choose a photo or video." xml:space="preserve">
+    <value>Wähle ein Foto oder Video.</value>
+  </data>
+  <data name="Choose a username so others can find you." xml:space="preserve">
+    <value>Wähle einen Benutzernamen, damit andere dich finden können.</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Schließen</value>
+  </data>
+  <data name="Close viewers" xml:space="preserve">
+    <value>Zuschauerliste schließen</value>
+  </data>
+  <data name="commented on your post." xml:space="preserve">
+    <value>hat deinen Beitrag kommentiert.</value>
+  </data>
+  <data name="Comments" xml:space="preserve">
+    <value>Kommentare</value>
+  </data>
+  <data name="Comments can have 1 to 2000 characters." xml:space="preserve">
+    <value>Kommentare können 1 bis 2000 Zeichen lang sein.</value>
+  </data>
+  <data name="Complete profile" xml:space="preserve">
+    <value>Profil vervollständigen</value>
+  </data>
+  <data name="Copy link" xml:space="preserve">
+    <value>Link kopieren</value>
+  </data>
+  <data name="Copy profile link" xml:space="preserve">
+    <value>Profillink kopieren</value>
+  </data>
+  <data name="Could not follow. Please try again." xml:space="preserve">
+    <value>Folgen hat nicht geklappt. Bitte versuch es noch einmal.</value>
+  </data>
+  <data name="Could not unfollow. Please try again." xml:space="preserve">
+    <value>Entfolgen hat nicht geklappt. Bitte versuch es noch einmal.</value>
+  </data>
+  <data name="Cover" xml:space="preserve">
+    <value>Titelbild</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Erstellen</value>
+  </data>
+  <data name="Create account" xml:space="preserve">
+    <value>Konto erstellen</value>
+  </data>
+  <data name="Create post" xml:space="preserve">
+    <value>Beitrag erstellen</value>
+  </data>
+  <data name="Create reel" xml:space="preserve">
+    <value>Reel erstellen</value>
+  </data>
+  <data name="Create your account in seconds." xml:space="preserve">
+    <value>Erstelle dein Konto in Sekunden.</value>
+  </data>
+  <data name="Dark mode" xml:space="preserve">
+    <value>Dunkelmodus</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Löschen</value>
+  </data>
+  <data name="Delete comment" xml:space="preserve">
+    <value>Kommentar löschen</value>
+  </data>
+  <data name="Delete message?" xml:space="preserve">
+    <value>Nachricht löschen?</value>
+  </data>
+  <data name="Delete post?" xml:space="preserve">
+    <value>Beitrag löschen?</value>
+  </data>
+  <data name="Delete story" xml:space="preserve">
+    <value>Story löschen</value>
+  </data>
+  <data name="Delete story?" xml:space="preserve">
+    <value>Story löschen?</value>
+  </data>
+  <data name="Drag &amp; drop or click · up to {0} photos" xml:space="preserve">
+    <value>Hierher ziehen oder klicken · bis zu {0} Fotos</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Bearbeiten</value>
+  </data>
+  <data name="Edit post" xml:space="preserve">
+    <value>Beitrag bearbeiten</value>
+  </data>
+  <data name="Edit profile" xml:space="preserve">
+    <value>Profil bearbeiten</value>
+  </data>
+  <data name="edited" xml:space="preserve">
+    <value>bearbeitet</value>
+  </data>
+  <data name="Edited {0}" xml:space="preserve">
+    <value>Bearbeitet am {0}</value>
+  </data>
+  <data name="Editing message" xml:space="preserve">
+    <value>Nachricht bearbeiten</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>E-Mail</value>
+  </data>
+  <data name="Email is required." xml:space="preserve">
+    <value>E-Mail ist erforderlich.</value>
+  </data>
+  <data name="Explore" xml:space="preserve">
+    <value>Entdecken</value>
+  </data>
+  <data name="Explore posts" xml:space="preserve">
+    <value>Beiträge entdecken</value>
+  </data>
+  <data name="Find people" xml:space="preserve">
+    <value>Personen finden</value>
+  </data>
+  <data name="First name" xml:space="preserve">
+    <value>Vorname</value>
+  </data>
+  <data name="Follow" xml:space="preserve">
+    <value>Folgen</value>
+  </data>
+  <data name="Follow {0}" xml:space="preserve">
+    <value>{0} folgen</value>
+  </data>
+  <data name="Follow people to see their posts here, or share your own." xml:space="preserve">
+    <value>Folge anderen, um hier ihre Beiträge zu sehen, oder teile deine eigenen.</value>
+  </data>
+  <data name="Followers" xml:space="preserve">
+    <value>Follower</value>
+  </data>
+  <data name="Following" xml:space="preserve">
+    <value>Gefolgt</value>
+  </data>
+  <data name="Former member" xml:space="preserve">
+    <value>Ehemaliges Mitglied</value>
+  </data>
+  <data name="Group name" xml:space="preserve">
+    <value>Gruppenname</value>
+  </data>
+  <data name="Group names can have 1 to 60 characters." xml:space="preserve">
+    <value>Gruppennamen können 1 bis 60 Zeichen lang sein.</value>
+  </data>
+  <data name="Group options" xml:space="preserve">
+    <value>Gruppenoptionen</value>
+  </data>
+  <data name="Groups can have up to {0} members." xml:space="preserve">
+    <value>Gruppen können bis zu {0} Mitglieder haben.</value>
+  </data>
+  <data name="Groups can have up to 32 members." xml:space="preserve">
+    <value>Gruppen können bis zu 32 Mitglieder haben.</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Startseite</value>
+  </data>
+  <data name="Invalid email or password." xml:space="preserve">
+    <value>E-Mail oder Passwort ist falsch.</value>
+  </data>
+  <data name="It may have been deleted." xml:space="preserve">
+    <value>Er wurde möglicherweise gelöscht.</value>
+  </data>
+  <data name="It will be removed for everyone in this chat." xml:space="preserve">
+    <value>Sie wird für alle in diesem Chat entfernt.</value>
+  </data>
+  <data name="It will be removed for everyone." xml:space="preserve">
+    <value>Sie wird für alle entfernt.</value>
+  </data>
+  <data name="just now" xml:space="preserve">
+    <value>gerade eben</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Sprache</value>
+  </data>
+  <data name="Last name" xml:space="preserve">
+    <value>Nachname</value>
+  </data>
+  <data name="Leave" xml:space="preserve">
+    <value>Verlassen</value>
+  </data>
+  <data name="Leave group" xml:space="preserve">
+    <value>Gruppe verlassen</value>
+  </data>
+  <data name="Leave group?" xml:space="preserve">
+    <value>Gruppe verlassen?</value>
+  </data>
+  <data name="Like" xml:space="preserve">
+    <value>Gefällt mir</value>
+  </data>
+  <data name="Like comment" xml:space="preserve">
+    <value>Kommentar gefällt mir</value>
+  </data>
+  <data name="liked your post." xml:space="preserve">
+    <value>gefällt dein Beitrag.</value>
+  </data>
+  <data name="Likes, comments, mentions and new followers will show up here." xml:space="preserve">
+    <value>„Gefällt mir“-Angaben, Kommentare, Erwähnungen und neue Follower erscheinen hier.</value>
+  </data>
+  <data name="Link copied" xml:space="preserve">
+    <value>Link kopiert</value>
+  </data>
+  <data name="Loading more" xml:space="preserve">
+    <value>Mehr wird geladen</value>
+  </data>
+  <data name="Location" xml:space="preserve">
+    <value>Ort</value>
+  </data>
+  <data name="Login failed" xml:space="preserve">
+    <value>Anmeldung fehlgeschlagen</value>
+  </data>
+  <data name="Members" xml:space="preserve">
+    <value>Mitglieder</value>
+  </data>
+  <data name="mentioned you." xml:space="preserve">
+    <value>hat dich erwähnt.</value>
+  </data>
+  <data name="Message" xml:space="preserve">
+    <value>Nachricht</value>
+  </data>
+  <data name="Message deleted" xml:space="preserve">
+    <value>Nachricht gelöscht</value>
+  </data>
+  <data name="Message options" xml:space="preserve">
+    <value>Nachrichtenoptionen</value>
+  </data>
+  <data name="Message…" xml:space="preserve">
+    <value>Nachricht …</value>
+  </data>
+  <data name="Messages" xml:space="preserve">
+    <value>Nachrichten</value>
+  </data>
+  <data name="Messages ({0} unread)" xml:space="preserve">
+    <value>Nachrichten ({0} ungelesen)</value>
+  </data>
+  <data name="Messages can have up to 2000 characters." xml:space="preserve">
+    <value>Nachrichten können bis zu 2000 Zeichen lang sein.</value>
+  </data>
+  <data name="Move left" xml:space="preserve">
+    <value>Nach links verschieben</value>
+  </data>
+  <data name="MP4, WebM or MOV · up to 50 MB · vertical works best" xml:space="preserve">
+    <value>MP4, WebM oder MOV · bis 50 MB · Hochformat funktioniert am besten</value>
+  </data>
+  <data name="Mute" xml:space="preserve">
+    <value>Ton aus</value>
+  </data>
+  <data name="New group" xml:space="preserve">
+    <value>Neue Gruppe</value>
+  </data>
+  <data name="New message" xml:space="preserve">
+    <value>Neue Nachricht</value>
+  </data>
+  <data name="New post" xml:space="preserve">
+    <value>Neuer Beitrag</value>
+  </data>
+  <data name="New reel" xml:space="preserve">
+    <value>Neues Reel</value>
+  </data>
+  <data name="No accounts found for “{0}”." xml:space="preserve">
+    <value>Keine Accounts für „{0}“ gefunden.</value>
+  </data>
+  <data name="No current session" xml:space="preserve">
+    <value>Keine aktive Sitzung</value>
+  </data>
+  <data name="No current user" xml:space="preserve">
+    <value>Kein angemeldeter Benutzer</value>
+  </data>
+  <data name="No followers yet." xml:space="preserve">
+    <value>Noch keine Follower.</value>
+  </data>
+  <data name="No hashtags found for “{0}”." xml:space="preserve">
+    <value>Keine Hashtags für „{0}“ gefunden.</value>
+  </data>
+  <data name="No login available" xml:space="preserve">
+    <value>Keine Anmeldung vorhanden</value>
+  </data>
+  <data name="No messages yet" xml:space="preserve">
+    <value>Noch keine Nachrichten</value>
+  </data>
+  <data name="No notifications yet" xml:space="preserve">
+    <value>Noch keine Benachrichtigungen</value>
+  </data>
+  <data name="No people found." xml:space="preserve">
+    <value>Keine Personen gefunden.</value>
+  </data>
+  <data name="No posts with this hashtag yet" xml:space="preserve">
+    <value>Noch keine Beiträge mit diesem Hashtag</value>
+  </data>
+  <data name="No posts yet" xml:space="preserve">
+    <value>Noch keine Beiträge</value>
+  </data>
+  <data name="No reels yet" xml:space="preserve">
+    <value>Noch keine Reels</value>
+  </data>
+  <data name="No suggestions right now." xml:space="preserve">
+    <value>Gerade keine Vorschläge.</value>
+  </data>
+  <data name="No views yet." xml:space="preserve">
+    <value>Noch keine Aufrufe.</value>
+  </data>
+  <data name="Not following anyone yet." xml:space="preserve">
+    <value>Du folgst noch niemandem.</value>
+  </data>
+  <data name="Nothing saved yet" xml:space="preserve">
+    <value>Noch nichts gespeichert</value>
+  </data>
+  <data name="Notifications" xml:space="preserve">
+    <value>Benachrichtigungen</value>
+  </data>
+  <data name="Notifications ({0} unread)" xml:space="preserve">
+    <value>Benachrichtigungen ({0} ungelesen)</value>
+  </data>
+  <data name="One photo was skipped (unsupported, too large or over the limit)." xml:space="preserve">
+    <value>Ein Foto wurde übersprungen (nicht unterstützt, zu groß oder über dem Limit).</value>
+  </data>
+  <data name="Only you can see what you've saved." xml:space="preserve">
+    <value>Nur du kannst sehen, was du gespeichert hast.</value>
+  </data>
+  <data name="Open post" xml:space="preserve">
+    <value>Beitrag öffnen</value>
+  </data>
+  <data name="Open someone's profile and tap “Message” to start a chat." xml:space="preserve">
+    <value>Öffne ein Profil und tippe auf „Nachricht“, um einen Chat zu starten.</value>
+  </data>
+  <data name="Page not found" xml:space="preserve">
+    <value>Seite nicht gefunden</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Passwort</value>
+  </data>
+  <data name="Password is required." xml:space="preserve">
+    <value>Passwort ist erforderlich.</value>
+  </data>
+  <data name="Pause" xml:space="preserve">
+    <value>Pausieren</value>
+  </data>
+  <data name="People added" xml:space="preserve">
+    <value>Personen hinzugefügt</value>
+  </data>
+  <data name="People could not be added (max. 32 members)." xml:space="preserve">
+    <value>Personen konnten nicht hinzugefügt werden (max. 32 Mitglieder).</value>
+  </data>
+  <data name="People could not be added." xml:space="preserve">
+    <value>Personen konnten nicht hinzugefügt werden.</value>
+  </data>
+  <data name="Photo" xml:space="preserve">
+    <value>Foto</value>
+  </data>
+  <data name="Photo {0}" xml:space="preserve">
+    <value>Foto {0}</value>
+  </data>
+  <data name="Photo by {0}" xml:space="preserve">
+    <value>Foto von {0}</value>
+  </data>
+  <data name="Photo ready to send" xml:space="preserve">
+    <value>Foto bereit zum Senden</value>
+  </data>
+  <data name="Play" xml:space="preserve">
+    <value>Abspielen</value>
+  </data>
+  <data name="Please confirm your email address first." xml:space="preserve">
+    <value>Bitte bestätige zuerst deine E-Mail-Adresse.</value>
+  </data>
+  <data name="Please enter a valid email address." xml:space="preserve">
+    <value>Bitte gib eine gültige E-Mail-Adresse ein.</value>
+  </data>
+  <data name="Please sign in again." xml:space="preserve">
+    <value>Bitte melde dich erneut an.</value>
+  </data>
+  <data name="Popular in your feed" xml:space="preserve">
+    <value>Beliebt in deinem Feed</value>
+  </data>
+  <data name="Post" xml:space="preserve">
+    <value>Beitrag</value>
+  </data>
+  <data name="Post [comment button]" xml:space="preserve">
+    <value>Posten</value>
+  </data>
+  <data name="Post by {0}" xml:space="preserve">
+    <value>Beitrag von {0}</value>
+  </data>
+  <data name="Post deleted" xml:space="preserve">
+    <value>Beitrag gelöscht</value>
+  </data>
+  <data name="Post not available" xml:space="preserve">
+    <value>Beitrag nicht verfügbar</value>
+  </data>
+  <data name="Post options" xml:space="preserve">
+    <value>Beitragsoptionen</value>
+  </data>
+  <data name="Post updated" xml:space="preserve">
+    <value>Beitrag aktualisiert</value>
+  </data>
+  <data name="Posts" xml:space="preserve">
+    <value>Beiträge</value>
+  </data>
+  <data name="Posts with this hashtag" xml:space="preserve">
+    <value>Beiträge mit diesem Hashtag</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="Profile link copied" xml:space="preserve">
+    <value>Profillink kopiert</value>
+  </data>
+  <data name="Profile saved" xml:space="preserve">
+    <value>Profil gespeichert</value>
+  </data>
+  <data name="Reel" xml:space="preserve">
+    <value>Reel</value>
+  </data>
+  <data name="Reels" xml:space="preserve">
+    <value>Reels</value>
+  </data>
+  <data name="Register failed." xml:space="preserve">
+    <value>Registrierung fehlgeschlagen.</value>
+  </data>
+  <data name="Registration failed" xml:space="preserve">
+    <value>Registrierung fehlgeschlagen</value>
+  </data>
+  <data name="Remove from saved" xml:space="preserve">
+    <value>Aus Gespeichert entfernen</value>
+  </data>
+  <data name="Remove photo" xml:space="preserve">
+    <value>Foto entfernen</value>
+  </data>
+  <data name="Remove video" xml:space="preserve">
+    <value>Video entfernen</value>
+  </data>
+  <data name="Rename group" xml:space="preserve">
+    <value>Gruppe umbenennen</value>
+  </data>
+  <data name="Replied to your story" xml:space="preserve">
+    <value>Hat auf deine Story geantwortet</value>
+  </data>
+  <data name="Replies can have 1 to 2000 characters." xml:space="preserve">
+    <value>Antworten können 1 bis 2000 Zeichen haben.</value>
+  </data>
+  <data name="Reply sent to {0}" xml:space="preserve">
+    <value>Antwort an {0} gesendet</value>
+  </data>
+  <data name="Reply to {0}…" xml:space="preserve">
+    <value>Antworten an {0} …</value>
+  </data>
+  <data name="Reply to story" xml:space="preserve">
+    <value>Auf Story antworten</value>
+  </data>
+  <data name="Required." xml:space="preserve">
+    <value>Pflichtfeld.</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="Save changes" xml:space="preserve">
+    <value>Änderungen speichern</value>
+  </data>
+  <data name="Saved" xml:space="preserve">
+    <value>Gespeichert</value>
+  </data>
+  <data name="Saved to your profile" xml:space="preserve">
+    <value>In deinem Profil gespeichert</value>
+  </data>
+  <data name="Say hi to {0} 👋" xml:space="preserve">
+    <value>Sag Hallo zu {0} 👋</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Suche</value>
+  </data>
+  <data name="Search people or #hashtags" xml:space="preserve">
+    <value>Personen oder #Hashtags suchen</value>
+  </data>
+  <data name="Search people…" xml:space="preserve">
+    <value>Personen suchen …</value>
+  </data>
+  <data name="See more" xml:space="preserve">
+    <value>Mehr ansehen</value>
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value>Auswählen</value>
+  </data>
+  <data name="Selected photo" xml:space="preserve">
+    <value>Ausgewähltes Foto</value>
+  </data>
+  <data name="Send" xml:space="preserve">
+    <value>Senden</value>
+  </data>
+  <data name="Send reply" xml:space="preserve">
+    <value>Antwort senden</value>
+  </data>
+  <data name="sent you a message." xml:space="preserve">
+    <value>hat dir eine Nachricht gesendet.</value>
+  </data>
+  <data name="Server not reachable. Please check your connection." xml:space="preserve">
+    <value>Server nicht erreichbar. Bitte prüf deine Verbindung.</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="Share" xml:space="preserve">
+    <value>Teilen</value>
+  </data>
+  <data name="Share a short video to get things started." xml:space="preserve">
+    <value>Teile ein kurzes Video, um loszulegen.</value>
+  </data>
+  <data name="Share your first photo." xml:space="preserve">
+    <value>Teile dein erstes Foto.</value>
+  </data>
+  <data name="Sharing…" xml:space="preserve">
+    <value>Wird geteilt …</value>
+  </data>
+  <data name="Show password" xml:space="preserve">
+    <value>Passwort anzeigen</value>
+  </data>
+  <data name="Sign in" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="Sign in failed." xml:space="preserve">
+    <value>Anmeldung fehlgeschlagen.</value>
+  </data>
+  <data name="Sign out" xml:space="preserve">
+    <value>Abmelden</value>
+  </data>
+  <data name="Sign up" xml:space="preserve">
+    <value>Registrieren</value>
+  </data>
+  <data name="Sign up failed." xml:space="preserve">
+    <value>Registrierung fehlgeschlagen.</value>
+  </data>
+  <data name="Signed out locally only" xml:space="preserve">
+    <value>Nur lokal abgemeldet</value>
+  </data>
+  <data name="Some items could not be added. The others are in your story." xml:space="preserve">
+    <value>Einige Elemente konnten nicht hinzugefügt werden. Die anderen sind in deiner Story.</value>
+  </data>
+  <data name="Something went wrong" xml:space="preserve">
+    <value>Etwas ist schiefgelaufen</value>
+  </data>
+  <data name="Something went wrong. Please try again." xml:space="preserve">
+    <value>Etwas ist schiefgelaufen. Bitte versuch es noch einmal.</value>
+  </data>
+  <data name="started following you." xml:space="preserve">
+    <value>folgt dir jetzt.</value>
+  </data>
+  <data name="Story" xml:space="preserve">
+    <value>Story</value>
+  </data>
+  <data name="Story by {0}" xml:space="preserve">
+    <value>Story von {0}</value>
+  </data>
+  <data name="Story deleted" xml:space="preserve">
+    <value>Story gelöscht</value>
+  </data>
+  <data name="Story no longer available" xml:space="preserve">
+    <value>Story nicht mehr verfügbar</value>
+  </data>
+  <data name="Story video" xml:space="preserve">
+    <value>Story-Video</value>
+  </data>
+  <data name="Suggested for you" xml:space="preserve">
+    <value>Vorschläge für dich</value>
+  </data>
+  <data name="Suggestions for you" xml:space="preserve">
+    <value>Vorschläge für dich</value>
+  </data>
+  <data name="Tags" xml:space="preserve">
+    <value>Hashtags</value>
+  </data>
+  <data name="That didn't work. Please try again." xml:space="preserve">
+    <value>Das hat nicht geklappt. Bitte versuch es noch einmal.</value>
+  </data>
+  <data name="The chat could not be opened. Please try again." xml:space="preserve">
+    <value>Der Chat konnte nicht geöffnet werden. Bitte versuch es noch einmal.</value>
+  </data>
+  <data name="The comment could not be deleted." xml:space="preserve">
+    <value>Der Kommentar konnte nicht gelöscht werden.</value>
+  </data>
+  <data name="The group could not be created." xml:space="preserve">
+    <value>Die Gruppe konnte nicht erstellt werden.</value>
+  </data>
+  <data name="The group could not be renamed." xml:space="preserve">
+    <value>Die Gruppe konnte nicht umbenannt werden.</value>
+  </data>
+  <data name="The link may be broken or the page may have been removed." xml:space="preserve">
+    <value>Der Link ist möglicherweise fehlerhaft oder die Seite wurde entfernt.</value>
+  </data>
+  <data name="The message could not be deleted." xml:space="preserve">
+    <value>Die Nachricht konnte nicht gelöscht werden.</value>
+  </data>
+  <data name="The photo could not be uploaded." xml:space="preserve">
+    <value>Das Foto konnte nicht hochgeladen werden.</value>
+  </data>
+  <data name="The post could not be deleted." xml:space="preserve">
+    <value>Der Beitrag konnte nicht gelöscht werden.</value>
+  </data>
+  <data name="The profile picture could not be uploaded. Please try a smaller JPG or PNG." xml:space="preserve">
+    <value>Das Profilbild konnte nicht hochgeladen werden. Bitte versuch es mit einem kleineren JPG oder PNG.</value>
+  </data>
+  <data name="The story could not be deleted." xml:space="preserve">
+    <value>Die Story konnte nicht gelöscht werden.</value>
+  </data>
+  <data name="The video could not be uploaded. Please try again." xml:space="preserve">
+    <value>Das Video konnte nicht hochgeladen werden. Bitte versuch es noch einmal.</value>
+  </data>
+  <data name="There is no user called @{0}." xml:space="preserve">
+    <value>Es gibt keinen Benutzer namens @{0}.</value>
+  </data>
+  <data name="This can't be undone. Likes, comments and photos will be removed too." xml:space="preserve">
+    <value>Das kann nicht rückgängig gemacht werden. „Gefällt mir“-Angaben, Kommentare und Fotos werden ebenfalls entfernt.</value>
+  </data>
+  <data name="This conversation isn't available." xml:space="preserve">
+    <value>Diese Unterhaltung ist nicht verfügbar.</value>
+  </data>
+  <data name="This image could not be read. Please choose a JPG, PNG or WebP up to 10 MB." xml:space="preserve">
+    <value>Dieses Bild konnte nicht gelesen werden. Bitte wähle ein JPG, PNG oder WebP bis 10 MB.</value>
+  </data>
+  <data name="This page couldn't be shown. Please try again." xml:space="preserve">
+    <value>Diese Seite konnte nicht angezeigt werden. Bitte versuche es erneut.</value>
+  </data>
+  <data name="This page doesn't exist" xml:space="preserve">
+    <value>Diese Seite existiert nicht</value>
+  </data>
+  <data name="This photo could not be read. Please choose a JPG, PNG or WebP." xml:space="preserve">
+    <value>Dieses Foto konnte nicht gelesen werden. Bitte wähle ein JPG, PNG oder WebP.</value>
+  </data>
+  <data name="This username is already taken." xml:space="preserve">
+    <value>Dieser Benutzername ist bereits vergeben.</value>
+  </data>
+  <data name="This video could not be read. Please choose an MP4, WebM or MOV up to 50 MB." xml:space="preserve">
+    <value>Dieses Video konnte nicht gelesen werden. Bitte wähle eine MP4-, WebM- oder MOV-Datei bis 50 MB.</value>
+  </data>
+  <data name="Today" xml:space="preserve">
+    <value>Heute</value>
+  </data>
+  <data name="Too many attempts. Please try again later." xml:space="preserve">
+    <value>Zu viele Versuche. Bitte versuch es später noch einmal.</value>
+  </data>
+  <data name="Try again" xml:space="preserve">
+    <value>Erneut versuchen</value>
+  </data>
+  <data name="Type to search hashtags." xml:space="preserve">
+    <value>Tippe, um nach Hashtags zu suchen.</value>
+  </data>
+  <data name="Unfollow {0}" xml:space="preserve">
+    <value>{0} nicht mehr folgen</value>
+  </data>
+  <data name="Unknown" xml:space="preserve">
+    <value>Unbekannt</value>
+  </data>
+  <data name="Unlike" xml:space="preserve">
+    <value>Gefällt mir nicht mehr</value>
+  </data>
+  <data name="Unlike comment" xml:space="preserve">
+    <value>Kommentar gefällt mir nicht mehr</value>
+  </data>
+  <data name="Unmute" xml:space="preserve">
+    <value>Ton an</value>
+  </data>
+  <data name="User not found" xml:space="preserve">
+    <value>Benutzer nicht gefunden</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>Benutzername</value>
+  </data>
+  <data name="Username is required." xml:space="preserve">
+    <value>Benutzername ist erforderlich.</value>
+  </data>
+  <data name="Usernames may only contain a–z, 0–9, . and _ (3–30 characters)." xml:space="preserve">
+    <value>Benutzernamen dürfen nur a–z, 0–9, . und _ enthalten (3–30 Zeichen).</value>
+  </data>
+  <data name="Videos can be up to 50 MB." xml:space="preserve">
+    <value>Videos dürfen bis zu 50 MB groß sein.</value>
+  </data>
+  <data name="View 1 comment" xml:space="preserve">
+    <value>1 Kommentar ansehen</value>
+  </data>
+  <data name="View all {0} comments" xml:space="preserve">
+    <value>Alle {0} Kommentare ansehen</value>
+  </data>
+  <data name="View my profile" xml:space="preserve">
+    <value>Mein Profil ansehen</value>
+  </data>
+  <data name="View story of {0}" xml:space="preserve">
+    <value>Story von {0} ansehen</value>
+  </data>
+  <data name="View your story" xml:space="preserve">
+    <value>Deine Story ansehen</value>
+  </data>
+  <data name="Viewed by" xml:space="preserve">
+    <value>Gesehen von</value>
+  </data>
+  <data name="Welcome back! Sign in to continue." xml:space="preserve">
+    <value>Willkommen zurück! Melde dich an, um fortzufahren.</value>
+  </data>
+  <data name="Write a caption… use #hashtags" xml:space="preserve">
+    <value>Schreib eine Bildunterschrift … mit #Hashtags</value>
+  </data>
+  <data name="Write a message or add a photo." xml:space="preserve">
+    <value>Schreib eine Nachricht oder füge ein Foto hinzu.</value>
+  </data>
+  <data name="Write something." xml:space="preserve">
+    <value>Schreib etwas.</value>
+  </data>
+  <data name="Yesterday" xml:space="preserve">
+    <value>Gestern</value>
+  </data>
+  <data name="You are offline. Please check your connection." xml:space="preserve">
+    <value>Du bist offline. Bitte prüf deine Verbindung.</value>
+  </data>
+  <data name="You can add up to {0} photos or videos at once." xml:space="preserve">
+    <value>Du kannst bis zu {0} Fotos oder Videos auf einmal hinzufügen.</value>
+  </data>
+  <data name="You can add up to 10 photos or videos at once." xml:space="preserve">
+    <value>Du kannst bis zu 10 Fotos oder Videos auf einmal hinzufügen.</value>
+  </data>
+  <data name="You can add up to 10 photos." xml:space="preserve">
+    <value>Du kannst bis zu 10 Fotos hinzufügen.</value>
+  </data>
+  <data name="You can only delete your own messages." xml:space="preserve">
+    <value>Du kannst nur deine eigenen Nachrichten löschen.</value>
+  </data>
+  <data name="You can only edit your own messages." xml:space="preserve">
+    <value>Du kannst nur deine eigenen Nachrichten bearbeiten.</value>
+  </data>
+  <data name="You can only edit your own posts." xml:space="preserve">
+    <value>Du kannst nur deine eigenen Beiträge bearbeiten.</value>
+  </data>
+  <data name="You can't follow yourself." xml:space="preserve">
+    <value>Du kannst dir nicht selbst folgen.</value>
+  </data>
+  <data name="You can't reply to your own story." xml:space="preserve">
+    <value>Du kannst nicht auf deine eigene Story antworten.</value>
+  </data>
+  <data name="You could not leave the group." xml:space="preserve">
+    <value>Du konntest die Gruppe nicht verlassen.</value>
+  </data>
+  <data name="You don't have permission to change your profile. Please run supabase/setup.sql in Supabase." xml:space="preserve">
+    <value>Du hast keine Berechtigung, dein Profil zu ändern. Bitte führ supabase/setup.sql in Supabase aus.</value>
+  </data>
+  <data name="You replied to a story" xml:space="preserve">
+    <value>Du hast auf eine Story geantwortet</value>
+  </data>
+  <data name="You seem to be offline. Please check your connection." xml:space="preserve">
+    <value>Du scheinst offline zu sein. Bitte prüf deine Verbindung.</value>
+  </data>
+  <data name="You won't receive new messages from this group anymore." xml:space="preserve">
+    <value>Du erhältst keine neuen Nachrichten mehr aus dieser Gruppe.</value>
+  </data>
+  <data name="You: " xml:space="preserve">
+    <value>Du: </value>
+  </data>
+  <data name="You're all caught up ✨" xml:space="preserve">
+    <value>Du bist auf dem neuesten Stand ✨</value>
+  </data>
+  <data name="You're offline. New posts and messages will load when you're back online." xml:space="preserve">
+    <value>Du bist offline. Neue Beiträge und Nachrichten werden geladen, sobald du wieder online bist.</value>
+  </data>
+  <data name="Your bio can have at most 160 characters." xml:space="preserve">
+    <value>Deine Bio darf höchstens 160 Zeichen lang sein.</value>
+  </data>
+  <data name="Your caption is too long (max. 2200 characters)." xml:space="preserve">
+    <value>Deine Bildunterschrift ist zu lang (max. 2200 Zeichen).</value>
+  </data>
+  <data name="Your changes could not be saved." xml:space="preserve">
+    <value>Deine Änderungen konnten nicht gespeichert werden.</value>
+  </data>
+  <data name="Your changes could not be saved. Please try again." xml:space="preserve">
+    <value>Deine Änderungen konnten nicht gespeichert werden. Bitte versuch es noch einmal.</value>
+  </data>
+  <data name="Your comment could not be posted." xml:space="preserve">
+    <value>Dein Kommentar konnte nicht gepostet werden.</value>
+  </data>
+  <data name="Your feed is empty" xml:space="preserve">
+    <value>Dein Feed ist leer</value>
+  </data>
+  <data name="Your message could not be sent." xml:space="preserve">
+    <value>Deine Nachricht konnte nicht gesendet werden.</value>
+  </data>
+  <data name="Your post could not be published." xml:space="preserve">
+    <value>Dein Beitrag konnte nicht veröffentlicht werden.</value>
+  </data>
+  <data name="Your post could not be published. Please try again." xml:space="preserve">
+    <value>Dein Beitrag konnte nicht veröffentlicht werden. Bitte versuch es noch einmal.</value>
+  </data>
+  <data name="Your post is live 🎉" xml:space="preserve">
+    <value>Dein Beitrag ist online 🎉</value>
+  </data>
+  <data name="Your post is too long (max. 2200 characters)." xml:space="preserve">
+    <value>Dein Beitrag ist zu lang (max. 2200 Zeichen).</value>
+  </data>
+  <data name="Your profile could not be loaded." xml:space="preserve">
+    <value>Dein Profil konnte nicht geladen werden.</value>
+  </data>
+  <data name="Your profile could not be saved." xml:space="preserve">
+    <value>Dein Profil konnte nicht gespeichert werden.</value>
+  </data>
+  <data name="Your profile could not be saved. Please try again." xml:space="preserve">
+    <value>Dein Profil konnte nicht gespeichert werden. Bitte versuch es noch einmal.</value>
+  </data>
+  <data name="Your reel could not be published. Please try again." xml:space="preserve">
+    <value>Dein Reel konnte nicht veröffentlicht werden. Bitte versuch es noch einmal.</value>
+  </data>
+  <data name="Your reel is live 🎬" xml:space="preserve">
+    <value>Dein Reel ist online 🎬</value>
+  </data>
+  <data name="Your reply could not be sent." xml:space="preserve">
+    <value>Deine Antwort konnte nicht gesendet werden.</value>
+  </data>
+  <data name="Your story" xml:space="preserve">
+    <value>Deine Story</value>
+  </data>
+  <data name="Your story could not be published." xml:space="preserve">
+    <value>Deine Story konnte nicht veröffentlicht werden.</value>
+  </data>
+</root>

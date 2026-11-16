@@ -5,14 +5,14 @@
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
 
-<PageTitle>Messages - Social</PageTitle>
+<PageTitle>@L["Messages"] - Social</PageTitle>
 
 <div style="max-width: 640px; margin: 0 auto">
     <div class="d-flex align-center justify-space-between mb-4">
-        <MudText Typo="Typo.h5">Messages</MudText>
+        <MudText Typo="Typo.h5">@L["Messages"]</MudText>
         <div class="d-flex flex-wrap gap-1">
-            <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.GroupAdd" OnClick="CreateGroup">New group</MudButton>
-            <MudButton Href="search" Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Edit">New message</MudButton>
+            <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.GroupAdd" OnClick="CreateGroup">@L["New group"]</MudButton>
+            <MudButton Href="search" Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Edit">@L["New message"]</MudButton>
         </div>
     </div>
 
@@ -34,10 +34,10 @@
         {
             <div class="pa-8 text-center">
                 <MudIcon Icon="@Icons.Material.Outlined.Forum" Size="Size.Large" Color="Color.Primary" />
-                <MudText Typo="Typo.h6" Class="mt-2">No messages yet</MudText>
-                <MudText Typo="Typo.body2" Class="mud-text-secondary">Open someone's profile and tap “Message” to start a chat.</MudText>
+                <MudText Typo="Typo.h6" Class="mt-2">@L["No messages yet"]</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Open someone's profile and tap “Message” to start a chat."]</MudText>
                 <MudButton Href="search" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
-                           StartIcon="@Icons.Material.Outlined.PersonSearch">Find people</MudButton>
+                           StartIcon="@Icons.Material.Outlined.PersonSearch">@L["Find people"]</MudButton>
             </div>
         }
         else
@@ -81,13 +81,13 @@
     private static string Preview(Conversation conversation)
     {
         if (!conversation.HasMessages)
-            return conversation.IsGroup ? $"{conversation.MemberCount} members · say hi 👋" : "";
+            return conversation.IsGroup ? Loc.L["{0} members · say hi 👋", conversation.MemberCount].Value : "";
 
-        var prefix = conversation.LastMessageIsMine ? "You: "
+        var prefix = conversation.LastMessageIsMine ? Loc.L["You: "].Value
             : conversation.IsGroup && !string.IsNullOrEmpty(conversation.LastSenderName) ? $"{conversation.LastSenderName}: "
             : "";
-        var text = conversation.LastMessageIsDeleted ? "Message deleted"
-            : conversation.LastMessageIsImage && string.IsNullOrWhiteSpace(conversation.LastMessage) ? "📷 Photo"
+        var text = conversation.LastMessageIsDeleted ? Loc.L["Message deleted"].Value
+            : conversation.LastMessageIsImage && string.IsNullOrWhiteSpace(conversation.LastMessage) ? Loc.L["📷 Photo"].Value
             : conversation.LastMessageIsImage ? $"📷 {conversation.LastMessage}"
             : conversation.LastMessage;
         return prefix + text;
@@ -97,7 +97,7 @@
     {
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
         var parameters = new DialogParameters<GroupDialog> { { x => x.Mode, GroupDialogMode.Create } };
-        var dialog = await DialogService.ShowAsync<GroupDialog>("New group", parameters, options);
+        var dialog = await DialogService.ShowAsync<GroupDialog>(L["New group"].Value, parameters, options);
         if (await dialog.Result is { Canceled: false, Data: long id })
             Navigation.NavigateTo($"messages/{id}");
     }

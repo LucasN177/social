@@ -15,7 +15,7 @@
         else if (_users.Count == 0)
         {
             <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary py-6">
-                @(ShowFollowers ? "No followers yet." : "Not following anyone yet.")
+                @(ShowFollowers ? L["No followers yet."] : L["Not following anyone yet."])
             </MudText>
         }
         else

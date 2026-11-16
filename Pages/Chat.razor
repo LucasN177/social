@@ -8,26 +8,26 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<PageTitle>@(_chat is null ? "Chat" : _chat.IsGroup ? _chat.Name : $"Chat with {_chat.Name}") - Social</PageTitle>
+<PageTitle>@(_chat is null ? L["Chat"].Value : _chat.IsGroup ? _chat.Name : L["Chat with {0}", _chat.Name].Value) - Social</PageTitle>
 
 <div class="chat">
     <div class="chat-header">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="messages" aria-label="Back to messages" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="messages" aria-label="@L["Back to messages"]" />
         @if (_chat is { IsGroup: true })
         {
             <button type="button" class="chat-partner chat-partner--button" @onclick="ShowMembers">
                 <UserAvatar User="_chat.AvatarUser" Size="36" />
                 <div style="min-width: 0">
                     <div class="font-weight-bold chat-title">@_chat.Name</div>
-                    <div class="mud-text-secondary" style="font-size: 0.8rem">@_chat.Members.Count members</div>
+                    <div class="mud-text-secondary" style="font-size: 0.8rem">@L["{0} members", _chat.Members.Count]</div>
                 </div>
             </button>
             <MudSpacer />
-            <MudMenu Icon="@Icons.Material.Filled.MoreVert" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="Group options">
-                <MudMenuItem Icon="@Icons.Material.Outlined.Group" OnClick="ShowMembers">Members</MudMenuItem>
-                <MudMenuItem Icon="@Icons.Material.Outlined.PersonAdd" OnClick="AddMembers">Add people</MudMenuItem>
-                <MudMenuItem Icon="@Icons.Material.Outlined.Edit" OnClick="RenameGroup">Rename group</MudMenuItem>
-                <MudMenuItem Icon="@Icons.Material.Outlined.Logout" IconColor="Color.Error" OnClick="LeaveGroup">Leave group</MudMenuItem>
+            <MudMenu Icon="@Icons.Material.Filled.MoreVert" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="@L["Group options"]">
+                <MudMenuItem Icon="@Icons.Material.Outlined.Group" OnClick="ShowMembers">@L["Members"]</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Outlined.PersonAdd" OnClick="AddMembers">@L["Add people"]</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Outlined.Edit" OnClick="RenameGroup">@L["Rename group"]</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Outlined.Logout" IconColor="Color.Error" OnClick="LeaveGroup">@L["Leave group"]</MudMenuItem>
             </MudMenu>
         }
         else if (_chat?.Partner is { } partner)
@@ -49,14 +49,14 @@
         }
         else if (_chat is null)
         {
-            <div class="pa-8 text-center mud-text-secondary">This conversation isn't available.</div>
+            <div class="pa-8 text-center mud-text-secondary">@L["This conversation isn't available."]</div>
         }
         else if (_messages.Count == 0)
         {
             <div class="chat-empty">
                 <UserAvatar User="_chat.AvatarUser" Size="72" />
                 <MudText Typo="Typo.subtitle1" Class="mt-2">
-                    Say hi to @_chat.Name 👋
+                    @L["Say hi to {0} 👋", _chat.Name]
                 </MudText>
             </div>
         }
@@ -86,9 +86,9 @@
                     @if (message.IsMine && !message.IsDeleted)
                     {
                         <MudMenu Icon="@Icons.Material.Filled.MoreHoriz" Size="Size.Small" Dense="true" Class="chat-actions"
-                                 AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopRight" aria-label="Message options">
-                            <MudMenuItem Icon="@Icons.Material.Outlined.Edit" OnClick="() => StartEdit(message)">Edit</MudMenuItem>
-                            <MudMenuItem Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" OnClick="() => DeleteMessage(message)">Delete</MudMenuItem>
+                                 AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopRight" aria-label="@L["Message options"]">
+                            <MudMenuItem Icon="@Icons.Material.Outlined.Edit" OnClick="() => StartEdit(message)">@L["Edit"]</MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" OnClick="() => DeleteMessage(message)">@L["Delete"]</MudMenuItem>
                         </MudMenu>
                     }
                     <div class="chat-bubble @(message.IsDeleted ? "chat-bubble--deleted" : null)" title="@message.CreatedAt.ToString("g")">
@@ -100,7 +100,7 @@
                         {
                             <span class="chat-deleted">
                                 <MudIcon Icon="@Icons.Material.Outlined.Block" Style="font-size: 14px; vertical-align: -2px" />
-                                Message deleted
+                                @L["Message deleted"]
                             </span>
                         }
                         else
@@ -108,18 +108,18 @@
                             @if (message.IsStoryReply)
                             {
                                 <div class="chat-story">
-                                    <span class="chat-story-label">@(message.IsMine ? "You replied to a story" : "Replied to your story")</span>
+                                    <span class="chat-story-label">@(message.IsMine ? L["You replied to a story"] : L["Replied to your story"])</span>
                                     @if (message.StoryAvailable && message.StoryIsVideo)
                                     {
-                                        <video src="@($"{message.StoryUrl}#t=0.1")" muted playsinline preload="metadata" aria-label="Story"></video>
+                                        <video src="@($"{message.StoryUrl}#t=0.1")" muted playsinline preload="metadata" aria-label="@L["Story"]"></video>
                                     }
                                     else if (message.StoryAvailable)
                                     {
-                                        <img src="@message.StoryUrl" alt="Story" loading="lazy" />
+                                        <img src="@message.StoryUrl" alt="@L["Story"]" loading="lazy" />
                                     }
                                     else
                                     {
-                                        <span class="chat-story-expired">Story no longer available</span>
+                                        <span class="chat-story-expired">@L["Story no longer available"]</span>
                                     }
                                 </div>
                             }
@@ -128,7 +128,7 @@
                                 @if (message.ImageUrl is not null)
                                 {
                                     <a href="@message.ImageUrl" target="_blank" rel="noopener" class="chat-image">
-                                        <img src="@message.ImageUrl" alt="Photo" loading="lazy" />
+                                        <img src="@message.ImageUrl" alt="@L["Photo"]" loading="lazy" />
                                     </a>
                                 }
                                 else
@@ -146,7 +146,7 @@
                         <span class="chat-time">
                             @if (message.IsEdited && !message.IsDeleted)
                             {
-                                <text>edited · </text>
+                                <text>@L["edited"] · </text>
                             }
                             @message.CreatedAt.ToString("HH:mm")
                         </span>
@@ -162,16 +162,16 @@
         {
             <div class="chat-compose-hint">
                 <MudIcon Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" />
-                <span class="flex-grow-1">Editing message</span>
-                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="CancelEdit" aria-label="Cancel editing" />
+                <span class="flex-grow-1">@L["Editing message"]</span>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="CancelEdit" aria-label="@L["Cancel editing"]" />
             </div>
         }
         else if (_imagePreview is not null)
         {
             <div class="chat-compose-hint">
-                <img src="@_imagePreview" alt="Selected photo" class="chat-compose-thumb" />
-                <span class="flex-grow-1">Photo ready to send</span>
-                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="RemoveImage" Disabled="_sending" aria-label="Remove photo" />
+                <img src="@_imagePreview" alt="@L["Selected photo"]" class="chat-compose-thumb" />
+                <span class="flex-grow-1">@L["Photo ready to send"]</span>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="RemoveImage" Disabled="_sending" aria-label="@L["Remove photo"]" />
             </div>
         }
 
@@ -183,15 +183,15 @@
                     <SelectedTemplate />
                     <CustomContent>
                         <MudIconButton Icon="@Icons.Material.Outlined.Image" OnClick="@context.OpenFilePickerAsync"
-                                       Disabled="_sending" aria-label="Add photo" />
+                                       Disabled="_sending" aria-label="@L["Add photo"]" />
                     </CustomContent>
                 </MudFileUpload>
             }
-            <MudTextField T="string" @bind-Value="_draft" Immediate="true" Placeholder="Message…" Variant="Variant.Outlined"
+            <MudTextField T="string" @bind-Value="_draft" Immediate="true" Placeholder="@L["Message…"]" Variant="Variant.Outlined"
                           Margin="Margin.Dense" MaxLength="IMessageService.MaxMessageLength" Class="flex-grow-1 mt-0"
                           Disabled="_sending" AutoFocus="true" />
             <MudIconButton Icon="@(_editing is null ? Icons.Material.Filled.Send : Icons.Material.Filled.Check)" Color="Color.Primary"
-                           OnClick="Submit" Disabled="@(!CanSubmit)" aria-label="@(_editing is null ? "Send" : "Save changes")" />
+                           OnClick="Submit" Disabled="@(!CanSubmit)" aria-label="@(_editing is null ? L["Send"] : L["Save changes"])" />
         </div>
     }
 </div>
@@ -362,8 +362,8 @@
 
     private async Task DeleteMessage(ChatMessage message)
     {
-        var confirmed = await DialogService.ShowMessageBoxAsync("Delete message?", "It will be removed for everyone in this chat.",
-            yesText: "Delete", cancelText: "Cancel");
+        var confirmed = await DialogService.ShowMessageBoxAsync(L["Delete message?"].Value, L["It will be removed for everyone in this chat."].Value,
+            yesText: L["Delete"].Value, cancelText: L["Cancel"].Value);
         if (confirmed != true) return;
 
         var result = await MessageService.DeleteAsync(message);
@@ -410,8 +410,8 @@
 
     private string SenderName(ChatMessage message) =>
         _members.TryGetValue(message.SenderId, out var user)
-            ? string.IsNullOrWhiteSpace(user.DisplayName) ? user.Username ?? "Unknown" : user.DisplayName
-            : "Former member";
+            ? string.IsNullOrWhiteSpace(user.DisplayName) ? user.Username ?? L["Unknown"].Value : user.DisplayName
+            : L["Former member"].Value;
 
     private async Task ShowMembers()
     {
@@ -421,7 +421,7 @@
             { x => x.Mode, GroupDialogMode.Members },
             { x => x.Members, _chat.Members }
         };
-        await DialogService.ShowAsync<GroupDialog>($"{_chat.Members.Count} members", parameters, DialogOptions);
+        await DialogService.ShowAsync<GroupDialog>(L["{0} members", _chat.Members.Count].Value, parameters, DialogOptions);
     }
 
     private async Task AddMembers()
@@ -433,7 +433,7 @@
             { x => x.ConversationId, Id },
             { x => x.Members, _chat.Members }
         };
-        var dialog = await DialogService.ShowAsync<GroupDialog>("Add people", parameters, DialogOptions);
+        var dialog = await DialogService.ShowAsync<GroupDialog>(L["Add people"].Value, parameters, DialogOptions);
         if (await dialog.Result is { Canceled: false })
         {
             SetChat(await MessageService.GetChatAsync(Id) ?? _chat);
@@ -450,15 +450,15 @@
             { x => x.ConversationId, Id },
             { x => x.CurrentTitle, _chat.Title }
         };
-        var dialog = await DialogService.ShowAsync<GroupDialog>("Rename group", parameters, DialogOptions);
+        var dialog = await DialogService.ShowAsync<GroupDialog>(L["Rename group"].Value, parameters, DialogOptions);
         if (await dialog.Result is { Canceled: false, Data: string title })
             _chat.Title = title;
     }
 
     private async Task LeaveGroup()
     {
-        var confirmed = await DialogService.ShowMessageBoxAsync("Leave group?",
-            "You won't receive new messages from this group anymore.", yesText: "Leave", cancelText: "Cancel");
+        var confirmed = await DialogService.ShowMessageBoxAsync(L["Leave group?"].Value,
+            L["You won't receive new messages from this group anymore."].Value, yesText: L["Leave"].Value, cancelText: L["Cancel"].Value);
         if (confirmed != true) return;
 
         var result = await MessageService.LeaveGroupAsync(Id);
@@ -483,8 +483,8 @@
     }
 
     private static string DayLabel(DateTime date) =>
-        date.Date == DateTime.Today ? "Today"
-        : date.Date == DateTime.Today.AddDays(-1) ? "Yesterday"
+        date.Date == DateTime.Today ? Loc.L["Today"].Value
+        : date.Date == DateTime.Today.AddDays(-1) ? Loc.L["Yesterday"].Value
         : date.ToString(date.Year == DateTime.Today.Year ? "d MMMM" : "d MMMM yyyy");
 
     public ValueTask DisposeAsync()

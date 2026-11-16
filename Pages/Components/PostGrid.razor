@@ -13,10 +13,10 @@ else if (_posts.Count == 0)
 {
     <div class="post-grid-empty">
         <MudIcon Icon="@EmptyIcon" Size="Size.Large" />
-        <MudText Typo="Typo.subtitle1">@EmptyTitle</MudText>
+        <MudText Typo="Typo.subtitle1">@L[EmptyTitle]</MudText>
         @if (!string.IsNullOrEmpty(EmptyText))
         {
-            <MudText Typo="Typo.body2" Class="mud-text-secondary">@EmptyText</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L[EmptyText]</MudText>
         }
         @EmptyAction
     </div>

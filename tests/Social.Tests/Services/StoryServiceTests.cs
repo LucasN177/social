@@ -58,7 +58,7 @@ public class StoryServiceTests
         });
 
         Assert.False(result.IsSuccess);
-        Assert.Contains("1 of 3", result.ErrorMessage);
+        Assert.Equal("Some items could not be added. The others are in your story.", result.ErrorMessage);
         Assert.Equal(1, changed);
         _repo.Verify(r => r.DeleteStoryMedia("url-2"), Times.Once);
         _repo.Verify(r => r.UploadStoryMedia(TestData.MeId, It.Is<byte[]>(d => d[0] == 3), It.IsAny<string>()), Times.Never);

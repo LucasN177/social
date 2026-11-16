@@ -14,12 +14,12 @@ else if (_following is null)
 else if (_following == true)
 {
     <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size" FullWidth="FullWidth" Disabled="_busy"
-               OnClick="() => SetFollow(false)" aria-label="@($"Unfollow {Target.Username}")">Following</MudButton>
+               OnClick="() => SetFollow(false)" aria-label="@(L["Unfollow {0}", Target.Username ?? ""])">@L["Following"]</MudButton>
 }
 else
 {
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size" FullWidth="FullWidth" Disabled="_busy"
-               OnClick="() => SetFollow(true)" aria-label="@($"Follow {Target.Username}")">Follow</MudButton>
+               OnClick="() => SetFollow(true)" aria-label="@(L["Follow {0}", Target.Username ?? ""])">@L["Follow"]</MudButton>
 }
 
 @code {

@@ -16,10 +16,10 @@
                     <div class="story-own">
                         <button type="button" class="@RingClass(_ownGroup)" disabled="@_uploading"
                                 @onclick="() => OnOwnStoryClick(context)"
-                                aria-label="@(_ownGroup is null ? "Add to your story" : "View your story")">
+                                aria-label="@(_ownGroup is null ? L["Add to your story"] : L["View your story"])">
                             <UserAvatar User="_currentUser" Size="56" />
                         </button>
-                        <button type="button" class="story-add" @onclick="@context.OpenFilePickerAsync" disabled="@_uploading" aria-label="Add to your story">
+                        <button type="button" class="story-add" @onclick="@context.OpenFilePickerAsync" disabled="@_uploading" aria-label="@L["Add to your story"]">
                             @if (_uploading)
                             {
                                 <MudProgressCircular Size="Size.Small" Indeterminate="true" Style="width: 14px; height: 14px; color: #fff" />
@@ -32,7 +32,7 @@
                     </div>
                 </CustomContent>
             </MudFileUpload>
-            <span class="story-name">Your story</span>
+            <span class="story-name">@L["Your story"]</span>
         </div>
 
         @if (_groups is null)
@@ -50,7 +50,7 @@
             @foreach (var group in _groups.Where(g => g != _ownGroup))
             {
                 <div class="story-item" @key="group.User.Id">
-                    <button type="button" class="@RingClass(group)" @onclick="() => Open(group)" aria-label="@($"View story of {group.User.Username}")">
+                    <button type="button" class="@RingClass(group)" @onclick="() => Open(group)" aria-label="@(L["View story of {0}", group.User.Username ?? ""])">
                         <UserAvatar User="group.User" Size="56" />
                     </button>
                     <span class="story-name">@(group.User.Username ?? group.User.DisplayName)</span>
@@ -126,7 +126,7 @@
         if (files is not { Count: > 0 }) return;
         if (files.Count > IStoryService.MaxItemsPerUpload)
         {
-            Feedback.Warning($"You can add up to {IStoryService.MaxItemsPerUpload} photos or videos at once.");
+            Feedback.Warning(L["You can add up to {0} photos or videos at once.", IStoryService.MaxItemsPerUpload]);
             return;
         }
 
@@ -141,7 +141,7 @@
                 var upload = await ReadFile(file);
                 if (upload is null)
                 {
-                    Feedback.Error($"\"{file.Name}\" could not be read. Use JPG, PNG, WebP or MP4, WebM, MOV up to 50 MB.");
+                    Feedback.Error(L["\"{0}\" could not be read. Use JPG, PNG, WebP or MP4, WebM, MOV up to 50 MB.", file.Name]);
                     return;
                 }
                 uploads.Add(upload);
@@ -149,7 +149,7 @@
 
             var result = await StoryService.AddStoriesAsync(uploads);
             if (result.IsSuccess)
-                Feedback.Success(result.Data == 1 ? "Added to your story" : $"{result.Data} items added to your story");
+                Feedback.Success(result.Data == 1 ? L["Added to your story"] : L["{0} items added to your story", result.Data]);
             else
                 Feedback.Error(result, "Your story could not be published.");
         }

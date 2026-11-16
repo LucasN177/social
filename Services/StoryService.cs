@@ -63,7 +63,8 @@ public class StoryService(IStoryRepository storyRepository, IAuthService authSer
         if (published > 0) StoriesChanged?.Invoke();
 
         if (error is null) return Response<int>.Success(published);
-        return Response<int>.Failure(published > 0 ? $"{error} {published} of {uploads.Count} were added." : error);
+        // Feste Texte (keine Zahlen), damit sie sich übersetzen lassen (Schlüssel = englischer Text)
+        return Response<int>.Failure(published > 0 ? "Some items could not be added. The others are in your story." : error);
     }
 
     public async Task<IResponse> DeleteStoryAsync(Story story)

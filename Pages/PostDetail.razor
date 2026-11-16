@@ -3,12 +3,12 @@
 @inject IPostService PostService
 @inject NavigationManager Navigation
 
-<PageTitle>@(_post is null ? "Post" : $"Post by {_post.User.DisplayName}") - Social</PageTitle>
+<PageTitle>@(_post is null ? L["Post"] : L["Post by {0}", _post.User.DisplayName]) - Social</PageTitle>
 
 <div style="max-width: 640px; margin: 0 auto">
     <div class="d-flex align-center mb-2">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack" aria-label="Back" />
-        <MudText Typo="Typo.h6" Class="ml-2">Post</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack" aria-label="@L["Back"]" />
+        <MudText Typo="Typo.h6" Class="ml-2">@L["Post"]</MudText>
     </div>
 
     @if (_loading)
@@ -25,9 +25,9 @@
     {
         <MudPaper Elevation="0" Outlined="true" Class="pa-8 text-center" Style="border-radius: 16px">
             <MudIcon Icon="@Icons.Material.Outlined.HideImage" Size="Size.Large" Class="mud-text-secondary" />
-            <MudText Typo="Typo.h6" Class="mt-2">Post not available</MudText>
-            <MudText Typo="Typo.body2" Class="mud-text-secondary">It may have been deleted.</MudText>
-            <MudButton Href="./" Variant="Variant.Text" Color="Color.Primary" Class="mt-4">Back to home</MudButton>
+            <MudText Typo="Typo.h6" Class="mt-2">@L["Post not available"]</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["It may have been deleted."]</MudText>
+            <MudButton Href="./" Variant="Variant.Text" Color="Color.Primary" Class="mt-4">@L["Back to home"]</MudButton>
         </MudPaper>
     }
     else

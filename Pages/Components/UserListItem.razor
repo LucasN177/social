@@ -12,7 +12,7 @@
             </div>
             @if (!string.IsNullOrEmpty(User.Username))
             {
-                <div class="user-item-sub">@("@" + User.Username)@(ShowFollowers ? $" · {User.FollowersCount:N0} followers" : "")</div>
+                <div class="user-item-sub">@("@" + User.Username)@(ShowFollowers ? " · " + L["{0} followers", User.FollowersCount.ToString("N0")] : "")</div>
             }
         </div>
     </a>

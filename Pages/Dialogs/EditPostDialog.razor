@@ -3,30 +3,30 @@
 
 <MudDialog ContentClass="pt-2">
     <DialogContent>
-        <MudTextField T="string" @bind-Value="_content" Immediate="true" Label="Caption" Placeholder="Write a caption… use #hashtags"
+        <MudTextField T="string" @bind-Value="_content" Immediate="true" Label="@L["Caption"]" Placeholder="@L["Write a caption… use #hashtags"]"
                       Variant="Variant.Outlined" Lines="5" MaxLength="IPostService.MaxContentLength"
                       Counter="IPostService.MaxContentLength" Disabled="_saving" AutoFocus="true" />
 
         @if (!Post.IsVideo)
         {
-            <MudTextField T="string" @bind-Value="_location" Label="Location" Variant="Variant.Outlined" Margin="Margin.Dense"
+            <MudTextField T="string" @bind-Value="_location" Label="@L["Location"]" Variant="Variant.Outlined" Margin="Margin.Dense"
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Place" MaxLength="100" Class="mt-4"
                           Disabled="_saving" />
         }
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
-            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-4">@_errorMessage</MudAlert>
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-4">@L[_errorMessage]</MudAlert>
         }
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel" Disabled="_saving">Cancel</MudButton>
+        <MudButton OnClick="Cancel" Disabled="_saving">@L["Cancel"]</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="@(_saving || !HasChanges)">
             @if (_saving)
             {
                 <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
             }
-            Save
+            @L["Save"]
         </MudButton>
     </DialogActions>
 </MudDialog>

@@ -21,7 +21,7 @@
                 <span title="@Post.CreatedAt.ToString("g")">@TimeAgo(Post.CreatedAt)</span>
                 @if (Post.EditedAt is { } editedAt)
                 {
-                    <span title="@($"Edited {editedAt:g}")"> · edited</span>
+                    <span title="@L["Edited {0}", editedAt.ToString("g")]"> · @L["edited"]</span>
                 }
                 @if (!string.IsNullOrEmpty(Post.Location))
                 {
@@ -29,12 +29,12 @@
                 }
             </div>
         </div>
-        <MudMenu Icon="@Icons.Material.Filled.MoreHoriz" Size="Size.Small" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="Post options">
-            <MudMenuItem Icon="@Icons.Material.Outlined.Link" OnClick="CopyLink">Copy link</MudMenuItem>
+        <MudMenu Icon="@Icons.Material.Filled.MoreHoriz" Size="Size.Small" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="@L["Post options"]">
+            <MudMenuItem Icon="@Icons.Material.Outlined.Link" OnClick="CopyLink">@L["Copy link"]</MudMenuItem>
             @if (PostService.IsOwnPost(Post))
             {
-                <MudMenuItem Icon="@Icons.Material.Outlined.Edit" OnClick="EditPost">Edit</MudMenuItem>
-                <MudMenuItem Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" OnClick="DeletePost">Delete</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Outlined.Edit" OnClick="EditPost">@L["Edit"]</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" OnClick="DeletePost">@L["Delete"]</MudMenuItem>
             }
         </MudMenu>
     </div>
@@ -48,7 +48,7 @@
     else if (Post.ImageUrls.Count == 1)
     {
         <div class="post-media" @ondblclick="LikeFromDoubleClick">
-            <img src="@Post.ImageUrls[0]" alt="Photo by @AuthorName(Post.User)" loading="lazy" />
+            <img src="@Post.ImageUrls[0]" alt="@L["Photo by {0}", AuthorName(Post.User)]" loading="lazy" />
         </div>
     }
     else if (Post.ImageUrls.Count > 1)
@@ -58,7 +58,7 @@
                 @foreach (var imageUrl in Post.ImageUrls)
                 {
                     <MudCarouselItem>
-                        <img src="@imageUrl" alt="Photo by @AuthorName(Post.User)" loading="lazy" />
+                        <img src="@imageUrl" alt="@L["Photo by {0}", AuthorName(Post.User)]" loading="lazy" />
                     </MudCarouselItem>
                 }
             </MudCarousel>
@@ -69,16 +69,16 @@
         <div class="post-actions">
             <MudIconButton Icon="@(Post.IsLiked ? Icons.Material.Filled.Favorite : Icons.Material.Outlined.FavoriteBorder)"
                            Color="@(Post.IsLiked ? Color.Error : Color.Default)" OnClick="ToggleLike"
-                           Class="@(_likePulse ? "like-pulse" : null)" aria-label="@(Post.IsLiked ? "Unlike" : "Like")" />
-            <MudIconButton Icon="@Icons.Material.Outlined.ChatBubbleOutline" OnClick="ToggleComments" aria-label="Comments" />
-            <MudIconButton Icon="@Icons.Material.Outlined.Share" OnClick="CopyLink" aria-label="Copy link" />
+                           Class="@(_likePulse ? "like-pulse" : null)" aria-label="@(Post.IsLiked ? L["Unlike"] : L["Like"])" />
+            <MudIconButton Icon="@Icons.Material.Outlined.ChatBubbleOutline" OnClick="ToggleComments" aria-label="@L["Comments"]" />
+            <MudIconButton Icon="@Icons.Material.Outlined.Share" OnClick="CopyLink" aria-label="@L["Copy link"]" />
             <MudSpacer />
             <MudIconButton Icon="@(Post.IsBookmarked ? Icons.Material.Filled.Bookmark : Icons.Material.Outlined.BookmarkBorder)"
                            Color="@(Post.IsBookmarked ? Color.Primary : Color.Default)" OnClick="ToggleBookmark"
-                           aria-label="@(Post.IsBookmarked ? "Remove from saved" : "Save")" />
+                           aria-label="@(Post.IsBookmarked ? L["Remove from saved"] : L["Save"])" />
         </div>
 
-        <div class="post-likes">@Post.LikesCount.ToString("N0") @(Post.LikesCount == 1 ? "like" : "likes")</div>
+        <div class="post-likes">@(Post.LikesCount == 1 ? L["1 like"] : L["{0} likes", Post.LikesCount.ToString("N0")])</div>
 
         @if (!string.IsNullOrWhiteSpace(Post.Content))
         {
@@ -91,7 +91,7 @@
         @if (Post.CommentsCount > 0 && !_showComments)
         {
             <button class="post-link" @onclick="ToggleComments">
-                View @(Post.CommentsCount == 1 ? "1 comment" : $"all {Post.CommentsCount} comments")
+                @(Post.CommentsCount == 1 ? L["View 1 comment"] : L["View all {0} comments", Post.CommentsCount])
             </button>
         }
 
@@ -114,16 +114,16 @@
                                     @TimeAgo(comment.CreatedAt)
                                     @if (comment.LikesCount > 0)
                                     {
-                                        <span> · @comment.LikesCount.ToString("N0") @(comment.LikesCount == 1 ? "like" : "likes")</span>
+                                        <span> · @(comment.LikesCount == 1 ? L["1 like"] : L["{0} likes", comment.LikesCount.ToString("N0")])</span>
                                     }
                                 </div>
                             </div>
                             <MudIconButton Icon="@(comment.IsLiked ? Icons.Material.Filled.Favorite : Icons.Material.Outlined.FavoriteBorder)"
                                            Color="@(comment.IsLiked ? Color.Error : Color.Default)" Size="Size.Small" Class="comment-like"
-                                           OnClick="() => ToggleCommentLike(comment)" aria-label="@(comment.IsLiked ? "Unlike comment" : "Like comment")" />
+                                           OnClick="() => ToggleCommentLike(comment)" aria-label="@(comment.IsLiked ? L["Unlike comment"] : L["Like comment"])" />
                             @if (PostService.IsOwnComment(comment) || PostService.IsOwnPost(Post))
                             {
-                                <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" OnClick="() => DeleteComment(comment)" aria-label="Delete comment" />
+                                <MudIconButton Icon="@Icons.Material.Outlined.Close" Size="Size.Small" OnClick="() => DeleteComment(comment)" aria-label="@L["Delete comment"]" />
                             }
                         </div>
                     }
@@ -131,10 +131,10 @@
 
                 <div class="post-comment-input" @onkeydown="OnCommentKeyDown">
                     <UserAvatar User="_currentUser" Size="28" />
-                    <MudTextField T="string" @bind-Value="_newComment" Immediate="true" Placeholder="Add a comment…"
+                    <MudTextField T="string" @bind-Value="_newComment" Immediate="true" Placeholder="@L["Add a comment…"]"
                                   Variant="Variant.Text" Underline="false" MaxLength="2000" Class="flex-grow-1 mt-0" Disabled="_sendingComment" />
                     <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" OnClick="AddComment"
-                               Disabled="@(string.IsNullOrWhiteSpace(_newComment) || _sendingComment)">Post</MudButton>
+                               Disabled="@(string.IsNullOrWhiteSpace(_newComment) || _sendingComment)">@PostCommentLabel</MudButton>
                 </div>
             </div>
         }
@@ -234,7 +234,7 @@
     {
         var parameters = new DialogParameters<EditPostDialog> { { x => x.Post, Post } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
-        var dialog = await DialogService.ShowAsync<EditPostDialog>("Edit post", parameters, options);
+        var dialog = await DialogService.ShowAsync<EditPostDialog>(L["Edit post"], parameters, options);
         var result = await dialog.Result;
         if (result is { Canceled: false })
             Feedback.Success("Post updated");
@@ -243,8 +243,8 @@
     private async Task DeletePost()
     {
         var confirmed = await DialogService.ShowMessageBoxAsync(
-            "Delete post?", "This can't be undone. Likes, comments and photos will be removed too.",
-            yesText: "Delete", cancelText: "Cancel");
+            L["Delete post?"], L["This can't be undone. Likes, comments and photos will be removed too."],
+            yesText: L["Delete"], cancelText: L["Cancel"]);
         if (confirmed != true) return;
 
         var result = await PostService.DeletePostAsync(Post);
@@ -267,7 +267,12 @@
     }
 
     private static string AuthorName(User user) =>
-        !string.IsNullOrWhiteSpace(user.DisplayName) ? user.DisplayName : user.Username ?? "Unknown";
+        !string.IsNullOrWhiteSpace(user.DisplayName) ? user.DisplayName : user.Username ?? Loc.L["Unknown"].Value;
+
+    // "Post" als Verb (Kommentar absenden) braucht im Deutschen ein anderes Wort als "Post" (Beitrag):
+    // eigener Schlüssel, ohne Übersetzung bleibt es beim englischen "Post".
+    private string PostCommentLabel =>
+        L["Post [comment button]"] is { ResourceNotFound: false } label ? label.Value : "Post";
 
     private static string ProfileUrl(User user) =>
         string.IsNullOrEmpty(user.Username) ? "profile" : $"u/{user.Username}";
@@ -276,10 +281,10 @@
     internal static string TimeAgo(DateTime dateTime)
     {
         var span = DateTime.Now - dateTime;
-        if (span.TotalMinutes < 1) return "just now";
-        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m";
-        if (span.TotalHours < 24) return $"{(int)span.TotalHours}h";
-        if (span.TotalDays < 7) return $"{(int)span.TotalDays}d";
+        if (span.TotalMinutes < 1) return Loc.L["just now"];
+        if (span.TotalMinutes < 60) return Loc.L["{0}m", (int)span.TotalMinutes];
+        if (span.TotalHours < 24) return Loc.L["{0}h", (int)span.TotalHours];
+        if (span.TotalDays < 7) return Loc.L["{0}d", (int)span.TotalDays];
         return dateTime.ToString(dateTime.Year == DateTime.Now.Year ? "d MMM" : "d MMM yyyy");
     }
 }

@@ -5,7 +5,7 @@
 @inject IJSRuntime JS
 
 <div class="story-viewer" tabindex="0" @ref="_root" @onkeydown="OnKeyDown" role="dialog" aria-modal="true"
-     aria-label="@($"Story by {Group.User.Username}")">
+     aria-label="@(L["Story by {0}", Group.User.Username ?? ""])">
     <div class="story-frame">
         <div class="story-progress">
             @for (var i = 0; i < Group.Stories.Count; i++)
@@ -26,26 +26,26 @@
                 @if (Current.IsVideo)
                 {
                     <MudIconButton Icon="@(_muted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)" Size="Size.Small" Style="color: #fff"
-                                   OnClick="ToggleMute" aria-label="@(_muted ? "Unmute" : "Mute")" />
+                                   OnClick="ToggleMute" aria-label="@(_muted ? L["Unmute"] : L["Mute"])" />
                 }
                 @if (StoryService.IsOwn(Current))
                 {
-                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Style="color: #fff" OnClick="DeleteCurrent" aria-label="Delete story" />
+                    <MudIconButton Icon="@Icons.Material.Outlined.Delete" Size="Size.Small" Style="color: #fff" OnClick="DeleteCurrent" aria-label="@L["Delete story"]" />
                 }
                 <MudIconButton Icon="@(_paused ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause)" Size="Size.Small" Style="color: #fff"
-                               OnClick="TogglePause" aria-label="@(_paused ? "Play" : "Pause")" />
-                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" Style="color: #fff" OnClick="Close" aria-label="Close" />
+                               OnClick="TogglePause" aria-label="@(_paused ? L["Play"] : L["Pause"])" />
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" Style="color: #fff" OnClick="Close" aria-label="@L["Close"]" />
             </div>
         </div>
 
         @if (Current.IsVideo)
         {
             <video @ref="_video" @key="Current.Id" src="@Current.ImageUrl" class="story-image" playsinline preload="auto"
-                   aria-label="Story video"></video>
+                   aria-label="@L["Story video"]"></video>
         }
         else
         {
-            <img src="@Current.ImageUrl" alt="Story" class="story-image" @key="Current.Id" draggable="false" />
+            <img src="@Current.ImageUrl" alt="@L["Story"]" class="story-image" @key="Current.Id" draggable="false" />
         }
 
         @* Tippen links = zurück, rechts = weiter; gedrückt halten = Pause *@
@@ -56,19 +56,19 @@
         {
             <button type="button" class="story-views" @onclick="ToggleViewers">
                 <MudIcon Icon="@Icons.Material.Outlined.Visibility" Style="font-size: 18px" />
-                @Current.ViewCount @(Current.ViewCount == 1 ? "view" : "views")
+                @(Current.ViewCount == 1 ? L["1 view"] : L["{0} views", Current.ViewCount])
             </button>
 
             @if (_viewers is not null)
             {
                 <div class="story-viewers">
                     <div class="d-flex justify-space-between align-center mb-2">
-                        <b>Viewed by</b>
-                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="ToggleViewers" aria-label="Close viewers" />
+                        <b>@L["Viewed by"]</b>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="ToggleViewers" aria-label="@L["Close viewers"]" />
                     </div>
                     @if (_viewers.Count == 0)
                     {
-                        <MudText Typo="Typo.body2" Class="mud-text-secondary">No views yet.</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["No views yet."]</MudText>
                     }
                     @foreach (var viewer in _viewers)
                     {
@@ -82,10 +82,10 @@
             @* Antwort geht als Direktnachricht an den Autor; während des Tippens pausiert die Story *@
             <div class="story-reply" @onkeydown:stopPropagation="true" @onkeydown="OnReplyKeyDown">
                 <input type="text" @bind="_reply" @bind:event="oninput" maxlength="2000" disabled="@_sendingReply"
-                       placeholder="@($"Reply to {Group.User.Username ?? Group.User.DisplayName}…")" aria-label="Reply to story"
+                       placeholder="@(L["Reply to {0}…", Group.User.Username ?? Group.User.DisplayName ?? ""])" aria-label="@L["Reply to story"]"
                        @onfocus="() => _replyFocused = true" @onblur="() => _replyFocused = false" />
                 <MudIconButton Icon="@Icons.Material.Filled.Send" Size="Size.Small" Style="color: #fff" OnClick="SendReply"
-                               Disabled="@(string.IsNullOrWhiteSpace(_reply) || _sendingReply)" aria-label="Send reply" />
+                               Disabled="@(string.IsNullOrWhiteSpace(_reply) || _sendingReply)" aria-label="@L["Send reply"]" />
             </div>
         }
     </div>
@@ -295,7 +295,7 @@
         if (result.IsSuccess)
         {
             _reply = "";
-            Feedback.Success($"Reply sent to {story.User.Username ?? story.User.DisplayName}");
+            Feedback.Success(L["Reply sent to {0}", story.User.Username ?? story.User.DisplayName ?? ""]);
             // Zurück zur Story, damit sie weiterläuft
             await _root.FocusAsync();
         }
@@ -317,8 +317,8 @@
     private async Task DeleteCurrent()
     {
         _paused = true;
-        var confirmed = await DialogService.ShowMessageBoxAsync("Delete story?", "It will be removed for everyone.",
-            yesText: "Delete", cancelText: "Cancel");
+        var confirmed = await DialogService.ShowMessageBoxAsync(L["Delete story?"].Value, L["It will be removed for everyone."].Value,
+            yesText: L["Delete"].Value, cancelText: L["Cancel"].Value);
         if (confirmed != true)
         {
             _paused = false;

@@ -5,25 +5,25 @@
 @inject IPostService PostService
 @inject NavigationManager Navigation
 
-<PageTitle>Search - Social</PageTitle>
+<PageTitle>@L["Search"] - Social</PageTitle>
 
 <div style="max-width: 640px; margin: 0 auto">
     <MudTextField T="string" Value="_term" ValueChanged="OnTermChanged" Immediate="true" DebounceInterval="300"
-                  Placeholder="Search people or #hashtags" Variant="Variant.Outlined" Clearable="true" AutoFocus="true"
+                  Placeholder="@L["Search people or #hashtags"]" Variant="Variant.Outlined" Clearable="true" AutoFocus="true"
                   Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-2" />
 
     <MudTabs @bind-ActivePanelIndex="_tab" Elevation="0" Rounded="true" MinimumTabWidth="0" TabPanelsClass="pt-3">
-        <MudTabPanel Text="Accounts" Icon="@Icons.Material.Outlined.Person">
+        <MudTabPanel Text="@L["Accounts"]" Icon="@Icons.Material.Outlined.Person">
             @if (string.IsNullOrWhiteSpace(_term))
             {
-                <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-2">Suggested for you</MudText>
+                <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-2">@L["Suggested for you"]</MudText>
                 @if (_suggested is null)
                 {
                     <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
                 }
                 else if (_suggested.Count == 0)
                 {
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">No suggestions right now.</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["No suggestions right now."]</MudText>
                 }
                 else
                 {
@@ -39,7 +39,7 @@
             }
             else if (_users.Count == 0)
             {
-                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary py-6">No accounts found for “@_term”.</MudText>
+                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary py-6">@L["No accounts found for “{0}”.", _term]</MudText>
             }
             else
             {
@@ -50,10 +50,10 @@
             }
         </MudTabPanel>
 
-        <MudTabPanel Text="Tags" Icon="@Icons.Material.Outlined.Tag">
+        <MudTabPanel Text="@L["Tags"]" Icon="@Icons.Material.Outlined.Tag">
             @if (string.IsNullOrWhiteSpace(_term))
             {
-                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary py-6">Type to search hashtags.</MudText>
+                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary py-6">@L["Type to search hashtags."]</MudText>
             }
             else if (_searching)
             {
@@ -61,7 +61,7 @@
             }
             else if (_tags.Count == 0)
             {
-                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary py-6">No hashtags found for “@_term”.</MudText>
+                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary py-6">@L["No hashtags found for “{0}”.", _term]</MudText>
             }
             else
             {
@@ -71,7 +71,7 @@
                         <MudListItem T="string" Href="@($"tags/{Uri.EscapeDataString(tag.Tag)}")" Icon="@Icons.Material.Outlined.Tag">
                             <div class="d-flex justify-space-between">
                                 <span class="font-weight-bold">#@tag.Tag</span>
-                                <span class="mud-text-secondary">@tag.PostCount.ToString("N0") @(tag.PostCount == 1 ? "post" : "posts")</span>
+                                <span class="mud-text-secondary">@(tag.PostCount == 1 ? L["1 post"] : L["{0} posts", tag.PostCount.ToString("N0")])</span>
                             </div>
                         </MudListItem>
                     }

@@ -5,7 +5,7 @@
 @inject IUserService UserService
 @inject IPostService PostService
 
-<PageTitle>Home - Social</PageTitle>
+<PageTitle>@L["Home"] - Social</PageTitle>
 
 <MudGrid>
     <MudItem xs="12" md="8">
@@ -13,8 +13,8 @@
 
         <MudToggleGroup T="bool" Value="_explore" ValueChanged="SwitchFeed" Color="Color.Primary" Size="Size.Small"
                         SelectionMode="SelectionMode.SingleSelection" CheckMark="false" Class="mb-4">
-            <MudToggleItem Value="false" Text="Following" />
-            <MudToggleItem Value="true" Text="Explore" />
+            <MudToggleItem Value="false" Text="@L["Following"]" />
+            <MudToggleItem Value="true" Text="@L["Explore"]" />
         </MudToggleGroup>
 
         @if (_posts is null)
@@ -35,12 +35,12 @@
         {
             <MudPaper Elevation="0" Outlined="true" Class="pa-8 text-center" Style="border-radius: 16px">
                 <MudIcon Icon="@Icons.Material.Outlined.Diversity3" Size="Size.Large" Class="mud-text-secondary" />
-                <MudText Typo="Typo.h6" Class="mt-2">Your feed is empty</MudText>
-                <MudText Typo="Typo.body2" Class="mud-text-secondary">Follow people to see their posts here, or share your own.</MudText>
+                <MudText Typo="Typo.h6" Class="mt-2">@L["Your feed is empty"]</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Follow people to see their posts here, or share your own."]</MudText>
                 <div class="d-flex justify-center flex-wrap gap-2 mt-4">
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => SwitchFeed(true)"
-                               StartIcon="@Icons.Material.Outlined.Explore">Explore posts</MudButton>
-                    <MudButton Href="search" Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.PersonSearch">Find people</MudButton>
+                               StartIcon="@Icons.Material.Outlined.Explore">@L["Explore posts"]</MudButton>
+                    <MudButton Href="search" Variant="Variant.Outlined" StartIcon="@Icons.Material.Outlined.PersonSearch">@L["Find people"]</MudButton>
                 </div>
             </MudPaper>
         }
@@ -48,10 +48,10 @@
         {
             <MudPaper Elevation="0" Outlined="true" Class="pa-8 text-center" Style="border-radius: 16px">
                 <MudIcon Icon="@Icons.Material.Outlined.PhotoCamera" Size="Size.Large" Class="mud-text-secondary" />
-                <MudText Typo="Typo.h6" Class="mt-2">No posts yet</MudText>
-                <MudText Typo="Typo.body2" Class="mud-text-secondary">Be the first to share something.</MudText>
+                <MudText Typo="Typo.h6" Class="mt-2">@L["No posts yet"]</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Be the first to share something."]</MudText>
                 <MudButton Href="create" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
-                           StartIcon="@Icons.Material.Filled.Add">Create post</MudButton>
+                           StartIcon="@Icons.Material.Filled.Add">@L["Create post"]</MudButton>
             </MudPaper>
         }
         else
@@ -67,7 +67,7 @@
             }
             else
             {
-                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary my-6">You're all caught up ✨</MudText>
+                <MudText Typo="Typo.body2" Align="Align.Center" Class="mud-text-secondary my-6">@L["You're all caught up ✨"]</MudText>
             }
         }
     </MudItem>
@@ -98,13 +98,13 @@
                 </a>
 
                 <div class="d-flex justify-space-between text-center mb-4">
-                    <div><MudText Typo="Typo.h6">@_currentUser.PostsCount.ToString("N0")</MudText><MudText Typo="Typo.caption">Posts</MudText></div>
-                    <div><MudText Typo="Typo.h6">@_currentUser.FollowersCount.ToString("N0")</MudText><MudText Typo="Typo.caption">Followers</MudText></div>
-                    <div><MudText Typo="Typo.h6">@_currentUser.FollowingCount.ToString("N0")</MudText><MudText Typo="Typo.caption">Following</MudText></div>
+                    <div><MudText Typo="Typo.h6">@_currentUser.PostsCount.ToString("N0")</MudText><MudText Typo="Typo.caption">@L["Posts"]</MudText></div>
+                    <div><MudText Typo="Typo.h6">@_currentUser.FollowersCount.ToString("N0")</MudText><MudText Typo="Typo.caption">@L["Followers"]</MudText></div>
+                    <div><MudText Typo="Typo.h6">@_currentUser.FollowingCount.ToString("N0")</MudText><MudText Typo="Typo.caption">@L["Following"]</MudText></div>
                 </div>
 
                 <MudButton Href="create" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" StartIcon="@Icons.Material.Filled.Add">
-                    Create post
+                    @L["Create post"]
                 </MudButton>
             }
         </MudPaper>
@@ -112,20 +112,20 @@
         @if (_suggestedUsers is { Count: > 0 })
         {
             <MudPaper Elevation="0" Outlined="true" Class="pa-4 mb-4" Style="border-radius: 16px">
-                <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Suggestions for you</MudText>
+                <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">@L["Suggestions for you"]</MudText>
                 @foreach (var user in _suggestedUsers)
                 {
                     @* Vorschläge sind per Definition noch nicht gefolgt *@
                     <UserListItem @key="user.Id" User="user" IsFollowing="false" />
                 }
-                <MudButton Href="search" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" Class="mt-1">See more</MudButton>
+                <MudButton Href="search" Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" Class="mt-1">@L["See more"]</MudButton>
             </MudPaper>
         }
 
         @if (PopularTags.Count > 0)
         {
             <MudPaper Elevation="0" Outlined="true" Class="pa-4" Style="border-radius: 16px">
-                <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-2">Popular in your feed</MudText>
+                <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-2">@L["Popular in your feed"]</MudText>
                 <div class="d-flex flex-wrap gap-1">
                     @foreach (var (tag, count) in PopularTags)
                     {

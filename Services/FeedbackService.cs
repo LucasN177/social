@@ -1,22 +1,29 @@
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using MudBlazor;
 using Social.Core.Interfaces.Response;
 using Social.Core.Interfaces.Services;
+using Social.Resources;
 
 namespace Social.Services;
 
-public class FeedbackService(ISnackbar snackbar, ILogger<FeedbackService> logger) : IFeedbackService
+/// <summary>
+/// Zeigt Meldungen in der Snackbar und übersetzt sie dabei (Schlüssel = englischer Text,
+/// siehe SharedResource). Bereits übersetzte Texte bleiben unverändert, weil es für sie keinen Schlüssel gibt.
+/// </summary>
+public class FeedbackService(ISnackbar snackbar, ILogger<FeedbackService> logger, IStringLocalizer<SharedResource> localizer)
+    : IFeedbackService
 {
-    public void Success(string message) => snackbar.Add(message, Severity.Success);
+    public void Success(string message) => snackbar.Add(Translate(message), Severity.Success);
 
-    public void Info(string message) => snackbar.Add(message, Severity.Normal);
+    public void Info(string message) => snackbar.Add(Translate(message), Severity.Normal);
 
-    public void Warning(string message) => snackbar.Add(message, Severity.Warning);
+    public void Warning(string message) => snackbar.Add(Translate(message), Severity.Warning);
 
-    public void Error(string message) => snackbar.Add(message, Severity.Error);
+    public void Error(string message) => snackbar.Add(Translate(message), Severity.Error);
 
     public void Error(IResponse result, string fallback = IFeedbackService.DefaultError) =>
-        Error(UserMessage(result, fallback) ?? fallback);
+        Error(UserMessage(result, fallback) ?? Translate(fallback));
 
     public bool Handle(IResponse result, string? successMessage = null, string fallback = IFeedbackService.DefaultError)
     {
@@ -43,11 +50,13 @@ public class FeedbackService(ISnackbar snackbar, ILogger<FeedbackService> logger
         if (result.Exception is { } exception)
         {
             logger.LogWarning(exception, "Operation failed: {Message}", result.ErrorMessage ?? exception.Message);
-            if (IsOffline(exception)) return IFeedbackService.OfflineError;
+            if (IsOffline(exception)) return Translate(IFeedbackService.OfflineError);
         }
 
-        return IsTechnical(result) ? fallback : result.ErrorMessage!;
+        return Translate(IsTechnical(result) ? fallback : result.ErrorMessage!);
     }
+
+    private string Translate(string message) => localizer[message].Value;
 
     /// <summary>
     /// Repositories geben bei Ausnahmen ex.Message als ErrorMessage weiter (z. B. Postgrest-JSON).

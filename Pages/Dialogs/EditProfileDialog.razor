@@ -11,7 +11,7 @@
                 <CustomContent>
                     <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
                                StartIcon="@Icons.Material.Outlined.PhotoCamera" OnClick="@context.OpenFilePickerAsync">
-                        Change photo
+                        @L["Change photo"]
                     </MudButton>
                 </CustomContent>
             </MudFileUpload>
@@ -20,22 +20,22 @@
         <MudForm @ref="_form" @bind-IsValid="_valid">
             <MudGrid Spacing="2">
                 <MudItem xs="6">
-                    <MudTextField Immediate="true" @bind-Value="_draft.Vorname" Label="First name" Variant="Variant.Outlined"
-                                  Required="true" RequiredError="Required." MaxLength="50" />
+                    <MudTextField Immediate="true" @bind-Value="_draft.Vorname" Label="@L["First name"]" Variant="Variant.Outlined"
+                                  Required="true" RequiredError="@L["Required."]" MaxLength="50" />
                 </MudItem>
                 <MudItem xs="6">
-                    <MudTextField Immediate="true" @bind-Value="_draft.Nachname" Label="Last name" Variant="Variant.Outlined"
-                                  Required="true" RequiredError="Required." MaxLength="50" />
+                    <MudTextField Immediate="true" @bind-Value="_draft.Nachname" Label="@L["Last name"]" Variant="Variant.Outlined"
+                                  Required="true" RequiredError="@L["Required."]" MaxLength="50" />
                 </MudItem>
                 <MudItem xs="12">
-                    <MudTextField Immediate="true" Value="_username" ValueChanged="@((string v) => _username = (v ?? "").Trim().ToLowerInvariant())" Label="Username" Variant="Variant.Outlined"
+                    <MudTextField Immediate="true" Value="_username" ValueChanged="@((string v) => _username = (v ?? "").Trim().ToLowerInvariant())" Label="@L["Username"]" Variant="Variant.Outlined"
                                   Adornment="Adornment.Start" AdornmentText="@("@")"
-                                  HelperText="3–30 characters: a–z, 0–9, . and _"
-                                  Required="true" RequiredError="Username is required."
+                                  HelperText="@L["3–30 characters: a–z, 0–9, . and _"]"
+                                  Required="true" RequiredError="@L["Username is required."]"
                                   Validation="@(new Func<string, string?>(ValidateUsername))" />
                 </MudItem>
                 <MudItem xs="12">
-                    <MudTextField Immediate="true" @bind-Value="_draft.Bio" Label="Bio" Variant="Variant.Outlined"
+                    <MudTextField Immediate="true" @bind-Value="_draft.Bio" Label="@L["Bio"]" Variant="Variant.Outlined"
                                   Lines="3" MaxLength="BioMaxLength" Counter="BioMaxLength" />
                 </MudItem>
             </MudGrid>
@@ -43,17 +43,17 @@
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
-            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-4">@_errorMessage</MudAlert>
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-4">@L[_errorMessage]</MudAlert>
         }
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel" Disabled="_saving">Cancel</MudButton>
+        <MudButton OnClick="Cancel" Disabled="_saving">@L["Cancel"]</MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="_saving">
             @if (_saving)
             {
                 <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
             }
-            Save
+            @L["Save"]
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -100,8 +100,8 @@
         _username = (Profile.Username ?? "").Trim().ToLowerInvariant();
     }
 
-    private static string? ValidateUsername(string value) =>
-        string.IsNullOrEmpty(value) || UsernameRegex.IsMatch(value) ? null : "3–30 characters: a–z, 0–9, . and _";
+    private string? ValidateUsername(string value) =>
+        string.IsNullOrEmpty(value) || UsernameRegex.IsMatch(value) ? null : L["3–30 characters: a–z, 0–9, . and _"].Value;
 
     private async Task OnAvatarSelected(IBrowserFile? file)
     {

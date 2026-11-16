@@ -3,6 +3,7 @@ using Moq;
 using MudBlazor;
 using Social.Core.Interfaces.Services;
 using Social.Core.Models.Response;
+using Social.Resources;
 using Social.Services;
 
 namespace Social.Tests.Services;
@@ -11,7 +12,8 @@ public class FeedbackServiceTests
 {
     private readonly Mock<ISnackbar> _snackbar = new();
 
-    private FeedbackService CreateService() => new(_snackbar.Object, NullLogger<FeedbackService>.Instance);
+    // Ohne Übersetzungen: Loc.L gibt den englischen Schlüssel zurück
+    private FeedbackService CreateService() => new(_snackbar.Object, NullLogger<FeedbackService>.Instance, Loc.L);
 
     private void VerifyShown(string message, Severity severity) =>
         _snackbar.Verify(s => s.Add(message, severity, It.IsAny<Action<SnackbarOptions>?>(), It.IsAny<string?>()), Times.Once);

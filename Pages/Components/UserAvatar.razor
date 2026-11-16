@@ -19,6 +19,6 @@ else
 
     private string? ImageUrl => Src ?? User?.ProfileImageUrl;
     private string Initials => User?.Initials ?? "?";
-    private string Alt => User?.DisplayName is { Length: > 0 } name ? name : User?.Username ?? "Avatar";
+    private string Alt => User?.DisplayName is { Length: > 0 } name ? name : User?.Username ?? L["Avatar"];
     private string SizeStyle => $"width: {Size}px; height: {Size}px";
 }

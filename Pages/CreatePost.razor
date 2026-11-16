@@ -7,29 +7,29 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<PageTitle>@(_isReel ? "New reel" : "New post") - Social</PageTitle>
+<PageTitle>@(_isReel ? L["New reel"] : L["New post"]) - Social</PageTitle>
 
 <div class="create-page">
     <div class="d-flex align-center mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.Close" Href="./" aria-label="Cancel" Disabled="_publishing" />
-        <MudText Typo="Typo.h6" Class="flex-grow-1 ml-2">@(_isReel ? "New reel" : "New post")</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.Close" Href="./" aria-label="@L["Cancel"]" Disabled="_publishing" />
+        <MudText Typo="Typo.h6" Class="flex-grow-1 ml-2">@(_isReel ? L["New reel"] : L["New post"])</MudText>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Publish" Disabled="@(!CanPublish)">
             @if (_publishing)
             {
                 <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                <span>Sharing…</span>
+                <span>@L["Sharing…"]</span>
             }
             else
             {
-                <span>Share</span>
+                <span>@L["Share"]</span>
             }
         </MudButton>
     </div>
 
     <MudToggleGroup T="bool" @bind-Value="_isReel" Color="Color.Primary" Size="Size.Small" CheckMark="false"
                     SelectionMode="SelectionMode.SingleSelection" Class="mb-4" Disabled="_publishing">
-        <MudToggleItem Value="false" Text="Post" />
-        <MudToggleItem Value="true" Text="Reel" />
+        <MudToggleItem Value="false" Text="@L["Post"]" />
+        <MudToggleItem Value="true" Text="@L["Reel"]" />
     </MudToggleGroup>
 
     <MudPaper Elevation="0" Outlined="true" Class="pa-4" Style="border-radius: 16px">
@@ -43,8 +43,8 @@
                     <CustomContent>
                         <div class="create-dropzone" @onclick="@context.OpenFilePickerAsync">
                             <MudIcon Icon="@Icons.Material.Outlined.VideoCall" Size="Size.Large" Color="Color.Primary" />
-                            <MudText Typo="Typo.subtitle1" Class="mt-2">Add a video</MudText>
-                            <MudText Typo="Typo.body2" Class="mud-text-secondary">MP4, WebM or MOV · up to 50 MB · vertical works best</MudText>
+                            <MudText Typo="Typo.subtitle1" Class="mt-2">@L["Add a video"]</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["MP4, WebM or MOV · up to 50 MB · vertical works best"]</MudText>
                         </div>
                     </CustomContent>
                 </MudFileUpload>
@@ -54,7 +54,7 @@
                 <div class="create-video">
                     <video src="@_videoPreviewUrl" controls playsinline muted loop autoplay></video>
                     <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="RemoveVideo"
-                                   Class="create-video-remove" aria-label="Remove video" Disabled="_publishing" />
+                                   Class="create-video-remove" aria-label="@L["Remove video"]" Disabled="_publishing" />
                 </div>
             }
         }
@@ -67,8 +67,8 @@
                 <CustomContent>
                     <div class="create-dropzone" @onclick="@context.OpenFilePickerAsync">
                         <MudIcon Icon="@Icons.Material.Outlined.AddPhotoAlternate" Size="Size.Large" Color="Color.Primary" />
-                        <MudText Typo="Typo.subtitle1" Class="mt-2">Add photos</MudText>
-                        <MudText Typo="Typo.body2" Class="mud-text-secondary">Drag & drop or click · up to @IPostService.MaxImages photos</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="mt-2">@L["Add photos"]</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Drag & drop or click · up to {0} photos", IPostService.MaxImages]</MudText>
                     </div>
                 </CustomContent>
             </MudFileUpload>
@@ -81,20 +81,20 @@
                     var index = i;
                     var image = _images[index];
                     <div class="create-thumb" @key="image">
-                        <img src="@image.Preview" alt="Photo @(index + 1)" />
+                        <img src="@image.Preview" alt="@L["Photo {0}", index + 1]" />
                         @if (index == 0)
                         {
-                            <span class="create-cover">Cover</span>
+                            <span class="create-cover">@L["Cover"]</span>
                         }
                         <div class="create-thumb-actions">
                             @if (index > 0)
                             {
                                 <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Size="Size.Small" OnClick="() => Move(index, -1)"
-                                               aria-label="Move left" Disabled="_publishing" />
+                                               aria-label="@L["Move left"]" Disabled="_publishing" />
                             }
                             <MudSpacer />
                             <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="() => _images.RemoveAt(index)"
-                                           aria-label="Remove photo" Disabled="_publishing" />
+                                           aria-label="@L["Remove photo"]" Disabled="_publishing" />
                         </div>
                     </div>
                 }
@@ -120,21 +120,21 @@
 
         <div class="d-flex gap-3 mt-4">
             <UserAvatar User="_currentUser" Size="36" />
-            <MudTextField T="string" @bind-Value="_content" Immediate="true" Placeholder="Write a caption… use #hashtags"
+            <MudTextField T="string" @bind-Value="_content" Immediate="true" Placeholder="@L["Write a caption… use #hashtags"]"
                           Variant="Variant.Text" Lines="4" MaxLength="IPostService.MaxContentLength"
                           Counter="IPostService.MaxContentLength" Class="flex-grow-1 mt-0" Disabled="_publishing" />
         </div>
 
         @if (!_isReel)
         {
-            <MudTextField T="string" @bind-Value="_location" Placeholder="Add location" Variant="Variant.Outlined" Margin="Margin.Dense"
+            <MudTextField T="string" @bind-Value="_location" Placeholder="@L["Add location"]" Variant="Variant.Outlined" Margin="Margin.Dense"
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Place" MaxLength="100" Class="mt-4"
                           Disabled="_publishing" />
         }
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
-            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-4">@_errorMessage</MudAlert>
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-4">@L[_errorMessage]</MudAlert>
         }
     </MudPaper>
 </div>
@@ -262,7 +262,7 @@
         if (skipped > 0)
             _errorMessage = skipped == 1
                 ? "One photo was skipped (unsupported, too large or over the limit)."
-                : $"{skipped} photos were skipped (unsupported, too large or over the limit).";
+                : L["{0} photos were skipped (unsupported, too large or over the limit).", skipped];
     }
 
     private void Move(int index, int direction)

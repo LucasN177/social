@@ -6,7 +6,7 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<PageTitle>Reels - Social</PageTitle>
+<PageTitle>@L["Reels"] - Social</PageTitle>
 
 @if (_reels is null)
 {
@@ -19,10 +19,10 @@ else if (_reels.Count == 0)
     <div class="reels-feed reels-feed--center">
         <div class="text-center">
             <MudIcon Icon="@Icons.Material.Outlined.VideoLibrary" Size="Size.Large" Class="mud-text-secondary" />
-            <MudText Typo="Typo.h6" Class="mt-2">No reels yet</MudText>
-            <MudText Typo="Typo.body2" Class="mud-text-secondary">Share a short video to get things started.</MudText>
+            <MudText Typo="Typo.h6" Class="mt-2">@L["No reels yet"]</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@L["Share a short video to get things started."]</MudText>
             <MudButton Href="create?type=reel" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
-                       StartIcon="@Icons.Material.Outlined.VideoCall">Create reel</MudButton>
+                       StartIcon="@Icons.Material.Outlined.VideoCall">@L["Create reel"]</MudButton>
         </div>
     </div>
 }
@@ -37,19 +37,19 @@ else
                 @* Antippen pausiert/spielt – erledigt socialMedia.observeReels (js/media.js) *@
 
                 <div class="reel-actions">
-                    <button type="button" class="reel-action" @onclick="() => ToggleLike(reel)" aria-label="@(reel.IsLiked ? "Unlike" : "Like")">
+                    <button type="button" class="reel-action" @onclick="() => ToggleLike(reel)" aria-label="@(reel.IsLiked ? L["Unlike"] : L["Like"])">
                         <MudIcon Icon="@(reel.IsLiked ? Icons.Material.Filled.Favorite : Icons.Material.Outlined.FavoriteBorder)"
                                  Style="@(reel.IsLiked ? "color: #ff4d6d" : null)" />
                         <span>@reel.LikesCount.ToString("N0")</span>
                     </button>
-                    <a class="reel-action" href="@($"p/{reel.Id}")" aria-label="Comments">
+                    <a class="reel-action" href="@($"p/{reel.Id}")" aria-label="@L["Comments"]">
                         <MudIcon Icon="@Icons.Material.Outlined.ChatBubbleOutline" />
                         <span>@reel.CommentsCount.ToString("N0")</span>
                     </a>
-                    <button type="button" class="reel-action" @onclick="() => CopyLink(reel)" aria-label="Copy link">
+                    <button type="button" class="reel-action" @onclick="() => CopyLink(reel)" aria-label="@L["Copy link"]">
                         <MudIcon Icon="@Icons.Material.Outlined.Share" />
                     </button>
-                    <button type="button" class="reel-action" @onclick="ToggleMute" aria-label="@(_muted ? "Unmute" : "Mute")">
+                    <button type="button" class="reel-action" @onclick="ToggleMute" aria-label="@(_muted ? L["Unmute"] : L["Mute"])">
                         <MudIcon Icon="@(_muted ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)" />
                     </button>
                 </div>
@@ -80,7 +80,7 @@ else
     </div>
 
     <MudFab Href="create?type=reel" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Size="Size.Medium"
-            Style="position: fixed; right: 20px; bottom: 72px; z-index: 10" aria-label="Create reel" />
+            Style="position: fixed; right: 20px; bottom: 72px; z-index: 10" aria-label="@L["Create reel"]" />
 }
 
 @code {

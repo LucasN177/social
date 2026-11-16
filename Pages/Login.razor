@@ -5,32 +5,32 @@
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 
-<PageTitle>Sign in - Social</PageTitle>
+<PageTitle>@L["Sign in"] - Social</PageTitle>
 
 <div class="auth-card">
     <div class="auth-brand">
         <img src="favicon.svg" alt="" class="auth-logo" />
         <MudText Typo="Typo.h4" Class="brand-title mt-3">Social</MudText>
         <MudText Typo="Typo.body2" Class="mud-text-secondary">
-            @(_activeTab == 0 ? "Welcome back! Sign in to continue." : "Create your account in seconds.")
+            @(_activeTab == 0 ? L["Welcome back! Sign in to continue."] : L["Create your account in seconds."])
         </MudText>
     </div>
 
     <MudPaper Elevation="0" Outlined="true" Class="pa-6 mt-6">
         <MudTabs @bind-ActivePanelIndex="_activeTab" MinimumTabWidth="0" Rounded="true" ApplyEffectsToContainer="true"
                  TabPanelsClass="pt-6" Elevation="0">
-            <MudTabPanel Text="Sign in">
+            <MudTabPanel Text="@L["Sign in"]">
                 <div @onkeydown="@(e => OnEnter(e, SignIn))">
                 <MudForm @ref="_loginForm" @bind-IsValid="_loginValid">
-                    <MudTextField Immediate="true" @bind-Value="_email" Label="Email" InputType="InputType.Email" Variant="Variant.Outlined"
+                    <MudTextField Immediate="true" @bind-Value="_email" Label="@L["Email"]" InputType="InputType.Email" Variant="Variant.Outlined"
                                   Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Email"
-                                  Required="true" RequiredError="Email is required." Validation="@(new Func<string, string?>(ValidateEmail))"
+                                  Required="true" RequiredError="@L["Email is required."]" Validation="@(new Func<string, string?>(ValidateEmail))"
                                   autocomplete="email" Class="mb-4" />
-                    <MudTextField Immediate="true" @bind-Value="_password" Label="Password" Variant="Variant.Outlined"
+                    <MudTextField Immediate="true" @bind-Value="_password" Label="@L["Password"]" Variant="Variant.Outlined"
                                   InputType="@(_showPassword ? InputType.Text : InputType.Password)"
                                   Adornment="Adornment.End" AdornmentIcon="@(_showPassword ? Icons.Material.Outlined.VisibilityOff : Icons.Material.Outlined.Visibility)"
-                                  OnAdornmentClick="() => _showPassword = !_showPassword" AdornmentAriaLabel="Show password"
-                                  Required="true" RequiredError="Password is required." autocomplete="current-password" />
+                                  OnAdornmentClick="() => _showPassword = !_showPassword" AdornmentAriaLabel="@L["Show password"]"
+                                  Required="true" RequiredError="@L["Password is required."]" autocomplete="current-password" />
                 </MudForm>
                 </div>
 
@@ -40,42 +40,42 @@
                     {
                         <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                     }
-                    Sign in
+                    @L["Sign in"]
                 </MudButton>
             </MudTabPanel>
 
-            <MudTabPanel Text="Sign up">
+            <MudTabPanel Text="@L["Sign up"]">
                 <div @onkeydown="@(e => OnEnter(e, SignUp))">
                 <MudForm @ref="_registerForm" @bind-IsValid="_registerValid">
                     <MudGrid Spacing="2">
                         <MudItem xs="6">
-                            <MudTextField Immediate="true" @bind-Value="_vorname" Label="First name" Variant="Variant.Outlined"
-                                          Required="true" RequiredError="Required." autocomplete="given-name" />
+                            <MudTextField Immediate="true" @bind-Value="_vorname" Label="@L["First name"]" Variant="Variant.Outlined"
+                                          Required="true" RequiredError="@L["Required."]" autocomplete="given-name" />
                         </MudItem>
                         <MudItem xs="6">
-                            <MudTextField Immediate="true" @bind-Value="_nachname" Label="Last name" Variant="Variant.Outlined"
-                                          Required="true" RequiredError="Required." autocomplete="family-name" />
+                            <MudTextField Immediate="true" @bind-Value="_nachname" Label="@L["Last name"]" Variant="Variant.Outlined"
+                                          Required="true" RequiredError="@L["Required."]" autocomplete="family-name" />
                         </MudItem>
                         <MudItem xs="12">
-                            <MudTextField Immediate="true" Value="_username" ValueChanged="@((string v) => _username = (v ?? "").Trim().ToLowerInvariant())" Label="Username" Variant="Variant.Outlined"
+                            <MudTextField Immediate="true" Value="_username" ValueChanged="@((string v) => _username = (v ?? "").Trim().ToLowerInvariant())" Label="@L["Username"]" Variant="Variant.Outlined"
                                           Adornment="Adornment.Start" AdornmentText="@("@")"
-                                          HelperText="3–30 characters: a–z, 0–9, . and _"
-                                          Required="true" RequiredError="Username is required." Validation="@(new Func<string, string?>(ValidateUsername))"
+                                          HelperText="@L["3–30 characters: a–z, 0–9, . and _"]"
+                                          Required="true" RequiredError="@L["Username is required."]" Validation="@(new Func<string, string?>(ValidateUsername))"
                                           autocomplete="username" />
                         </MudItem>
                         <MudItem xs="12">
-                            <MudTextField Immediate="true" @bind-Value="_email" Label="Email" InputType="InputType.Email" Variant="Variant.Outlined"
+                            <MudTextField Immediate="true" @bind-Value="_email" Label="@L["Email"]" InputType="InputType.Email" Variant="Variant.Outlined"
                                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Email"
-                                          Required="true" RequiredError="Email is required." Validation="@(new Func<string, string?>(ValidateEmail))"
+                                          Required="true" RequiredError="@L["Email is required."]" Validation="@(new Func<string, string?>(ValidateEmail))"
                                           autocomplete="email" />
                         </MudItem>
                         <MudItem xs="12">
-                            <MudTextField Immediate="true" @bind-Value="_password" Label="Password" Variant="Variant.Outlined"
+                            <MudTextField Immediate="true" @bind-Value="_password" Label="@L["Password"]" Variant="Variant.Outlined"
                                           InputType="@(_showPassword ? InputType.Text : InputType.Password)"
                                           Adornment="Adornment.End" AdornmentIcon="@(_showPassword ? Icons.Material.Outlined.VisibilityOff : Icons.Material.Outlined.Visibility)"
-                                          OnAdornmentClick="() => _showPassword = !_showPassword" AdornmentAriaLabel="Show password"
-                                          HelperText="At least 8 characters"
-                                          Required="true" RequiredError="Password is required." Validation="@(new Func<string, string?>(ValidatePassword))"
+                                          OnAdornmentClick="() => _showPassword = !_showPassword" AdornmentAriaLabel="@L["Show password"]"
+                                          HelperText="@L["At least 8 characters"]"
+                                          Required="true" RequiredError="@L["Password is required."]" Validation="@(new Func<string, string?>(ValidatePassword))"
                                           autocomplete="new-password" />
                         </MudItem>
                     </MudGrid>
@@ -88,18 +88,18 @@
                     {
                         <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                     }
-                    Create account
+                    @L["Create account"]
                 </MudButton>
             </MudTabPanel>
         </MudTabs>
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
-            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-4">@_errorMessage</MudAlert>
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-4">@L[_errorMessage]</MudAlert>
         }
         @if (!string.IsNullOrEmpty(_infoMessage))
         {
-            <MudAlert Severity="Severity.Success" Dense="true" Class="mt-4">@_infoMessage</MudAlert>
+            <MudAlert Severity="Severity.Success" Dense="true" Class="mt-4">@L[_infoMessage]</MudAlert>
         }
     </MudPaper>
 </div>
@@ -127,14 +127,14 @@
     private static readonly Regex UsernameRegex = new("^[a-z0-9._]{3,30}$");
     private static readonly Regex EmailRegex = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
 
-    private static string? ValidateEmail(string value) =>
-        string.IsNullOrEmpty(value) || EmailRegex.IsMatch(value) ? null : "Please enter a valid email address.";
+    private string? ValidateEmail(string value) =>
+        string.IsNullOrEmpty(value) || EmailRegex.IsMatch(value) ? null : L["Please enter a valid email address."].Value;
 
-    private static string? ValidateUsername(string value) =>
-        string.IsNullOrEmpty(value) || UsernameRegex.IsMatch(value) ? null : "3–30 characters: a–z, 0–9, . and _";
+    private string? ValidateUsername(string value) =>
+        string.IsNullOrEmpty(value) || UsernameRegex.IsMatch(value) ? null : L["3–30 characters: a–z, 0–9, . and _"].Value;
 
-    private static string? ValidatePassword(string value) =>
-        string.IsNullOrEmpty(value) || value.Length >= 8 ? null : "At least 8 characters.";
+    private string? ValidatePassword(string value) =>
+        string.IsNullOrEmpty(value) || value.Length >= 8 ? null : L["At least 8 characters."].Value;
 
     private async Task OnEnter(KeyboardEventArgs e, Func<Task> action)
     {

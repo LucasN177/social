@@ -19,6 +19,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     <script type="importmap"></script>
+    <script>
+        // Sprache (de/en): gespeicherte Wahl, sonst Browsersprache. Liest Program.cs vor dem ersten Rendern.
+        window.socialI18n = {
+            getLanguage: () => {
+                let stored = null;
+                try { stored = localStorage.getItem('social.language'); } catch { /* z. B. privater Modus */ }
+                if (stored === 'de' || stored === 'en') return stored;
+                return (navigator.language || 'en').toLowerCase().startsWith('de') ? 'de' : 'en';
+            },
+            setLanguage: (code) => {
+                try { localStorage.setItem('social.language', code); } catch { }
+                document.documentElement.lang = code;
+            }
+        };
+        document.documentElement.lang = window.socialI18n.getLanguage();
+
+        // Blazor-Fehlerleiste (statisches HTML unten) ebenfalls übersetzen
+        document.addEventListener('DOMContentLoaded', () => {
+            const ui = document.getElementById('blazor-error-ui');
+            if (!ui || document.documentElement.lang !== 'de') return;
+            ui.firstChild.textContent = 'Ein unerwarteter Fehler ist aufgetreten. ';
+            ui.querySelector('.reload').textContent = 'Neu laden';
+        });
+    </script>
 </head>
 
 <body>

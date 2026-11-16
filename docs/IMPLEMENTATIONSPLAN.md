@@ -1,58 +1,71 @@
 # Implementationsplan – Social (Blazor WASM · MudBlazor · Supabase)
 
-Stand: 29.10.2026
+Stand: 16.11.2026 – alle Phasen 0–7 umgesetzt.
 
-## 1. Ausgangslage
+## 1. Aktueller Stand
 
 | Bereich | Status |
 |---|---|
-| Hosting | Blazor WebAssembly (.NET 10), Deployment via GitHub Actions auf GitHub Pages (`/social/`) |
-| UI | MudBlazor 9.3, Layout mit oberer AppBar + Bottom-Navigation (Home, Reels, Messages, Search, Profile) |
-| Backend | Supabase-Client (`Supabase` 1.1.1) als Singleton in `Program.cs`, Konfiguration über `wwwroot/appsettings.json` |
-| Auth | `AuthRepository` / `AuthService`: Login, Registrierung, Logout, Session, `users`-Metadaten lesen/schreiben |
-| Daten | `PostService`, `NotificationService` liefern **Mock-Daten**; `User`, `Post`, `Comment`, `Story`, `Notification` sind noch keine Supabase-Modelle (außer `User`/`UserDto`) |
-| Seiten | `Login` (`/`), `Home` (`/fyp`), `NotFound`; Komponenten `PostCard`, `StoriesComponent` |
+| Hosting | Blazor WebAssembly (.NET 10), Deployment per GitHub Actions auf GitHub Pages (`/social/`), nur wenn Unit- und SQL-Tests grün sind; installierbar als PWA mit Offline-Cache und eigener Offline-Seite |
+| UI | MudBlazor 9.3, obere AppBar (Erstellen, Benachrichtigungen, Dark Mode, Menü) + untere Navigation (Home, Reels, Nachrichten, Suche, Profil); Sprache Deutsch/Englisch |
+| Backend | Supabase-Client (`Supabase` 1.1.1) als Singleton, Konfiguration über `wwwroot/appsettings.json` (im Deployment aus GitHub Secrets) |
+| Auth | Login/Registrierung (`/login`), Session-Persistenz, `SupabaseAuthStateProvider` + `AuthorizeRouteView` |
+| Daten | Alle Inhalte kommen aus Supabase (Tabellen, Views, RPCs); Sicherheit ausschließlich über RLS, Skripte in `supabase/sql` |
+| Aktualität | Polling statt Realtime: Badges alle 30 s (`ActivityService`), offener Chat alle 3 s |
+| Qualität | `IFeedbackService` für alle Meldungen, `AppErrorBoundary`, Unit-Tests (`tests/Social.Tests`), SQL-Tests (`supabase/tests`) |
 
-### Bekannte Probleme
+### Seiten
 
-Behoben in Phase 0:
+| Route | Seite |
+|---|---|
+| `/login` | Anmelden / Registrieren (`AuthLayout`) |
+| `/`, `/fyp` | Home: Stories, Feed „Following“/„Explore“ mit Infinite Scroll, Vorschläge, beliebte Hashtags |
+| `/create`, `/create?type=reel` | Beitrag (bis 10 Fotos) oder Reel erstellen |
+| `/p/{id}` | Beitrag mit Kommentaren |
+| `/reels` | Reels (Snap-Scroll, Autoplay) |
+| `/search` | Accounts und Hashtags suchen |
+| `/tags/{tag}` | Beiträge zu einem Hashtag |
+| `/profile`, `/u/{username}` | Profil mit Beiträgen/Gespeichert, Follower-Listen, Nachricht schreiben |
+| `/notifications` | Benachrichtigungen (Like, Kommentar, Follow, Erwähnung) |
+| `/messages`, `/messages/{id}` | Chatliste und Chat (1:1 und Gruppen, Bilder, Bearbeiten/Löschen) |
+| `/settings` | Profil bearbeiten, Dunkelmodus, Sprache, Abmelden |
+| `/not-found` | 404 |
 
-- ~~`IUserService` nicht registriert~~ → `UserService` + `UserRepository` registriert.
-- ~~Namespaces uneinheitlich~~ → `Social.Core.Models.Database` / `.Enums`, alle Service-Interfaces in `Social.Core.Interfaces.Services`, zentrale `_Imports.razor`.
-- ~~Drei Theme-Quellen, Dark-Mode-Toggle wirkungslos~~ → nur noch `ThemeService`, Wahl in `localStorage`.
-- ~~`Logout()` nicht abgewartet~~, ~~Session nicht persistiert~~, ~~Login mit Bootstrap-Markup~~.
-- ~~Absolute Links (`/create`, `/fyp`)~~ → relative Links, damit die App unter `/social/` auf GitHub Pages funktioniert.
+### Technische Hinweise
 
-Offen:
-
-1. **Supabase-Realtime funktioniert im Browser nicht** mit Paket `Supabase` 1.1.1: Der Realtime-Client setzt WebSocket-Header, was in WebAssembly `PlatformNotSupported` wirft. `AutoConnectRealtime` ist deshalb aus. Die App nutzt **Polling** (`ActivityService`, Chat) – das ist eine bewusste Entscheidung (siehe Phase 5), kein offener Punkt mehr.
+1. **Supabase-Realtime funktioniert im Browser nicht** mit Paket `Supabase` 1.1.1: Der Realtime-Client setzt WebSocket-Header, was in WebAssembly `PlatformNotSupported` wirft. `AutoConnectRealtime` ist deshalb aus. Die App nutzt bewusst **Polling** (siehe Phase 5).
 2. **`SupabaseOptions.SessionHandler` wird in 1.1.1 ignoriert** → Persistenz wird in `Program.cs` explizit per `Auth.SetPersistence` gesetzt und per `LoadSession()` geladen.
-3. ~~Deployment nutzt Platzhalter aus `appsettings.json`~~ → der Workflow schreibt die Datei aus den Secrets `SUPABASE_URL` / `SUPABASE_KEY` (siehe README).
-   ~~Offline-Cache auf GitHub Pages defekt~~ → Service Worker leitet die Basis aus seinem Scope ab, der Workflow setzt die base href vor dem Publish.
-4. ~~`ISocialNetworkService` mit `int`-IDs~~ → entfernt; Posts/Kommentare nutzen `long`.
-5. ~~`User` und `UserDto` mappen beide die Tabelle `users`~~ → zusammengeführt.
-6. ~~Der Feed zeigt alle Posts~~ → Home hat jetzt „Following“ (View `home_feed`) und „Explore“.
-7. ~~`client.Rpc<List<User>>` ignoriert `[Column]`-Namen~~ → `User` hat zusätzlich `[JsonProperty]`; bei weiteren RPC-Modellen ebenso vorgehen.
+3. **`client.Rpc<List<User>>` ignoriert `[Column]`-Namen** → RPC-Modelle brauchen zusätzlich `[JsonProperty]` (siehe `User`, `HashtagResult`).
+4. **Base href**: Links sind relativ, der Deploy-Workflow setzt `<base href="/social/">` vor dem Publish; der Service Worker leitet seine Basis aus dem Scope ab.
+5. **Sprache**: Die Kultur wird beim Start gesetzt (`LanguageService`); ein Wechsel lädt die App neu, weil Blazor WASM die Kultur nicht für alle Komponenten zur Laufzeit umstellen kann.
 
-## 2. Zielarchitektur
+<details>
+<summary>Ausgangslage vor Phase 0 (29.10.2026)</summary>
+
+Mock-Daten in `PostService`/`NotificationService`, nur `Login`, `Home` und `NotFound`, `User` und `UserDto` mappten beide `users`, nicht registrierter `IUserService`, uneinheitliche Namespaces, drei Theme-Quellen, nicht persistierte Session, absolute Links (unter `/social/` defekt), Platzhalter-Keys im Deployment, defekter Offline-Cache auf GitHub Pages. Alles in Phase 0–6 behoben.
+
+</details>
+
+## 2. Architektur
 
 ```
 Pages / Components (MudBlazor)
         │  inject
         ▼
-Services (Social.Services)          ← Geschäftslogik, Caching, State
+Services (Social.Services)          ← Geschäftslogik, Validierung, Caching, State, Meldungen
         │
         ▼
-Repositories (Social.Infrastructure) ← nur Supabase-Zugriff (Postgrest, Storage, Realtime)
+Repositories (Social.Infrastructure) ← nur Supabase-Zugriff (Postgrest, RPCs, Storage)
         │
         ▼
-Supabase (Postgres + RLS, Auth, Storage, Realtime)
+Supabase (Postgres + RLS, Auth, Storage, Edge Functions, pg_cron)
 ```
 
-- **Core**: Interfaces, Datenbank-Modelle (`BaseModel` mit `[Table]`/`[Column]`), DTOs, `IResponse`.
-- **Infrastructure**: je Aggregat ein Repository (`PostRepository`, `CommentRepository`, `FollowRepository`, `StoryRepository`, `NotificationRepository`, `StorageRepository`).
-- **Services**: kapseln Repositories, mappen DB-Modelle → UI-Modelle (`Core/Mapping`).
-- **Datenbank**: alle Skripte versioniert unter [`supabase/sql`](../supabase/sql), Sicherheit ausschließlich über **Row Level Security**.
+- **Core**: Interfaces, Datenbank-Modelle (`BaseModel` mit `[Table]`/`[Column]`), UI-Modelle, Mapping (`Core/Mapping`), `IResponse`.
+- **Infrastructure**: `AuthRepository`, `UserRepository`, `PostRepository`, `StoryRepository`, `NotificationRepository` + `MessageRepository` (`MessagingRepositories.cs`), Hilfen `StorageUrl`, `LocalStorageSessionHandler`.
+- **Services**: `AuthService`, `UserService`, `PostService`, `StoryService`, `NotificationService`, `MessageService`, `ActivityService` (Badges), `FeedbackService` (Snackbar), `ThemeService`, `LanguageService`.
+- **Resources**: `SharedResource` + `SharedResource.de.resx` (deutsche Texte, Schlüssel = englischer Text).
+- **Datenbank**: alle Skripte versioniert unter [`supabase/sql`](../supabase/sql), Sicherheit ausschließlich über **Row Level Security**; Edge Function unter [`supabase/functions`](../supabase/functions).
 
 ## 3. Phasen
 
@@ -135,6 +148,14 @@ Supabase (Postgres + RLS, Auth, Storage, Realtime)
 - [x] PWA: App-Icons im Markendesign
 - [x] PWA: eigene Offline-Seite `wwwroot/offline.html` (ohne externe Dateien, lädt automatisch neu, sobald wieder online), vom Service Worker ausgeliefert, wenn eine Seite weder im Cache noch im Netz ist; in der App zusätzlich ein Offline-Banner (`OfflineBanner`)
 
+### Phase 7 – Lokalisierung & Doku
+- [x] Deutsch/Englisch: `IStringLocalizer<SharedResource>` (in `_Imports.razor` als `L` injiziert), Schlüssel = englischer Text, Übersetzungen in `Resources/SharedResource.de.resx`; statische Helfer nutzen `Loc.L`
+- [x] Sprache: gespeicherte Wahl (`localStorage`), sonst Browsersprache; Auswahl unter Einstellungen → Sprache (lädt die App neu); deutsche Datums-/Zahlenformate (`BlazorWebAssemblyLoadAllGlobalizationData`)
+- [x] Meldungen der Services bleiben englische Schlüssel und werden von `FeedbackService` bzw. beim Anzeigen (`@L[_errorMessage]`) übersetzt; Texte mit Zahlen aus Konstanten sind feste Schlüssel
+- [x] Offline-Seite und Blazor-Fehlerleiste zweisprachig (nach gespeicherter bzw. Browsersprache)
+- [x] Test `LocalizationTests`: jeder `L["…"]`-Schlüssel und jede feste Meldung im Code hat eine deutsche Übersetzung, Platzhalter stimmen überein; ungenutztes `NavMenu` (alte deutsche Texte) entfernt
+- [x] Einstellungsseite `/settings` (Profil, Dunkelmodus, Sprache, Abmelden) und Doku auf den aktuellen Stand gebracht
+
 ## 4. Datenbank
 
 Zum Einrichten genügt [`supabase/setup.sql`](../supabase/setup.sql) im Supabase SQL-Editor. Es wird aus den nummerierten Skripten in [`supabase/sql`](../supabase/sql) erzeugt (Details: [`supabase/sql/README.md`](../supabase/sql/README.md)).
@@ -175,4 +196,4 @@ Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als n
 - IDs: `uuid` (User = `auth.users.id`), Inhalte `bigint generated always as identity`.
 - Jede Tabelle hat RLS aktiviert; keine Policy = kein Zugriff.
 - Services geben `IResponse` / `IResponse<T>` zurück, keine Exceptions an die UI.
-- UI-Texte zentral halten, damit später Lokalisierung (de/en) möglich ist.
+- UI-Texte nie fest auf Deutsch: englischen Text mit `L["…"]` (bzw. `Loc.L` in statischen Helfern) ausgeben und die Übersetzung in `Resources/SharedResource.de.resx` ergänzen. Platzhalter als `{0}`, Mehrzahl als eigener Schlüssel.

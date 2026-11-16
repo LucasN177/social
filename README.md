@@ -18,6 +18,7 @@
 | Registrierung & Login (Supabase Auth) | ✅ |
 | Session bleibt nach Reload erhalten | ✅ |
 | Hell-/Dunkelmodus (folgt dem System, Wahl wird gespeichert) | ✅ |
+| Deutsch / Englisch (folgt der Browsersprache, umschaltbar in den Einstellungen) | ✅ |
 | Vorschläge „Suggestions for you“ (RPC `suggested_users`) | ✅ |
 | Beiträge mit bis zu 10 Fotos, Hashtags, Ort erstellen, bearbeiten und löschen | ✅ |
 | Feed mit Infinite Scroll, Likes, Lesezeichen, Kommentare mit Likes | ✅ |
@@ -45,7 +46,8 @@ Der vollständige Fahrplan steht im [Implementationsplan](docs/IMPLEMENTATIONSPL
 Core/             Interfaces, Datenbank-Modelle, Response-Typen
 Infrastructure/   Repositories – einziger Ort mit direktem Supabase-Zugriff
 Services/         Geschäftslogik, App-State, Theme, Auth-State
-Layout/           MainLayout, Theme
+Layout/           MainLayout, AuthLayout, Fehler- und Offline-Anzeige
+Resources/        UI-Texte: SharedResource.de.resx (Schlüssel = englischer Text)
 Pages/            Seiten und Komponenten
 supabase/sql/     Alle SQL-Skripte für die Datenbank (nummeriert)
 supabase/tests/   SQL-Tests mit PGlite (Supabase-Umgebung nachgebaut)

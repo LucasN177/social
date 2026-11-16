@@ -6,7 +6,7 @@
     <DialogContent>
         @if (Mode is GroupDialogMode.Create or GroupDialogMode.Rename)
         {
-            <MudTextField T="string" @bind-Value="_title" Immediate="true" Label="Group name" Variant="Variant.Outlined"
+            <MudTextField T="string" @bind-Value="_title" Immediate="true" Label="@L["Group name"]" Variant="Variant.Outlined"
                           MaxLength="IMessageService.MaxGroupTitleLength" Counter="IMessageService.MaxGroupTitleLength"
                           Disabled="_saving" AutoFocus="true" Class="mb-3" />
         }
@@ -25,7 +25,7 @@
             }
 
             <MudTextField T="string" Value="_term" ValueChanged="OnTermChanged" Immediate="true" DebounceInterval="300"
-                          Placeholder="Search people…" Variant="Variant.Outlined" Margin="Margin.Dense"
+                          Placeholder="@L["Search people…"]" Variant="Variant.Outlined" Margin="Margin.Dense"
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Disabled="_saving"
                           AutoFocus="@(Mode == GroupDialogMode.AddMembers)" />
 
@@ -42,12 +42,12 @@
                             <div class="font-weight-bold">@(string.IsNullOrWhiteSpace(user.DisplayName) ? user.Username : user.DisplayName)</div>
                             <div class="mud-text-secondary" style="font-size: 0.8rem">@("@" + user.Username)</div>
                         </div>
-                        <MudCheckBox T="bool" Value="@IsSelected(user)" ReadOnly="true" Color="Color.Primary" aria-label="Select" />
+                        <MudCheckBox T="bool" Value="@IsSelected(user)" ReadOnly="true" Color="Color.Primary" aria-label="@L["Select"]" />
                     </div>
                 }
                 @if (!_searching && _term.Length > 0 && _results.Count == 0)
                 {
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">No people found.</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">@L["No people found."]</MudText>
                 }
             </div>
         }
@@ -62,23 +62,23 @@
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
-            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-3">@_errorMessage</MudAlert>
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-3">@L[_errorMessage]</MudAlert>
         }
     </DialogContent>
     <DialogActions>
         @if (Mode == GroupDialogMode.Members)
         {
-            <MudButton OnClick="Cancel">Close</MudButton>
+            <MudButton OnClick="Cancel">@L["Close"]</MudButton>
         }
         else
         {
-            <MudButton OnClick="Cancel" Disabled="_saving">Cancel</MudButton>
+            <MudButton OnClick="Cancel" Disabled="_saving">@L["Cancel"]</MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="@(_saving || !CanSave)">
                 @if (_saving)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
                 }
-                @SaveText
+                @L[SaveText]
             </MudButton>
         }
     </DialogActions>
@@ -151,7 +151,7 @@
         else if (_selected.Count + Members.Count < IMessageService.MaxGroupMembers)
             _selected.Add(user);
         else
-            _errorMessage = $"Groups can have up to {IMessageService.MaxGroupMembers} members.";
+            _errorMessage = L["Groups can have up to {0} members.", IMessageService.MaxGroupMembers];
     }
 
     private async Task Save()

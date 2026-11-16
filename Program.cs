@@ -11,6 +11,9 @@ using Social.Core.Interfaces.Infrastructure;
 using Social.Core.Interfaces.Services;
 using Social.Infrastructure;
 using Social.Services;
+using Social.Resources;
+using Microsoft.Extensions.Localization;
+using Microsoft.JSInterop;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -70,12 +73,18 @@ builder.Services.AddSingleton<IMessageService, MessageService>();
 builder.Services.AddSingleton<ActivityService>();
 // Scoped wie ISnackbar von MudBlazor
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+builder.Services.AddLocalization();
+builder.Services.AddScoped<LanguageService>();
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddSingleton<AuthenticationStateProvider, SupabaseAuthStateProvider>();
 
 var host = builder.Build();
+
+// Sprache (de/en) vor dem ersten Rendern setzen – gespeicherte Wahl oder Browsersprache
+await LanguageService.ApplyStoredCultureAsync(host.Services.GetRequiredService<IJSRuntime>());
+Loc.L = host.Services.GetRequiredService<IStringLocalizer<SharedResource>>();
 
 // Gespeicherte Session laden und gegen den Server prüfen bzw. Token erneuern, bevor die erste Seite gerendert wird.
 // Ist die Session ungültig, verwirft Gotrue sie und der User landet auf dem Login.

@@ -8,39 +8,53 @@
 @inject IDialogService DialogService
 @inject IFeedbackService Feedback
 @inject NavigationManager Navigation
+@inject LanguageService Language
 
-<PageTitle>Settings - Social</PageTitle>
+<PageTitle>@L["Settings"] - Social</PageTitle>
 
 <div style="max-width: 640px; margin: 0 auto">
-    <MudText Typo="Typo.h5" Class="mb-4">Settings</MudText>
+    <MudText Typo="Typo.h5" Class="mb-4">@L["Settings"]</MudText>
 
     <MudPaper Elevation="0" Outlined="true" Class="mb-4" Style="border-radius: 16px; overflow: hidden">
         <MudList T="string" Dense="false">
-            <MudListSubheader>Account</MudListSubheader>
+            <MudListSubheader>@L["Account"]</MudListSubheader>
             <MudListItem T="string" Icon="@Icons.Material.Outlined.Person" OnClick="EditProfile">
                 <div class="d-flex align-center gap-3">
                     <UserAvatar User="_profile" Size="36" />
                     <div>
                         <div class="font-weight-bold">@(_profile?.DisplayName ?? "…")</div>
-                        <div class="mud-text-secondary" style="font-size: 0.85rem">Edit profile</div>
+                        <div class="mud-text-secondary" style="font-size: 0.85rem">@L["Edit profile"]</div>
                     </div>
                 </div>
             </MudListItem>
             <MudListItem T="string" Icon="@Icons.Material.Outlined.Email">
-                <div>Email</div>
+                <div>@L["Email"]</div>
                 <div class="mud-text-secondary" style="font-size: 0.85rem">@(AuthService.CurrentUser?.Email ?? "–")</div>
             </MudListItem>
-            <MudListItem T="string" Icon="@Icons.Material.Outlined.AccountCircle" Href="profile">View my profile</MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Outlined.AccountCircle" Href="profile">@L["View my profile"]</MudListItem>
         </MudList>
     </MudPaper>
 
     <MudPaper Elevation="0" Outlined="true" Class="mb-4" Style="border-radius: 16px; overflow: hidden">
         <MudList T="string">
-            <MudListSubheader>Appearance</MudListSubheader>
+            <MudListSubheader>@L["Appearance"]</MudListSubheader>
             <MudListItem T="string" Icon="@(ThemeService.IsDarkMode ? Icons.Material.Outlined.DarkMode : Icons.Material.Outlined.LightMode)">
                 <div class="d-flex align-center justify-space-between">
-                    <span>Dark mode</span>
+                    <span>@L["Dark mode"]</span>
                     <MudSwitch T="bool" Value="ThemeService.IsDarkMode" ValueChanged="_ => ThemeService.ToggleTheme()" Color="Color.Primary" />
+                </div>
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Outlined.Language">
+                <div class="d-flex align-center justify-space-between gap-3">
+                    <span>@L["Language"]</span>
+                    @* Wechsel lädt die App neu, damit alle Texte und Formate die neue Sprache nutzen *@
+                    <MudSelect T="string" Value="Language.Current" ValueChanged="Language.SetAsync" Dense="true"
+                               Variant="Variant.Outlined" Margin="Margin.Dense" Style="max-width: 160px" aria-label="@L["Language"]">
+                        @foreach (var (lang, name) in LanguageService.Available)
+                        {
+                            <MudSelectItem T="string" Value="@lang">@name</MudSelectItem>
+                        }
+                    </MudSelect>
                 </div>
             </MudListItem>
         </MudList>
@@ -49,7 +63,7 @@
     <MudPaper Elevation="0" Outlined="true" Class="mb-4" Style="border-radius: 16px; overflow: hidden">
         <MudList T="string">
             <MudListItem T="string" Icon="@Icons.Material.Outlined.Logout" IconColor="Color.Error" OnClick="Logout">
-                <span class="mud-error-text">Sign out</span>
+                <span class="mud-error-text">@L["Sign out"]</span>
             </MudListItem>
         </MudList>
     </MudPaper>
@@ -74,7 +88,7 @@
         if (_profile is null) return;
         var parameters = new DialogParameters<EditProfileDialog> { { x => x.Profile, _profile } };
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
-        var dialog = await DialogService.ShowAsync<EditProfileDialog>("Edit profile", parameters, options);
+        var dialog = await DialogService.ShowAsync<EditProfileDialog>(L["Edit profile"], parameters, options);
         if (await dialog.Result is { Canceled: false })
             Feedback.Success("Profile saved");
     }
