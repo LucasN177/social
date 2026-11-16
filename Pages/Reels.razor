@@ -64,7 +64,7 @@ else
                     </div>
                     @if (!string.IsNullOrWhiteSpace(reel.Content))
                     {
-                        <p class="reel-caption">@reel.Content</p>
+                        <p class="reel-caption"><RichText Text="@reel.Content" /></p>
                     }
                 </div>
             </section>

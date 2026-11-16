@@ -122,7 +122,7 @@ Supabase (Postgres + RLS, Auth, Storage, Realtime)
 - [x] Gruppenchats: anlegen („New group“, Name + mind. 2 Personen, max. 32), Leute hinzufügen, umbenennen, Mitglieder ansehen, verlassen; Absendername/-avatar in Gruppen (RPCs `create_group_conversation`, `add_conversation_members`, `rename_conversation`, `leave_conversation`, `conversation_member_profiles`)
 - [x] Nachrichten bearbeiten („edited“) und löschen (Platzhalter „Message deleted“, Bild wird mitgelöscht) über RPCs `edit_message` / `delete_message`; Polling über `updated_at`, damit Änderungen auch beim Gegenüber ankommen
 - [x] Bilder im Chat: privater Bucket `chat-images` (nur Mitglieder, Anzeige per Signed URL), im Browser auf 1600 px verkleinert, optional mit Text
-- ~~Erwähnungen (`@username` → Typ `mention`)~~ → verworfen, es werden keine weiteren Benachrichtigungen umgesetzt
+- [x] Erwähnungen: `@username` in Posts (auch beim Bearbeiten neu hinzugefügte) und Kommentaren erzeugt per Trigger eine Benachrichtigung vom Typ `mention`; sichtbar auf `/notifications` und im Badge beim nächsten Öffnen (kein Push). In Posts, Kommentaren und Reels sind `@username` und `#hashtags` verlinkt (`RichText`)
 
 ### Phase 6 – Qualität & Release
 - [x] Loading-Skeletons (`MudSkeleton`) und leere Zustände auf den Hauptseiten
@@ -161,6 +161,7 @@ Zum Einrichten genügt [`supabase/setup.sql`](../supabase/setup.sql) im Supabase
 | `018_post_edit_comment_likes.sql` | `posts.edited_at`, Spaltenrechte auf `posts`, RPC `update_post`, `feed_posts`/`home_feed` um `edited_at`, `comment_details` um `is_liked` erweitert |
 | `019_stories_media_replies_cleanup.sql` | `stories.media_type` (Bild/Video), Bucket `stories` bis 50 MB inkl. Video, `messages.story_id`/`story_url` + RPC `reply_to_story`, `invoke_story_cleanup` + stündlicher `pg_cron`-Job |
 | `020_chat_groups_edit_images.sql` | Gruppen (`conversations.is_group`/`title`, RPCs zum Anlegen/Hinzufügen/Umbenennen/Verlassen), Nachrichten bearbeiten/löschen (`edit_message`, `delete_message`, `updated_at` als Polling-Cursor), Bilder im privaten Bucket `chat-images`, `conversation_list` um Gruppen/Bild/gelöscht erweitert |
+| `021_mentions.sql` | `mentioned_user_ids`, Trigger auf `posts` (Anlegen/Bearbeiten) und `comments` → Benachrichtigung `mention` |
 
 Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als neues Skript mit der nächsten Nummer angelegt.
 

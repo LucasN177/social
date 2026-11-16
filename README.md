@@ -27,7 +27,7 @@
 | Profil ansehen & bearbeiten, Profilbild hochladen | ✅ |
 | Folgen / Entfolgen, Follower-Listen, Feed „Following“ / „Explore“ | ✅ |
 | Suche nach Accounts und Hashtags, Hashtag-Seiten | ✅ |
-| Benachrichtigungen mit Badge (Like, Kommentar, Follow) | ✅ (Polling) |
+| Benachrichtigungen mit Badge (Like, Kommentar, Follow, @Erwähnung) | ✅ (Polling) |
 | Direktnachrichten und Gruppenchats mit Ungelesen-Zähler, Bildern, Bearbeiten/Löschen | ✅ (Polling) |
 | Installierbar als PWA mit Offline-Cache | ✅ |
 

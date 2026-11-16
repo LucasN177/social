@@ -1,0 +1,11 @@
+/* #hashtags und @erwähnungen in der Primärfarbe (in Reels überschrieben, siehe Reels.razor.css) */
+.rich-link {
+    color: var(--mud-palette-primary);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.rich-link:hover,
+.rich-link:focus-visible {
+    text-decoration: underline;
+}

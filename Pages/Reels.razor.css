@@ -102,3 +102,9 @@
     overflow: hidden;
     overflow-wrap: anywhere;
 }
+
+/* Auf dem dunklen Video: Links weiß und fett statt in der Primärfarbe */
+.reel-caption ::deep .rich-link {
+    color: #fff;
+    font-weight: 700;
+}

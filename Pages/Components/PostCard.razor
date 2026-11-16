@@ -84,17 +84,7 @@
         {
             <div class="post-content">
                 <a href="@ProfileUrl(Post.User)" class="post-author-inline">@(Post.User.Username ?? AuthorName(Post.User))</a>
-                @foreach (var part in SplitHashtags(Post.Content))
-                {
-                    if (part.IsTag)
-                    {
-                        <a class="post-hashtag" href="@($"tags/{Uri.EscapeDataString(part.Text[1..].ToLowerInvariant())}")">@part.Text</a>
-                    }
-                    else
-                    {
-                        @part.Text
-                    }
-                }
+                <RichText Text="@Post.Content" />
             </div>
         }
 
@@ -119,7 +109,7 @@
                         <div class="post-comment">
                             <a href="@ProfileUrl(comment.User)"><UserAvatar User="comment.User" Size="28" /></a>
                             <div class="flex-grow-1">
-                                <span><a href="@ProfileUrl(comment.User)" class="post-author-inline">@(comment.User.Username ?? AuthorName(comment.User))</a> @comment.Content</span>
+                                <span><a href="@ProfileUrl(comment.User)" class="post-author-inline">@(comment.User.Username ?? AuthorName(comment.User))</a> <RichText Text="@comment.Content" /></span>
                                 <div class="post-sub">
                                     @TimeAgo(comment.CreatedAt)
                                     @if (comment.LikesCount > 0)
@@ -156,7 +146,6 @@
     [Parameter] public bool ShowCommentsInitially { get; set; }
     [Parameter] public EventCallback<Post> OnDeleted { get; set; }
 
-    private static readonly Regex HashtagRegex = new(@"(#\w{1,50})", RegexOptions.Compiled);
 
     private bool _showComments;
     private List<Comment>? _comments;
@@ -283,8 +272,6 @@
     private static string ProfileUrl(User user) =>
         string.IsNullOrEmpty(user.Username) ? "profile" : $"u/{user.Username}";
 
-    private static IEnumerable<(string Text, bool IsTag)> SplitHashtags(string content) =>
-        HashtagRegex.Split(content).Where(p => p.Length > 0).Select(p => (p, p.StartsWith('#') && HashtagRegex.IsMatch(p)));
 
     internal static string TimeAgo(DateTime dateTime)
     {

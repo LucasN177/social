@@ -1,0 +1,59 @@
+@* Text mit verlinkten #hashtags (→ tags/…) und @erwähnungen (→ u/…). Erwähnungen lösen per
+   Trigger eine Benachrichtigung aus (021_mentions.sql) – gleiche Regeln wie dort. *@
+@using System.Text.RegularExpressions
+
+@foreach (var part in Split(Text))
+{
+    switch (part.Kind)
+    {
+        case PartKind.Tag:
+            <a class="rich-link" href="@($"tags/{Uri.EscapeDataString(part.Value)}")">@part.Text</a>
+            break;
+        case PartKind.Mention:
+            <a class="rich-link" href="@($"u/{Uri.EscapeDataString(part.Value)}")">@part.Text</a>
+            @part.Trailing
+            break;
+        default:
+            @part.Text
+            break;
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public string Text { get; set; } = "";
+
+    // Gleiche Zeichen wie in der Datenbank: Hashtags \w{1,50}, Usernames [a-z0-9._]{3,30}
+    private static readonly Regex TokenRegex = new(
+        @"(?<![\w@#.])(#\w{1,50}|@[a-zA-Z0-9._]{3,30})", RegexOptions.Compiled);
+
+    private enum PartKind { Text, Tag, Mention }
+
+    private readonly record struct Part(PartKind Kind, string Text, string Value = "", string Trailing = "");
+
+    private static IEnumerable<Part> Split(string text)
+    {
+        var last = 0;
+        foreach (Match match in TokenRegex.Matches(text))
+        {
+            if (match.Index > last) yield return new Part(PartKind.Text, text[last..match.Index]);
+
+            var token = match.Value;
+            if (token[0] == '#')
+            {
+                yield return new Part(PartKind.Tag, token, token[1..].ToLowerInvariant());
+            }
+            else
+            {
+                // Satzpunkt am Ende gehört nicht zum Namen ("Danke @lucas.")
+                var name = token[1..].TrimEnd('.');
+                var trailing = token[(1 + name.Length)..];
+                if (name.Length >= 3)
+                    yield return new Part(PartKind.Mention, "@" + name, name.ToLowerInvariant(), trailing);
+                else
+                    yield return new Part(PartKind.Text, token);
+            }
+            last = match.Index + match.Length;
+        }
+        if (last < text.Length) yield return new Part(PartKind.Text, text[last..]);
+    }
+}
