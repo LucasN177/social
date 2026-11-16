@@ -30,18 +30,26 @@ public static class MessagingMapper
     public static Conversation ToConversation(this ConversationRecord record, string? currentUserId) => new()
     {
         Id = record.Id,
+        // Bei Gruppen ohne weitere Mitglieder sind die Spalten des Gegenübers NULL
         Other = new User
         {
-            Id = record.OtherUserId,
+            Id = record.OtherUserId ?? string.Empty,
             Username = record.Username,
-            DisplayName = record.DisplayName,
-            Vorname = record.Vorname,
-            Nachname = record.Nachname,
-            ProfileImageUrl = record.ProfileImageUrl,
+            DisplayName = record.DisplayName ?? string.Empty,
+            Vorname = record.Vorname ?? string.Empty,
+            Nachname = record.Nachname ?? string.Empty,
+            ProfileImageUrl = record.ProfileImageUrl ?? string.Empty,
             IsVerified = record.IsVerified
         },
-        LastMessage = record.LastMessage,
-        LastMessageIsMine = record.LastSenderId == currentUserId,
+        IsGroup = record.IsGroup,
+        Title = record.Title,
+        MemberCount = record.MemberCount,
+        LastMessage = record.LastMessage ?? string.Empty,
+        LastMessageIsMine = record.LastSenderId is not null && record.LastSenderId == currentUserId,
+        LastMessageIsImage = record.LastIsImage,
+        LastMessageIsDeleted = record.LastIsDeleted,
+        LastSenderName = record.LastSenderName,
+        HasMessages = record.LastSenderId is not null,
         LastMessageAt = record.LastMessageAt.ToLocalTime(),
         UnreadCount = record.UnreadCount
     };
@@ -55,6 +63,10 @@ public static class MessagingMapper
         CreatedAt = record.CreatedAt.ToLocalTime(),
         IsMine = record.SenderId == currentUserId,
         StoryUrl = record.StoryUrl,
-        StoryAvailable = record.StoryId is not null
+        StoryAvailable = record.StoryId is not null,
+        ImagePath = record.ImagePath,
+        EditedAt = record.EditedAt?.ToLocalTime(),
+        IsDeleted = record.DeletedAt is not null,
+        UpdatedAtUtc = record.UpdatedAt.ToUniversalTime()
     };
 }

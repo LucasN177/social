@@ -2,13 +2,18 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @inject IMessageService MessageService
 @inject ActivityService Activity
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
 
 <PageTitle>Messages - Social</PageTitle>
 
 <div style="max-width: 640px; margin: 0 auto">
     <div class="d-flex align-center justify-space-between mb-4">
         <MudText Typo="Typo.h5">Messages</MudText>
-        <MudButton Href="search" Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Edit">New message</MudButton>
+        <div class="d-flex flex-wrap gap-1">
+            <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.GroupAdd" OnClick="CreateGroup">New group</MudButton>
+            <MudButton Href="search" Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Outlined.Edit">New message</MudButton>
+        </div>
     </div>
 
     <MudPaper Elevation="0" Outlined="true" Style="border-radius: 16px; overflow: hidden">
@@ -40,14 +45,16 @@
             @foreach (var conversation in _conversations)
             {
                 <a href="@($"messages/{conversation.Id}")" class="conversation @(conversation.UnreadCount > 0 ? "conversation--unread" : null)" @key="conversation.Id">
-                    <UserAvatar User="conversation.Other" Size="52" />
+                    <UserAvatar User="conversation.AvatarUser" Size="52" />
                     <div class="conversation-text">
                         <div class="conversation-name">
-                            @(string.IsNullOrWhiteSpace(conversation.Other.DisplayName) ? conversation.Other.Username : conversation.Other.DisplayName)
+                            @conversation.Name
+                            @if (conversation.IsGroup)
+                            {
+                                <MudIcon Icon="@Icons.Material.Outlined.Group" Style="font-size: 16px; vertical-align: -3px" Class="ml-1 mud-text-secondary" />
+                            }
                         </div>
-                        <div class="conversation-preview">
-                            @(conversation.LastMessageIsMine ? "You: " : "")@conversation.LastMessage
-                        </div>
+                        <div class="conversation-preview">@Preview(conversation)</div>
                     </div>
                     <div class="conversation-meta">
                         <span>@PostCard.TimeAgo(conversation.LastMessageAt)</span>
@@ -69,5 +76,29 @@
     {
         _conversations = await MessageService.GetConversationsAsync();
         await Activity.RefreshAsync();
+    }
+
+    private static string Preview(Conversation conversation)
+    {
+        if (!conversation.HasMessages)
+            return conversation.IsGroup ? $"{conversation.MemberCount} members · say hi 👋" : "";
+
+        var prefix = conversation.LastMessageIsMine ? "You: "
+            : conversation.IsGroup && !string.IsNullOrEmpty(conversation.LastSenderName) ? $"{conversation.LastSenderName}: "
+            : "";
+        var text = conversation.LastMessageIsDeleted ? "Message deleted"
+            : conversation.LastMessageIsImage && string.IsNullOrWhiteSpace(conversation.LastMessage) ? "📷 Photo"
+            : conversation.LastMessageIsImage ? $"📷 {conversation.LastMessage}"
+            : conversation.LastMessage;
+        return prefix + text;
+    }
+
+    private async Task CreateGroup()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var parameters = new DialogParameters<GroupDialog> { { x => x.Mode, GroupDialogMode.Create } };
+        var dialog = await DialogService.ShowAsync<GroupDialog>("New group", parameters, options);
+        if (await dialog.Result is { Canceled: false, Data: long id })
+            Navigation.NavigateTo($"messages/{id}");
     }
 }

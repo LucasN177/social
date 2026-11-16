@@ -25,7 +25,7 @@ Behoben in Phase 0:
 
 Offen:
 
-1. **Supabase-Realtime funktioniert im Browser nicht** mit Paket `Supabase` 1.1.1: Der Realtime-Client setzt WebSocket-Header, was in WebAssembly `PlatformNotSupported` wirft. `AutoConnectRealtime` ist deshalb aus. Phase 5 nutzt daher **Polling** (`ActivityService`, Chat); Umstieg auf Realtime siehe Phase 5.
+1. **Supabase-Realtime funktioniert im Browser nicht** mit Paket `Supabase` 1.1.1: Der Realtime-Client setzt WebSocket-Header, was in WebAssembly `PlatformNotSupported` wirft. `AutoConnectRealtime` ist deshalb aus. Die App nutzt **Polling** (`ActivityService`, Chat) – das ist eine bewusste Entscheidung (siehe Phase 5), kein offener Punkt mehr.
 2. **`SupabaseOptions.SessionHandler` wird in 1.1.1 ignoriert** → Persistenz wird in `Program.cs` explizit per `Auth.SetPersistence` gesetzt und per `LoadSession()` geladen.
 3. ~~Deployment nutzt Platzhalter aus `appsettings.json`~~ → der Workflow schreibt die Datei aus den Secrets `SUPABASE_URL` / `SUPABASE_KEY` (siehe README).
    ~~Offline-Cache auf GitHub Pages defekt~~ → Service Worker leitet die Basis aus seinem Scope ab, der Workflow setzt die base href vor dem Publish.
@@ -118,8 +118,11 @@ Supabase (Postgres + RLS, Auth, Storage, Realtime)
 - [x] Direktnachrichten: `conversations`, `conversation_members`, `messages` mit RLS nur für Mitglieder; `get_or_create_direct_conversation`
 - [x] Chatliste `/messages` (View `conversation_list`, Ungelesen-Zähler) und Chat `/messages/{id}` (Polling alle 3 s, Tagestrenner, Auto-Scroll nur wenn unten)
 - [x] „Message“-Button im Profil
-- [ ] Echtes Realtime statt Polling: `supabase-js` per JS-Interop (Publication für `notifications` und `messages` ist schon eingerichtet), oder neueres C#-Paket prüfen
-- [ ] Gruppenchats, Nachrichten löschen/bearbeiten, Bilder im Chat, Erwähnungen (`@username` → Typ `mention`)
+- [x] ~~Echtes Realtime statt Polling~~ → **entschieden: Polling bleibt.** Für diese App reicht es (Chat alle 3 s, Badges alle 30 s), es braucht keine WebSocket-Verbindungen und hält das Free-Tier-Kontingent für Realtime (gleichzeitige Verbindungen, Nachrichten pro Monat) frei. Die Publication für `notifications`/`messages` bleibt bestehen, falls es später doch nötig wird.
+- [x] Gruppenchats: anlegen („New group“, Name + mind. 2 Personen, max. 32), Leute hinzufügen, umbenennen, Mitglieder ansehen, verlassen; Absendername/-avatar in Gruppen (RPCs `create_group_conversation`, `add_conversation_members`, `rename_conversation`, `leave_conversation`, `conversation_member_profiles`)
+- [x] Nachrichten bearbeiten („edited“) und löschen (Platzhalter „Message deleted“, Bild wird mitgelöscht) über RPCs `edit_message` / `delete_message`; Polling über `updated_at`, damit Änderungen auch beim Gegenüber ankommen
+- [x] Bilder im Chat: privater Bucket `chat-images` (nur Mitglieder, Anzeige per Signed URL), im Browser auf 1600 px verkleinert, optional mit Text
+- ~~Erwähnungen (`@username` → Typ `mention`)~~ → verworfen, es werden keine weiteren Benachrichtigungen umgesetzt
 
 ### Phase 6 – Qualität & Release
 - [x] Loading-Skeletons (`MudSkeleton`) und leere Zustände auf den Hauptseiten
@@ -157,6 +160,7 @@ Zum Einrichten genügt [`supabase/setup.sql`](../supabase/setup.sql) im Supabase
 | `017_users_cleanup.sql` | Bereinigung älterer `users`-Tabellen (Usernames, NULL-Werte), danach Checks validiert |
 | `018_post_edit_comment_likes.sql` | `posts.edited_at`, Spaltenrechte auf `posts`, RPC `update_post`, `feed_posts`/`home_feed` um `edited_at`, `comment_details` um `is_liked` erweitert |
 | `019_stories_media_replies_cleanup.sql` | `stories.media_type` (Bild/Video), Bucket `stories` bis 50 MB inkl. Video, `messages.story_id`/`story_url` + RPC `reply_to_story`, `invoke_story_cleanup` + stündlicher `pg_cron`-Job |
+| `020_chat_groups_edit_images.sql` | Gruppen (`conversations.is_group`/`title`, RPCs zum Anlegen/Hinzufügen/Umbenennen/Verlassen), Nachrichten bearbeiten/löschen (`edit_message`, `delete_message`, `updated_at` als Polling-Cursor), Bilder im privaten Bucket `chat-images`, `conversation_list` um Gruppen/Bild/gelöscht erweitert |
 
 Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als neues Skript mit der nächsten Nummer angelegt.
 

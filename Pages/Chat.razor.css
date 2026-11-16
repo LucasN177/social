@@ -122,3 +122,110 @@
     font-style: italic;
     opacity: 0.75;
 }
+
+.chat-partner--button {
+    flex: 1;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    text-align: left;
+    background: none;
+    cursor: pointer;
+}
+
+.chat-title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Gruppen: Platz für den Avatar, damit Folgenachrichten bündig bleiben */
+.chat-avatar {
+    flex: 0 0 28px;
+    margin-right: 6px;
+    align-self: flex-end;
+}
+
+.chat-row--first {
+    margin-top: 6px;
+}
+
+.chat-sender {
+    margin-bottom: 2px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--mud-palette-primary);
+}
+
+/* Optionen für eigene Nachrichten: dezent, beim Überfahren deutlicher */
+.chat-row ::deep .chat-actions {
+    align-self: center;
+    opacity: 0.35;
+    transition: opacity 0.15s;
+}
+
+.chat-row:hover ::deep .chat-actions,
+.chat-row ::deep .chat-actions:focus-within {
+    opacity: 1;
+}
+
+@media (hover: none) {
+    .chat-row ::deep .chat-actions { opacity: 0.7; }
+}
+
+.chat-bubble--deleted {
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.chat-row--mine .chat-bubble--deleted {
+    color: var(--mud-palette-text-primary);
+    background: var(--mud-palette-background-gray);
+}
+
+.chat-image {
+    display: block;
+    margin: -2px -6px 6px;
+}
+
+.chat-image img {
+    display: block;
+    max-width: 100%;
+    max-height: 320px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.chat-image--missing {
+    display: grid;
+    place-items: center;
+    width: 160px;
+    height: 120px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.chat-compose-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px 0 14px;
+    font-size: 0.85rem;
+    color: var(--mud-palette-text-secondary);
+    border-top: 1px solid var(--mud-palette-lines-default);
+}
+
+.chat-compose-hint + .chat-input {
+    border-top: 0;
+}
+
+.chat-compose-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chat-row ::deep .chat-actions { transition: none; }
+}

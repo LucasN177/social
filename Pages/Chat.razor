@@ -3,21 +3,40 @@
 @implements IAsyncDisposable
 @inject IMessageService MessageService
 @inject ActivityService Activity
+@inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<PageTitle>@(_partner is null ? "Chat" : $"Chat with {_partner.DisplayName}") - Social</PageTitle>
+<PageTitle>@(_chat is null ? "Chat" : _chat.IsGroup ? _chat.Name : $"Chat with {_chat.Name}") - Social</PageTitle>
 
 <div class="chat">
     <div class="chat-header">
         <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="messages" aria-label="Back to messages" />
-        @if (_partner is not null)
+        @if (_chat is { IsGroup: true })
         {
-            <a href="@($"u/{_partner.Username}")" class="chat-partner">
-                <UserAvatar User="_partner" Size="36" />
-                <div>
-                    <div class="font-weight-bold">@(string.IsNullOrWhiteSpace(_partner.DisplayName) ? _partner.Username : _partner.DisplayName)</div>
-                    <div class="mud-text-secondary" style="font-size: 0.8rem">@("@" + _partner.Username)</div>
+            <button type="button" class="chat-partner chat-partner--button" @onclick="ShowMembers">
+                <UserAvatar User="_chat.AvatarUser" Size="36" />
+                <div style="min-width: 0">
+                    <div class="font-weight-bold chat-title">@_chat.Name</div>
+                    <div class="mud-text-secondary" style="font-size: 0.8rem">@_chat.Members.Count members</div>
+                </div>
+            </button>
+            <MudSpacer />
+            <MudMenu Icon="@Icons.Material.Filled.MoreVert" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" aria-label="Group options">
+                <MudMenuItem Icon="@Icons.Material.Outlined.Group" OnClick="ShowMembers">Members</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Outlined.PersonAdd" OnClick="AddMembers">Add people</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Outlined.Edit" OnClick="RenameGroup">Rename group</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Outlined.Logout" IconColor="Color.Error" OnClick="LeaveGroup">Leave group</MudMenuItem>
+            </MudMenu>
+        }
+        else if (_chat?.Partner is { } partner)
+        {
+            <a href="@($"u/{partner.Username}")" class="chat-partner">
+                <UserAvatar User="partner" Size="36" />
+                <div style="min-width: 0">
+                    <div class="font-weight-bold chat-title">@_chat.Name</div>
+                    <div class="mud-text-secondary" style="font-size: 0.8rem">@("@" + partner.Username)</div>
                 </div>
             </a>
         }
@@ -28,15 +47,17 @@
         {
             <div class="d-flex justify-center pa-6"><MudProgressCircular Indeterminate="true" Color="Color.Primary" /></div>
         }
-        else if (_notFound)
+        else if (_chat is null)
         {
             <div class="pa-8 text-center mud-text-secondary">This conversation isn't available.</div>
         }
         else if (_messages.Count == 0)
         {
             <div class="chat-empty">
-                <UserAvatar User="_partner" Size="72" />
-                <MudText Typo="Typo.subtitle1" Class="mt-2">Say hi to @(_partner?.DisplayName) 👋</MudText>
+                <UserAvatar User="_chat.AvatarUser" Size="72" />
+                <MudText Typo="Typo.subtitle1" Class="mt-2">
+                    Say hi to @_chat.Name 👋
+                </MudText>
             </div>
         }
         else
@@ -44,46 +65,133 @@
             @for (var i = 0; i < _messages.Count; i++)
             {
                 var message = _messages[i];
-                var showDay = i == 0 || _messages[i - 1].CreatedAt.Date != message.CreatedAt.Date;
+                var previous = i > 0 ? _messages[i - 1] : null;
+                var showDay = previous is null || previous.CreatedAt.Date != message.CreatedAt.Date;
+                // In Gruppen Name und Avatar beim ersten Beitrag einer Folge desselben Absenders
+                var showSender = _chat.IsGroup && !message.IsMine && (showDay || previous!.SenderId != message.SenderId);
                 @if (showDay)
                 {
                     <div class="chat-day">@DayLabel(message.CreatedAt)</div>
                 }
-                <div class="chat-row @(message.IsMine ? "chat-row--mine" : null)" @key="message.Id">
-                    <div class="chat-bubble" title="@message.CreatedAt.ToString("g")">
-                        @if (message.IsStoryReply)
+                <div class="chat-row @(message.IsMine ? "chat-row--mine" : null) @(showSender ? "chat-row--first" : null)" @key="message.Id">
+                    @if (_chat.IsGroup && !message.IsMine)
+                    {
+                        <div class="chat-avatar">
+                            @if (showSender)
+                            {
+                                <UserAvatar User="Sender(message)" Size="28" />
+                            }
+                        </div>
+                    }
+                    @if (message.IsMine && !message.IsDeleted)
+                    {
+                        <MudMenu Icon="@Icons.Material.Filled.MoreHoriz" Size="Size.Small" Dense="true" Class="chat-actions"
+                                 AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopRight" aria-label="Message options">
+                            <MudMenuItem Icon="@Icons.Material.Outlined.Edit" OnClick="() => StartEdit(message)">Edit</MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Outlined.Delete" IconColor="Color.Error" OnClick="() => DeleteMessage(message)">Delete</MudMenuItem>
+                        </MudMenu>
+                    }
+                    <div class="chat-bubble @(message.IsDeleted ? "chat-bubble--deleted" : null)" title="@message.CreatedAt.ToString("g")">
+                        @if (showSender)
                         {
-                            <div class="chat-story">
-                                <span class="chat-story-label">@(message.IsMine ? "You replied to their story" : "Replied to your story")</span>
-                                @if (message.StoryAvailable && message.StoryIsVideo)
+                            <div class="chat-sender">@SenderName(message)</div>
+                        }
+                        @if (message.IsDeleted)
+                        {
+                            <span class="chat-deleted">
+                                <MudIcon Icon="@Icons.Material.Outlined.Block" Style="font-size: 14px; vertical-align: -2px" />
+                                Message deleted
+                            </span>
+                        }
+                        else
+                        {
+                            @if (message.IsStoryReply)
+                            {
+                                <div class="chat-story">
+                                    <span class="chat-story-label">@(message.IsMine ? "You replied to a story" : "Replied to your story")</span>
+                                    @if (message.StoryAvailable && message.StoryIsVideo)
+                                    {
+                                        <video src="@($"{message.StoryUrl}#t=0.1")" muted playsinline preload="metadata" aria-label="Story"></video>
+                                    }
+                                    else if (message.StoryAvailable)
+                                    {
+                                        <img src="@message.StoryUrl" alt="Story" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <span class="chat-story-expired">Story no longer available</span>
+                                    }
+                                </div>
+                            }
+                            @if (message.ImagePath is not null)
+                            {
+                                @if (message.ImageUrl is not null)
                                 {
-                                    <video src="@($"{message.StoryUrl}#t=0.1")" muted playsinline preload="metadata" aria-label="Story"></video>
-                                }
-                                else if (message.StoryAvailable)
-                                {
-                                    <img src="@message.StoryUrl" alt="Story" loading="lazy" />
+                                    <a href="@message.ImageUrl" target="_blank" rel="noopener" class="chat-image">
+                                        <img src="@message.ImageUrl" alt="Photo" loading="lazy" />
+                                    </a>
                                 }
                                 else
                                 {
-                                    <span class="chat-story-expired">Story no longer available</span>
+                                    <div class="chat-image chat-image--missing">
+                                        <MudIcon Icon="@Icons.Material.Outlined.BrokenImage" />
+                                    </div>
                                 }
-                            </div>
+                            }
+                            @if (message.Content.Length > 0)
+                            {
+                                <span>@message.Content</span>
+                            }
                         }
-                        <span>@message.Content</span>
-                        <span class="chat-time">@message.CreatedAt.ToString("HH:mm")</span>
+                        <span class="chat-time">
+                            @if (message.IsEdited && !message.IsDeleted)
+                            {
+                                <text>edited · </text>
+                            }
+                            @message.CreatedAt.ToString("HH:mm")
+                        </span>
                     </div>
                 </div>
             }
         }
     </div>
 
-    @if (!_notFound && !_loading)
+    @if (_chat is not null && !_loading)
     {
+        @if (_editing is not null)
+        {
+            <div class="chat-compose-hint">
+                <MudIcon Icon="@Icons.Material.Outlined.Edit" Size="Size.Small" />
+                <span class="flex-grow-1">Editing message</span>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="CancelEdit" aria-label="Cancel editing" />
+            </div>
+        }
+        else if (_imagePreview is not null)
+        {
+            <div class="chat-compose-hint">
+                <img src="@_imagePreview" alt="Selected photo" class="chat-compose-thumb" />
+                <span class="flex-grow-1">Photo ready to send</span>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="RemoveImage" Disabled="_sending" aria-label="Remove photo" />
+            </div>
+        }
+
         <div class="chat-input" @onkeydown="OnKeyDown">
+            @if (_editing is null)
+            {
+                <MudFileUpload T="IBrowserFile" Accept="image/png, image/jpeg, image/webp" FilesChanged="OnImageSelected"
+                               MaxFileSize="MaxImageInputBytes" Disabled="_sending">
+                    <SelectedTemplate />
+                    <CustomContent>
+                        <MudIconButton Icon="@Icons.Material.Outlined.Image" OnClick="@context.OpenFilePickerAsync"
+                                       Disabled="_sending" aria-label="Add photo" />
+                    </CustomContent>
+                </MudFileUpload>
+            }
             <MudTextField T="string" @bind-Value="_draft" Immediate="true" Placeholder="Message…" Variant="Variant.Outlined"
-                          Margin="Margin.Dense" MaxLength="2000" Class="flex-grow-1 mt-0" Disabled="_sending" AutoFocus="true" />
-            <MudIconButton Icon="@Icons.Material.Filled.Send" Color="Color.Primary" OnClick="Send"
-                           Disabled="@(string.IsNullOrWhiteSpace(_draft) || _sending)" aria-label="Send" />
+                          Margin="Margin.Dense" MaxLength="IMessageService.MaxMessageLength" Class="flex-grow-1 mt-0"
+                          Disabled="_sending" AutoFocus="true" />
+            <MudIconButton Icon="@(_editing is null ? Icons.Material.Filled.Send : Icons.Material.Filled.Check)" Color="Color.Primary"
+                           OnClick="Submit" Disabled="@(!CanSubmit)" aria-label="@(_editing is null ? "Send" : "Save changes")" />
         </div>
     }
 </div>
@@ -92,37 +200,53 @@
     [Parameter] public long Id { get; set; }
 
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(3);
+    private const long MaxImageInputBytes = 20 * 1024 * 1024;
+    private const long MaxImageBytes = 10 * 1024 * 1024;
 
-    private User? _partner;
+    private ChatInfo? _chat;
+    private Dictionary<string, User> _members = new();
     private List<ChatMessage> _messages = new();
     private ElementReference _scroller;
     private bool _loading = true;
-    private bool _notFound;
     private string _draft = "";
     private bool _sending;
     private bool _scrollToEnd;
     private CancellationTokenSource? _pollCts;
 
+    private ChatMessage? _editing;
+    private byte[]? _image;
+    private string? _imagePreview;
+
+    private bool CanSubmit => !_sending && (!string.IsNullOrWhiteSpace(_draft) || (_editing is null && _image is not null)
+                                            || _editing?.ImagePath is not null);
+
     protected override async Task OnParametersSetAsync()
     {
         _pollCts?.Cancel();
         _loading = true;
+        _editing = null;
+        RemoveImage();
 
-        var partnerTask = MessageService.GetPartnerAsync(Id);
+        var chatTask = MessageService.GetChatAsync(Id);
         var messagesTask = MessageService.GetLatestMessagesAsync(Id);
-        await Task.WhenAll(partnerTask, messagesTask);
+        await Task.WhenAll(chatTask, messagesTask);
 
-        _partner = partnerTask.Result;
-        _notFound = _partner is null;
+        SetChat(chatTask.Result);
         _messages = messagesTask.Result;
         _loading = false;
         _scrollToEnd = true;
 
-        if (_notFound) return;
+        if (_chat is null) return;
 
         await MarkRead();
         _pollCts = new CancellationTokenSource();
         _ = PollAsync(_pollCts.Token);
+    }
+
+    private void SetChat(ChatInfo? chat)
+    {
+        _chat = chat;
+        _members = chat?.Members.ToDictionary(m => m.Id) ?? new Dictionary<string, User>();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -132,6 +256,7 @@
         await JS.InvokeVoidAsync("socialUi.scrollToBottom", _scroller);
     }
 
+    // Polling statt Realtime: neue UND geänderte Nachrichten über updated_at
     private async Task PollAsync(CancellationToken token)
     {
         using var timer = new PeriodicTimer(PollInterval);
@@ -139,16 +264,25 @@
         {
             while (await timer.WaitForNextTickAsync(token))
             {
-                var lastId = _messages.Count > 0 ? _messages[^1].Id : 0;
-                var fresh = await MessageService.GetMessagesAfterAsync(Id, lastId);
-                if (fresh.Count == 0 || token.IsCancellationRequested) continue;
+                var since = _messages.Count > 0 ? _messages.Max(m => m.UpdatedAtUtc) : DateTime.UnixEpoch;
+                var changes = await MessageService.GetChangesSinceAsync(Id, since);
+                if (token.IsCancellationRequested) return;
 
+                var fresh = changes.Where(c => !IsKnownVersion(c)).ToList();
+                if (fresh.Count == 0) continue;
+
+                var hasNew = fresh.Any(c => _messages.All(m => m.Id != c.Id));
                 var nearBottom = await JS.InvokeAsync<bool>("socialUi.isNearBottom", token, _scroller, 120);
-                AppendUnique(fresh);
-                _scrollToEnd = nearBottom;
+
+                // Unbekannter Absender (gerade hinzugefügt) → Mitglieder neu laden
+                if (_chat is { IsGroup: true } && fresh.Any(c => !_members.ContainsKey(c.SenderId)))
+                    SetChat(await MessageService.GetChatAsync(Id) ?? _chat);
+
+                Merge(fresh);
+                _scrollToEnd = hasNew && nearBottom;
                 await InvokeAsync(StateHasChanged);
 
-                if (fresh.Any(m => !m.IsMine)) await MarkRead();
+                if (hasNew && fresh.Any(m => !m.IsMine)) await MarkRead();
             }
         }
         catch (OperationCanceledException)
@@ -161,37 +295,186 @@
         }
     }
 
+    // Ergebnis mit ">=" enthält immer die zuletzt bekannte Version – die nicht erneut verarbeiten
+    private bool IsKnownVersion(ChatMessage change) =>
+        _messages.Any(m => m.Id == change.Id && m.UpdatedAtUtc == change.UpdatedAtUtc);
+
+    /// <summary>Neue anhängen, bekannte (bearbeitet/gelöscht) ersetzen.</summary>
+    private void Merge(IEnumerable<ChatMessage> messages)
+    {
+        foreach (var message in messages)
+        {
+            var index = _messages.FindIndex(m => m.Id == message.Id);
+            if (index >= 0) _messages[index] = message;
+            else _messages.Add(message);
+        }
+        _messages.Sort((a, b) => a.Id.CompareTo(b.Id));
+    }
+
+    private async Task Submit()
+    {
+        if (!CanSubmit) return;
+        if (_editing is not null) await SaveEdit();
+        else await Send();
+    }
+
     private async Task Send()
     {
-        if (string.IsNullOrWhiteSpace(_draft) || _sending) return;
         _sending = true;
-
-        var message = await MessageService.SendAsync(Id, _draft);
+        var result = await MessageService.SendAsync(Id, _draft, _image);
         _sending = false;
 
-        if (message is null)
+        if (result is not { IsSuccess: true, Data: not null })
         {
-            Snackbar.Add("Your message could not be sent.", Severity.Error);
+            Snackbar.Add(result.ErrorMessage ?? "Your message could not be sent.", Severity.Error);
             return;
         }
 
-        AppendUnique(new List<ChatMessage> { message });
+        Merge(new[] { result.Data });
         _draft = "";
+        RemoveImage();
         _scrollToEnd = true;
+    }
+
+    private void StartEdit(ChatMessage message)
+    {
+        RemoveImage();
+        _editing = message;
+        _draft = message.Content;
+    }
+
+    private void CancelEdit()
+    {
+        _editing = null;
+        _draft = "";
+    }
+
+    private async Task SaveEdit()
+    {
+        var message = _editing!;
+        _sending = true;
+        var result = await MessageService.EditAsync(message, _draft);
+        _sending = false;
+
+        if (result.IsSuccess) CancelEdit();
+        else Snackbar.Add(result.ErrorMessage ?? "Your changes could not be saved.", Severity.Error);
+    }
+
+    private async Task DeleteMessage(ChatMessage message)
+    {
+        var confirmed = await DialogService.ShowMessageBoxAsync("Delete message?", "It will be removed for everyone in this chat.",
+            yesText: "Delete", cancelText: "Cancel");
+        if (confirmed != true) return;
+
+        var result = await MessageService.DeleteAsync(message);
+        if (!result.IsSuccess)
+            Snackbar.Add(result.ErrorMessage ?? "The message could not be deleted.", Severity.Error);
+        else if (_editing == message)
+            CancelEdit();
+    }
+
+    private async Task OnImageSelected(IBrowserFile? file)
+    {
+        if (file is null) return;
+        try
+        {
+            // Im Browser verkleinern, dann als Vorschau (Data-URL) anzeigen
+            var resized = await file.RequestImageFileAsync("image/jpeg", 1600, 1600);
+            await using var stream = resized.OpenReadStream(MaxImageBytes);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            _image = buffer.ToArray();
+            _imagePreview = $"data:image/jpeg;base64,{Convert.ToBase64String(_image)}";
+        }
+        catch (Exception)
+        {
+            RemoveImage();
+            Snackbar.Add("This photo could not be read. Please choose a JPG, PNG or WebP.", Severity.Error);
+        }
+    }
+
+    private void RemoveImage()
+    {
+        _image = null;
+        _imagePreview = null;
     }
 
     private async Task OnKeyDown(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter" && !e.ShiftKey) await Send();
+        if (e.Key == "Enter" && !e.ShiftKey) await Submit();
+        else if (e.Key == "Escape" && _editing is not null) CancelEdit();
     }
 
-    // Polling und eigenes Senden können dieselbe Nachricht liefern
-    private void AppendUnique(List<ChatMessage> messages)
+    private User Sender(ChatMessage message) =>
+        _members.TryGetValue(message.SenderId, out var user) ? user : new User { Id = message.SenderId, Vorname = "?" };
+
+    private string SenderName(ChatMessage message) =>
+        _members.TryGetValue(message.SenderId, out var user)
+            ? string.IsNullOrWhiteSpace(user.DisplayName) ? user.Username ?? "Unknown" : user.DisplayName
+            : "Former member";
+
+    private async Task ShowMembers()
     {
-        foreach (var message in messages.Where(m => _messages.All(x => x.Id != m.Id)))
-            _messages.Add(message);
-        _messages.Sort((a, b) => a.Id.CompareTo(b.Id));
+        if (_chat is null) return;
+        var parameters = new DialogParameters<GroupDialog>
+        {
+            { x => x.Mode, GroupDialogMode.Members },
+            { x => x.Members, _chat.Members }
+        };
+        await DialogService.ShowAsync<GroupDialog>($"{_chat.Members.Count} members", parameters, DialogOptions);
     }
+
+    private async Task AddMembers()
+    {
+        if (_chat is null) return;
+        var parameters = new DialogParameters<GroupDialog>
+        {
+            { x => x.Mode, GroupDialogMode.AddMembers },
+            { x => x.ConversationId, Id },
+            { x => x.Members, _chat.Members }
+        };
+        var dialog = await DialogService.ShowAsync<GroupDialog>("Add people", parameters, DialogOptions);
+        if (await dialog.Result is { Canceled: false })
+        {
+            SetChat(await MessageService.GetChatAsync(Id) ?? _chat);
+            Snackbar.Add("People added", Severity.Success);
+        }
+    }
+
+    private async Task RenameGroup()
+    {
+        if (_chat is null) return;
+        var parameters = new DialogParameters<GroupDialog>
+        {
+            { x => x.Mode, GroupDialogMode.Rename },
+            { x => x.ConversationId, Id },
+            { x => x.CurrentTitle, _chat.Title }
+        };
+        var dialog = await DialogService.ShowAsync<GroupDialog>("Rename group", parameters, DialogOptions);
+        if (await dialog.Result is { Canceled: false, Data: string title })
+            _chat.Title = title;
+    }
+
+    private async Task LeaveGroup()
+    {
+        var confirmed = await DialogService.ShowMessageBoxAsync("Leave group?",
+            "You won't receive new messages from this group anymore.", yesText: "Leave", cancelText: "Cancel");
+        if (confirmed != true) return;
+
+        var result = await MessageService.LeaveGroupAsync(Id);
+        if (result.IsSuccess)
+        {
+            _pollCts?.Cancel();
+            await Activity.RefreshAsync();
+            Navigation.NavigateTo("messages", replace: true);
+        }
+        else
+        {
+            Snackbar.Add(result.ErrorMessage ?? "You could not leave the group.", Severity.Error);
+        }
+    }
+
+    private static readonly DialogOptions DialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
 
     private async Task MarkRead()
     {

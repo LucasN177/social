@@ -1,0 +1,185 @@
+@* Gruppen: anlegen (Name + Leute), Leute hinzufügen, umbenennen oder Mitglieder ansehen *@
+@inject IUserService UserService
+@inject IMessageService MessageService
+
+<MudDialog ContentClass="pt-2">
+    <DialogContent>
+        @if (Mode is GroupDialogMode.Create or GroupDialogMode.Rename)
+        {
+            <MudTextField T="string" @bind-Value="_title" Immediate="true" Label="Group name" Variant="Variant.Outlined"
+                          MaxLength="IMessageService.MaxGroupTitleLength" Counter="IMessageService.MaxGroupTitleLength"
+                          Disabled="_saving" AutoFocus="true" Class="mb-3" />
+        }
+
+        @if (Mode is GroupDialogMode.Create or GroupDialogMode.AddMembers)
+        {
+            @if (_selected.Count > 0)
+            {
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    @foreach (var user in _selected)
+                    {
+                        <MudChip T="string" @key="user.Id" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined"
+                                 OnClose="() => Toggle(user)">@(user.Username ?? user.DisplayName)</MudChip>
+                    }
+                </div>
+            }
+
+            <MudTextField T="string" Value="_term" ValueChanged="OnTermChanged" Immediate="true" DebounceInterval="300"
+                          Placeholder="Search people…" Variant="Variant.Outlined" Margin="Margin.Dense"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Search" Disabled="_saving"
+                          AutoFocus="@(Mode == GroupDialogMode.AddMembers)" />
+
+            <div class="mt-2" style="max-height: 320px; overflow-y: auto">
+                @if (_searching)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+                }
+                @foreach (var user in Candidates)
+                {
+                    <div class="d-flex align-center gap-3 py-2" @key="user.Id" style="cursor: pointer" @onclick="() => Toggle(user)">
+                        <UserAvatar User="user" Size="36" />
+                        <div class="flex-grow-1" style="min-width: 0">
+                            <div class="font-weight-bold">@(string.IsNullOrWhiteSpace(user.DisplayName) ? user.Username : user.DisplayName)</div>
+                            <div class="mud-text-secondary" style="font-size: 0.8rem">@("@" + user.Username)</div>
+                        </div>
+                        <MudCheckBox T="bool" Value="@IsSelected(user)" ReadOnly="true" Color="Color.Primary" aria-label="Select" />
+                    </div>
+                }
+                @if (!_searching && _term.Length > 0 && _results.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary pa-2">No people found.</MudText>
+                }
+            </div>
+        }
+
+        @if (Mode == GroupDialogMode.Members)
+        {
+            @foreach (var member in Members)
+            {
+                <UserListItem @key="member.Id" User="member" ShowFollowButton="false" OnNavigate="Cancel" />
+            }
+        }
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-3">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (Mode == GroupDialogMode.Members)
+        {
+            <MudButton OnClick="Cancel">Close</MudButton>
+        }
+        else
+        {
+            <MudButton OnClick="Cancel" Disabled="_saving">Cancel</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Save" Disabled="@(_saving || !CanSave)">
+                @if (_saving)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                @SaveText
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public GroupDialogMode Mode { get; set; } = GroupDialogMode.Create;
+    /// <summary>Für AddMembers, Rename und Members.</summary>
+    [Parameter] public long ConversationId { get; set; }
+    [Parameter] public string? CurrentTitle { get; set; }
+    /// <summary>Aktuelle Mitglieder: werden bei der Suche ausgeblendet bzw. im Modus Members angezeigt.</summary>
+    [Parameter] public List<User> Members { get; set; } = new();
+
+    private string _title = "";
+    private string _term = "";
+    private List<User> _results = new();
+    private readonly List<User> _selected = new();
+    private bool _searching;
+    private bool _saving;
+    private string _errorMessage = "";
+    private string? _currentUserId;
+
+    private IEnumerable<User> Candidates =>
+        _results.Where(u => u.Id != _currentUserId && Members.All(m => m.Id != u.Id));
+
+    private bool CanSave => Mode switch
+    {
+        GroupDialogMode.Create => _title.Trim().Length > 0 && _selected.Count >= 2,
+        GroupDialogMode.AddMembers => _selected.Count > 0,
+        GroupDialogMode.Rename => _title.Trim().Length > 0 && _title.Trim() != CurrentTitle,
+        _ => false
+    };
+
+    private string SaveText => Mode switch
+    {
+        GroupDialogMode.Create => "Create",
+        GroupDialogMode.AddMembers => "Add",
+        _ => "Save"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _title = CurrentTitle ?? "";
+        _currentUserId = (await UserService.GetCurrentUserAsync())?.Id;
+    }
+
+    private async Task OnTermChanged(string? term)
+    {
+        _term = (term ?? "").Trim();
+        if (_term.Length == 0)
+        {
+            _results = new List<User>();
+            return;
+        }
+
+        _searching = true;
+        _results = await UserService.SearchUsersAsync(_term);
+        _searching = false;
+    }
+
+    private bool IsSelected(User user) => _selected.Any(u => u.Id == user.Id);
+
+    private void Toggle(User user)
+    {
+        var existing = _selected.FirstOrDefault(u => u.Id == user.Id);
+        if (existing is not null)
+            _selected.Remove(existing);
+        else if (_selected.Count + Members.Count < IMessageService.MaxGroupMembers)
+            _selected.Add(user);
+        else
+            _errorMessage = $"Groups can have up to {IMessageService.MaxGroupMembers} members.";
+    }
+
+    private async Task Save()
+    {
+        _saving = true;
+        _errorMessage = "";
+
+        switch (Mode)
+        {
+            case GroupDialogMode.Create:
+                var created = await MessageService.CreateGroupAsync(_title, _selected);
+                if (created.IsSuccess) MudDialog.Close(DialogResult.Ok(created.Data));
+                else _errorMessage = created.ErrorMessage ?? "The group could not be created.";
+                break;
+            case GroupDialogMode.AddMembers:
+                var added = await MessageService.AddMembersAsync(ConversationId, _selected);
+                if (added.IsSuccess) MudDialog.Close(DialogResult.Ok(true));
+                else _errorMessage = added.ErrorMessage ?? "People could not be added.";
+                break;
+            case GroupDialogMode.Rename:
+                var renamed = await MessageService.RenameGroupAsync(ConversationId, _title);
+                if (renamed.IsSuccess) MudDialog.Close(DialogResult.Ok(_title.Trim()));
+                else _errorMessage = renamed.ErrorMessage ?? "The group could not be renamed.";
+                break;
+        }
+
+        _saving = false;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

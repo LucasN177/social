@@ -40,8 +40,24 @@ public class ConversationRecord : BaseModel
     [Column("profile_image_url")] public string ProfileImageUrl { get; set; } = string.Empty;
     [Column("is_verified")] public bool IsVerified { get; set; }
     [Column("last_message")] public string LastMessage { get; set; } = string.Empty;
-    [Column("last_sender_id")] public string LastSenderId { get; set; } = string.Empty;
+    [Column("last_sender_id")] public string? LastSenderId { get; set; }
     [Column("unread_count")] public int UnreadCount { get; set; }
+    // 020: Gruppen, Bilder, gelöschte Nachrichten
+    [Column("is_group")] public bool IsGroup { get; set; }
+    [Column("title")] public string? Title { get; set; }
+    [Column("member_count")] public int MemberCount { get; set; }
+    [Column("last_is_image")] public bool LastIsImage { get; set; }
+    [Column("last_is_deleted")] public bool LastIsDeleted { get; set; }
+    [Column("last_sender_name")] public string? LastSenderName { get; set; }
+}
+
+/// <summary>Zeile der Tabelle conversations (020) – nur lesend, Änderungen über RPCs.</summary>
+[Table("conversations")]
+public class ConversationInfoRecord : BaseModel
+{
+    [PrimaryKey("id")] public long Id { get; set; }
+    [Column("is_group")] public bool IsGroup { get; set; }
+    [Column("title")] public string? Title { get; set; }
 }
 
 [Table("conversation_members")]
@@ -62,4 +78,10 @@ public class MessageRecord : BaseModel
     // Nur über die RPC reply_to_story (019) gesetzt; die Insert-Policy verlangt sonst NULL
     [Column("story_id", ignoreOnInsert: true, ignoreOnUpdate: true)] public long? StoryId { get; set; }
     [Column("story_url", ignoreOnInsert: true, ignoreOnUpdate: true)] public string? StoryUrl { get; set; }
+    /// <summary>Pfad im privaten Bucket "chat-images" (020).</summary>
+    [Column("image_path", ignoreOnUpdate: true)] public string? ImagePath { get; set; }
+    [Column("edited_at", ignoreOnInsert: true, ignoreOnUpdate: true)] public DateTime? EditedAt { get; set; }
+    [Column("deleted_at", ignoreOnInsert: true, ignoreOnUpdate: true)] public DateTime? DeletedAt { get; set; }
+    /// <summary>Cursor fürs Polling: ändert sich bei jedem Bearbeiten/Löschen.</summary>
+    [Column("updated_at", ignoreOnInsert: true, ignoreOnUpdate: true)] public DateTime UpdatedAt { get; set; }
 }
