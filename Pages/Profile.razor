@@ -7,7 +7,7 @@
 @inject IMessageService MessageService
 @inject IAuthService AuthService
 @inject IDialogService DialogService
-@inject ISnackbar Snackbar
+@inject IFeedbackService Feedback
 @inject NavigationManager Navigation
 
 <PageTitle>@PageTitleText - Social</PageTitle>
@@ -166,7 +166,7 @@ else
 
         if (result is { Canceled: false, Data: User updated })
         {
-            Snackbar.Add("Profile saved", Severity.Success);
+            Feedback.Success("Profile saved");
             // Bei geändertem Username auf die neue Profil-URL wechseln
             if (Username is not null && updated.Username != Username)
                 Navigation.NavigateTo($"u/{updated.Username}", replace: true);
@@ -185,7 +185,7 @@ else
         if (conversationId is { } id)
             Navigation.NavigateTo($"messages/{id}");
         else
-            Snackbar.Add("The chat could not be opened. Please try again.", Severity.Error);
+            Feedback.Error("The chat could not be opened. Please try again.");
     }
 
     private async Task OpenFollowList(bool followers)
@@ -211,7 +211,7 @@ else
     {
         var url = Navigation.ToAbsoluteUri($"u/{_profile!.Username}").ToString();
         await JS.InvokeVoidAsync("navigator.clipboard.writeText", url);
-        Snackbar.Add("Profile link copied", Severity.Info);
+        Feedback.Info("Profile link copied");
     }
 
     [Inject] private IJSRuntime JS { get; set; } = null!;

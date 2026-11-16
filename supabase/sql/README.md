@@ -27,7 +27,8 @@ powershell -ExecutionPolicy Bypass -File supabase/build-setup.ps1
 
 - **Neue Änderungen = neues Skript** mit der nächsten freien Nummer (`015_…sql`), danach `setup.sql` neu erzeugen und beides committen.
 - Dateiname: `NNN_kurze_beschreibung.sql` in `snake_case`.
-- Jedes Skript muss **mehrfach ausführbar** sein. Achtung bei Views: `create or replace view` kann keine Spalten entfernen – wird eine View erweitert, muss jede frühere Definition dieselben Spalten haben (siehe `feed_posts` in 009/013).
+- Jedes Skript muss **mehrfach ausführbar** sein. Views dürfen in späteren Skripten um Spalten erweitert werden (`create or replace view`, neue Spalten nur am Ende). Damit frühere Definitionen beim erneuten Ausführen keine Spalten „verlieren“, entfernt `setup.sql` diese Views am Anfang (`build-setup.ps1`) – eine neue, später erweiterte View dort in die `drop view`-Liste aufnehmen.
+- Die SQL-Tests unter [`../tests`](../tests/README.md) prüfen u. a., dass `setup.sql` zweimal hintereinander durchläuft.
 - Jede neue Tabelle bekommt **RLS** und passende Policies im selben Skript.
 - Tabellen/Spalten in `snake_case`; die C#-Modelle mappen per `[Table]` / `[Column]` (und `[JsonProperty]`, wenn sie auch aus RPCs gelesen werden).
 
@@ -57,3 +58,4 @@ powershell -ExecutionPolicy Bypass -File supabase/build-setup.ps1
 | `019_stories_media_replies_cleanup.sql` | Stories mit Videos (`media_type`, Bucket `stories` bis 50 MB); Story-Antworten: `messages.story_id`/`story_url`, RPC `reply_to_story` (Insert-Policy erlaubt Story-Bezug nur darüber); Aufräumen abgelaufener Stories: `invoke_story_cleanup` ruft die Edge Function `cleanup-expired-stories` stündlich per `pg_cron`/`pg_net` (Vault-Secret `project_url`) |
 | `020_chat_groups_edit_images.sql` | Gruppenchats (`is_group`, `title`, RPCs `create_group_conversation`, `add_conversation_members`, `rename_conversation`, `leave_conversation`, `conversation_member_profiles`); Nachrichten bearbeiten/löschen (`edit_message`, `delete_message`, Spaltenrechte, `updated_at` als Polling-Cursor); Bilder im privaten Bucket `chat-images` (Pfad `<conversation_id>/<user_id>/…`, nur Mitglieder); `conversation_list` um Gruppen, Bild-/Gelöscht-Flags und Absendernamen erweitert |
 | `021_mentions.sql` | Erwähnungen: `mentioned_user_ids(text, author)`; Trigger auf `posts` (Anlegen + neu hinzugefügte beim Bearbeiten) und `comments` erzeugen Benachrichtigungen vom Typ `mention` (Post-Autor bei Kommentaren ausgenommen, er bekommt schon `comment`) |
+| `022_chat_fixes.sql` | Korrekturen aus den SQL-Tests: erste Story-Antwort zählt beim Empfänger als ungelesen (`last_read_at = -infinity` für neue 1:1-Mitglieder), `messages_update_own` prüft wie beim Insert auch den Absender-Ordner von `image_path` |

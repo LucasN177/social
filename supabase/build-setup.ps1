@@ -22,6 +22,13 @@ $lines.Add('-- Laeuft in einer Transaktion - bei einem Fehler wird nichts uebern
 $lines.Add('-- =====================================================================')
 $lines.Add('')
 $lines.Add('begin;')
+$lines.Add('')
+# Spaeter erweiterte Views (018-020) wuerden beim erneuten Ausfuehren der frueheren Definitionen
+# Spalten verlieren ("cannot drop columns from view"). Views enthalten keine Daten und werden von
+# den Skripten unten neu angelegt; die Rechte kommen ueber die Default-Privileges von Supabase.
+$lines.Add('-- Abgeleitete Views vorab entfernen, damit setup.sql wiederholt ausfuehrbar bleibt')
+$lines.Add('drop view if exists public.home_feed, public.feed_posts, public.comment_details,')
+$lines.Add('    public.story_feed, public.conversation_list, public.notification_feed cascade;')
 
 foreach ($script in $scripts) {
     $content = [System.IO.File]::ReadAllText($script.FullName, $utf8).Replace("`r`n", "`n").TrimEnd()

@@ -28,5 +28,23 @@ window.socialUi = {
     disposeSentinel: (element) => {
         element?.__sentinelObserver?.disconnect();
         if (element) element.__sentinelObserver = null;
+    },
+
+    // Online/Offline melden (OfflineBanner). Liefert den aktuellen Stand.
+    watchConnection: (dotNetRef) => {
+        window.socialUi.unwatchConnection();
+        const notify = () => dotNetRef.invokeMethodAsync('SetOnline', navigator.onLine).catch(() => { });
+        window.addEventListener('online', notify);
+        window.addEventListener('offline', notify);
+        window.socialUi.__connectionHandler = notify;
+        return navigator.onLine;
+    },
+
+    unwatchConnection: () => {
+        const handler = window.socialUi.__connectionHandler;
+        if (!handler) return;
+        window.removeEventListener('online', handler);
+        window.removeEventListener('offline', handler);
+        window.socialUi.__connectionHandler = null;
     }
 };

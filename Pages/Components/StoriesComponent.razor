@@ -1,7 +1,7 @@
 @implements IDisposable
 @inject IStoryService StoryService
 @inject IUserService UserService
-@inject ISnackbar Snackbar
+@inject IFeedbackService Feedback
 
 <MudPaper Elevation="0" Outlined="true" Class="mb-4 py-3" Style="border-radius: 16px">
     <div class="stories-strip">
@@ -126,7 +126,7 @@
         if (files is not { Count: > 0 }) return;
         if (files.Count > IStoryService.MaxItemsPerUpload)
         {
-            Snackbar.Add($"You can add up to {IStoryService.MaxItemsPerUpload} photos or videos at once.", Severity.Warning);
+            Feedback.Warning($"You can add up to {IStoryService.MaxItemsPerUpload} photos or videos at once.");
             return;
         }
 
@@ -141,7 +141,7 @@
                 var upload = await ReadFile(file);
                 if (upload is null)
                 {
-                    Snackbar.Add($"\"{file.Name}\" could not be read. Use JPG, PNG, WebP or MP4, WebM, MOV up to 50 MB.", Severity.Error);
+                    Feedback.Error($"\"{file.Name}\" could not be read. Use JPG, PNG, WebP or MP4, WebM, MOV up to 50 MB.");
                     return;
                 }
                 uploads.Add(upload);
@@ -149,9 +149,9 @@
 
             var result = await StoryService.AddStoriesAsync(uploads);
             if (result.IsSuccess)
-                Snackbar.Add(result.Data == 1 ? "Added to your story" : $"{result.Data} items added to your story", Severity.Success);
+                Feedback.Success(result.Data == 1 ? "Added to your story" : $"{result.Data} items added to your story");
             else
-                Snackbar.Add(result.ErrorMessage ?? "Your story could not be published.", Severity.Error);
+                Feedback.Error(result, "Your story could not be published.");
         }
         finally
         {

@@ -48,8 +48,11 @@ Services/         Geschäftslogik, App-State, Theme, Auth-State
 Layout/           MainLayout, Theme
 Pages/            Seiten und Komponenten
 supabase/sql/     Alle SQL-Skripte für die Datenbank (nummeriert)
+supabase/tests/   SQL-Tests mit PGlite (Supabase-Umgebung nachgebaut)
+supabase/functions/  Edge Functions (Aufräumen abgelaufener Stories)
+tests/            Unit-Tests (xUnit, Moq, bUnit)
 docs/             Implementationsplan
-wwwroot/          index.html (Ladebildschirm), CSS, Icons, Manifest
+wwwroot/          index.html (Ladebildschirm), offline.html, CSS, Icons, Manifest
 ```
 
 ## Lokal starten
@@ -76,6 +79,22 @@ Voraussetzung: [.NET 10 SDK](https://dotnet.microsoft.com/download).
    ```
 
 3. Im Browser öffnen: <http://localhost:5046>
+
+## Tests
+
+Unit-Tests für Services, Mapping und Komponenten (xUnit, Moq, bUnit):
+
+```bash
+dotnet test tests/Social.Tests
+```
+
+SQL-Tests: `supabase/setup.sql` läuft in [PGlite](https://pglite.dev/) (Postgres als WebAssembly) mit nachgebauter Supabase-Umgebung; geprüft werden u. a. RLS-Policies, RPCs und Trigger. Voraussetzung: Node.js 22+.
+
+```bash
+cd supabase/tests && npm ci && npm test
+```
+
+Beides läuft automatisch in GitHub Actions ([`tests.yml`](.github/workflows/tests.yml)) – bei Pull Requests und vor jedem Deployment.
 
 ## Datenbank einrichten
 

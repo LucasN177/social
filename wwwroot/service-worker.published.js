@@ -42,19 +42,35 @@ async function onActivate(event) {
     await self.clients.claim();
 }
 
+// Eigene Offline-Seite (wwwroot/offline.html), falls eine Seite weder im Cache noch im Netz ist
+const offlinePageUrl = new URL('offline.html', baseUrl).href;
+
 async function onFetch(event) {
     let cachedResponse = null;
+    const isNavigation = event.request.mode === 'navigate';
+    const cache = await caches.open(cacheName);
+
     if (event.request.method === 'GET') {
         // For all navigation requests, try to serve index.html from cache,
         // unless that request is for an offline resource.
         // If you need some URLs to be server-rendered, edit the following check to exclude those URLs
-        const shouldServeIndexHtml = event.request.mode === 'navigate'
+        const shouldServeIndexHtml = isNavigation
             && !manifestUrlList.some(url => url === event.request.url);
 
-        const request = shouldServeIndexHtml ? 'index.html' : event.request;
-        const cache = await caches.open(cacheName);
+        const request = shouldServeIndexHtml ? new URL('index.html', baseUrl).href : event.request;
         cachedResponse = await cache.match(request);
     }
 
-    return cachedResponse || fetch(event.request);
+    if (cachedResponse) return cachedResponse;
+
+    try {
+        return await fetch(event.request);
+    } catch (error) {
+        // Nur Seitenaufrufe bekommen die Offline-Seite; Daten-/Bildanfragen schlagen normal fehl
+        if (isNavigation) {
+            const offlinePage = await cache.match(offlinePageUrl);
+            if (offlinePage) return offlinePage;
+        }
+        throw error;
+    }
 }

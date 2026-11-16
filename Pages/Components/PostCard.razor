@@ -2,7 +2,7 @@
 @inject IPostService PostService
 @inject IUserService UserService
 @inject IDialogService DialogService
-@inject ISnackbar Snackbar
+@inject IFeedbackService Feedback
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
@@ -164,7 +164,7 @@
     {
         _likePulse = !Post.IsLiked;
         var result = await PostService.ToggleLikeAsync(Post);
-        if (!result.IsSuccess) Snackbar.Add("That didn't work. Please try again.", Severity.Error);
+        Feedback.Handle(result);
     }
 
     private async Task LikeFromDoubleClick()
@@ -176,9 +176,9 @@
     {
         var result = await PostService.ToggleBookmarkAsync(Post);
         if (!result.IsSuccess)
-            Snackbar.Add("That didn't work. Please try again.", Severity.Error);
+            Feedback.Error(result);
         else if (Post.IsBookmarked)
-            Snackbar.Add("Saved to your profile", Severity.Normal);
+            Feedback.Info("Saved to your profile");
     }
 
     private async Task ToggleComments()
@@ -206,7 +206,7 @@
         }
         else
         {
-            Snackbar.Add(result.ErrorMessage ?? "Your comment could not be posted.", Severity.Error);
+            Feedback.Error(result, "Your comment could not be posted.");
         }
     }
 
@@ -221,13 +221,13 @@
         if (result.IsSuccess)
             _comments?.Remove(comment);
         else
-            Snackbar.Add("The comment could not be deleted.", Severity.Error);
+            Feedback.Error("The comment could not be deleted.");
     }
 
     private async Task ToggleCommentLike(Comment comment)
     {
         var result = await PostService.ToggleCommentLikeAsync(comment);
-        if (!result.IsSuccess) Snackbar.Add("That didn't work. Please try again.", Severity.Error);
+        Feedback.Handle(result);
     }
 
     private async Task EditPost()
@@ -237,7 +237,7 @@
         var dialog = await DialogService.ShowAsync<EditPostDialog>("Edit post", parameters, options);
         var result = await dialog.Result;
         if (result is { Canceled: false })
-            Snackbar.Add("Post updated", Severity.Success);
+            Feedback.Success("Post updated");
     }
 
     private async Task DeletePost()
@@ -250,12 +250,12 @@
         var result = await PostService.DeletePostAsync(Post);
         if (result.IsSuccess)
         {
-            Snackbar.Add("Post deleted", Severity.Normal);
+            Feedback.Info("Post deleted");
             await OnDeleted.InvokeAsync(Post);
         }
         else
         {
-            Snackbar.Add(result.ErrorMessage ?? "The post could not be deleted.", Severity.Error);
+            Feedback.Error(result, "The post could not be deleted.");
         }
     }
 
@@ -263,7 +263,7 @@
     {
         var url = Navigation.ToAbsoluteUri($"p/{Post.Id}").ToString();
         await JS.InvokeVoidAsync("navigator.clipboard.writeText", url);
-        Snackbar.Add("Link copied", Severity.Normal);
+        Feedback.Info("Link copied");
     }
 
     private static string AuthorName(User user) =>

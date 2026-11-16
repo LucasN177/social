@@ -20,6 +20,16 @@
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
+  <!-- Testprojekt und SQL-Tests liegen im selben Ordnerbaum, gehören aber nicht zur App -->
+  <ItemGroup>
+    <Compile Remove="tests\**" />
+    <Content Remove="tests\**" />
+    <None Remove="tests\**" />
+    <EmbeddedResource Remove="tests\**" />
+    <Content Remove="supabase\**" />
+    <None Remove="supabase\**" />
+  </ItemGroup>
+
   <ItemGroup>
     <Folder Include="Core\Interfaces\Models\" />
     <Folder Include="Core\Mapping\" />

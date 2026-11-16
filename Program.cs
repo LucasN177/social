@@ -68,6 +68,8 @@ builder.Services.AddSingleton<IThemeService, ThemeService>();
 builder.Services.AddSingleton<INotificationService, NotificationService>();
 builder.Services.AddSingleton<IMessageService, MessageService>();
 builder.Services.AddSingleton<ActivityService>();
+// Scoped wie ISnackbar von MudBlazor
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();

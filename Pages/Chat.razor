@@ -4,7 +4,7 @@
 @inject IMessageService MessageService
 @inject ActivityService Activity
 @inject IDialogService DialogService
-@inject ISnackbar Snackbar
+@inject IFeedbackService Feedback
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
@@ -326,7 +326,7 @@
 
         if (result is not { IsSuccess: true, Data: not null })
         {
-            Snackbar.Add(result.ErrorMessage ?? "Your message could not be sent.", Severity.Error);
+            Feedback.Error(result, "Your message could not be sent.");
             return;
         }
 
@@ -357,7 +357,7 @@
         _sending = false;
 
         if (result.IsSuccess) CancelEdit();
-        else Snackbar.Add(result.ErrorMessage ?? "Your changes could not be saved.", Severity.Error);
+        else Feedback.Error(result, "Your changes could not be saved.");
     }
 
     private async Task DeleteMessage(ChatMessage message)
@@ -368,7 +368,7 @@
 
         var result = await MessageService.DeleteAsync(message);
         if (!result.IsSuccess)
-            Snackbar.Add(result.ErrorMessage ?? "The message could not be deleted.", Severity.Error);
+            Feedback.Error(result, "The message could not be deleted.");
         else if (_editing == message)
             CancelEdit();
     }
@@ -389,7 +389,7 @@
         catch (Exception)
         {
             RemoveImage();
-            Snackbar.Add("This photo could not be read. Please choose a JPG, PNG or WebP.", Severity.Error);
+            Feedback.Error("This photo could not be read. Please choose a JPG, PNG or WebP.");
         }
     }
 
@@ -437,7 +437,7 @@
         if (await dialog.Result is { Canceled: false })
         {
             SetChat(await MessageService.GetChatAsync(Id) ?? _chat);
-            Snackbar.Add("People added", Severity.Success);
+            Feedback.Success("People added");
         }
     }
 
@@ -470,7 +470,7 @@
         }
         else
         {
-            Snackbar.Add(result.ErrorMessage ?? "You could not leave the group.", Severity.Error);
+            Feedback.Error(result, "You could not leave the group.");
         }
     }
 

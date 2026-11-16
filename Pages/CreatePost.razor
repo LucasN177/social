@@ -3,7 +3,7 @@
 @implements IAsyncDisposable
 @inject IPostService PostService
 @inject IUserService UserService
-@inject ISnackbar Snackbar
+@inject IFeedbackService Feedback
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
@@ -285,7 +285,7 @@
 
         if (result.IsSuccess)
         {
-            Snackbar.Add(_isReel ? "Your reel is live 🎬" : "Your post is live 🎉", Severity.Success);
+            Feedback.Success(_isReel ? "Your reel is live 🎬" : "Your post is live 🎉");
             Navigation.NavigateTo($"p/{result.Data}");
         }
         else

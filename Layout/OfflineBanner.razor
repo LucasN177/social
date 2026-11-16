@@ -1,0 +1,44 @@
+@* Hinweis, solange der Browser offline ist. Die App selbst kommt aus dem Offline-Cache,
+   Daten von Supabase aber nicht – Aktionen schlagen dann fehl. *@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@if (!_online)
+{
+    <div class="offline-banner" role="status">
+        <MudIcon Icon="@Icons.Material.Outlined.CloudOff" Size="Size.Small" />
+        <span>You're offline. New posts and messages will load when you're back online.</span>
+    </div>
+}
+
+@code {
+    private bool _online = true;
+    private DotNetObjectReference<OfflineBanner>? _selfRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _selfRef = DotNetObjectReference.Create(this);
+        var online = await JS.InvokeAsync<bool>("socialUi.watchConnection", _selfRef);
+        if (online != _online) await SetOnline(online);
+    }
+
+    [JSInvokable]
+    public Task SetOnline(bool online)
+    {
+        _online = online;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("socialUi.unwatchConnection");
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        _selfRef?.Dispose();
+    }
+}

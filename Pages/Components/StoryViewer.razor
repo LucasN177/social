@@ -1,7 +1,7 @@
 @implements IAsyncDisposable
 @inject IStoryService StoryService
 @inject IDialogService DialogService
-@inject ISnackbar Snackbar
+@inject IFeedbackService Feedback
 @inject IJSRuntime JS
 
 <div class="story-viewer" tabindex="0" @ref="_root" @onkeydown="OnKeyDown" role="dialog" aria-modal="true"
@@ -295,13 +295,13 @@
         if (result.IsSuccess)
         {
             _reply = "";
-            Snackbar.Add($"Reply sent to {story.User.Username ?? story.User.DisplayName}", Severity.Success);
+            Feedback.Success($"Reply sent to {story.User.Username ?? story.User.DisplayName}");
             // Zurück zur Story, damit sie weiterläuft
             await _root.FocusAsync();
         }
         else
         {
-            Snackbar.Add(result.ErrorMessage ?? "Your reply could not be sent.", Severity.Error);
+            Feedback.Error(result, "Your reply could not be sent.");
         }
     }
 
@@ -328,12 +328,12 @@
         var result = await StoryService.DeleteStoryAsync(Current);
         if (result.IsSuccess)
         {
-            Snackbar.Add("Story deleted", Severity.Normal);
+            Feedback.Info("Story deleted");
             await Close();
         }
         else
         {
-            Snackbar.Add(result.ErrorMessage ?? "The story could not be deleted.", Severity.Error);
+            Feedback.Error(result, "The story could not be deleted.");
             _paused = false;
         }
     }

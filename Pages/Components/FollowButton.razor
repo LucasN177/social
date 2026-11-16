@@ -1,7 +1,7 @@
 @* Folgen / Entfolgen; lädt den Status selbst, wenn IsFollowing nicht übergeben wird *@
 @implements IDisposable
 @inject IUserService UserService
-@inject ISnackbar Snackbar
+@inject IFeedbackService Feedback
 
 @if (_isSelf)
 {
@@ -63,7 +63,7 @@ else
         }
         else
         {
-            Snackbar.Add(result.ErrorMessage ?? "That didn't work. Please try again.", Severity.Error);
+            Feedback.Error(result, "That didn't work. Please try again.");
         }
     }
 

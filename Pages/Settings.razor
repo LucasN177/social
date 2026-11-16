@@ -6,7 +6,7 @@
 @inject IUserService UserService
 @inject IThemeService ThemeService
 @inject IDialogService DialogService
-@inject ISnackbar Snackbar
+@inject IFeedbackService Feedback
 @inject NavigationManager Navigation
 
 <PageTitle>Settings - Social</PageTitle>
@@ -76,7 +76,7 @@
         var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
         var dialog = await DialogService.ShowAsync<EditProfileDialog>("Edit profile", parameters, options);
         if (await dialog.Result is { Canceled: false })
-            Snackbar.Add("Profile saved", Severity.Success);
+            Feedback.Success("Profile saved");
     }
 
     private async Task Logout()

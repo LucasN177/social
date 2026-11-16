@@ -2,7 +2,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @implements IAsyncDisposable
 @inject IPostService PostService
-@inject ISnackbar Snackbar
+@inject IFeedbackService Feedback
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
@@ -126,7 +126,7 @@ else
     private async Task ToggleLike(Post reel)
     {
         var result = await PostService.ToggleLikeAsync(reel);
-        if (!result.IsSuccess) Snackbar.Add("That didn't work. Please try again.", Severity.Error);
+        Feedback.Handle(result);
     }
 
     private async Task LikeOnce(Post reel)
@@ -138,7 +138,7 @@ else
     {
         var url = Navigation.ToAbsoluteUri($"p/{reel.Id}").ToString();
         await JS.InvokeVoidAsync("navigator.clipboard.writeText", url);
-        Snackbar.Add("Link copied", Severity.Normal);
+        Feedback.Info("Link copied");
     }
 
     public async ValueTask DisposeAsync()

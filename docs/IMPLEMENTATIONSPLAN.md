@@ -126,13 +126,14 @@ Supabase (Postgres + RLS, Auth, Storage, Realtime)
 
 ### Phase 6 – Qualität & Release
 - [x] Loading-Skeletons (`MudSkeleton`) und leere Zustände auf den Hauptseiten
-- [ ] Fehlerbehandlung über `IResponse` + zentrale Snackbar
-- [ ] Unit-Tests für Services (xUnit + Moq), bUnit für Komponenten
-- [ ] SQL-Tests (PGlite, Supabase-Umgebung nachgebaut) ins Repo und in CI übernehmen
+- [x] Fehlerbehandlung über `IResponse` + zentrale Snackbar: `IFeedbackService` (alle Meldungen der UI laufen darüber; technische Texte wie Postgrest-JSON oder Exception-Meldungen werden protokolliert und durch verständliche ersetzt, Netzwerkfehler → Offline-Hinweis), `AppErrorBoundary` im Layout statt der Blazor-Fehlerleiste (nur die Seite zeigt „Something went wrong“, zurücksetzen per „Try again“ oder Navigation)
+- [x] Unit-Tests für Services (xUnit + Moq), bUnit für Komponenten: `tests/Social.Tests` (PostService, StoryService, MessageService, FeedbackService, Mapping, `RichText`)
+- [x] SQL-Tests (PGlite, Supabase-Umgebung nachgebaut) unter `supabase/tests` (siehe README dort): 40 Tests zu Idempotenz, RLS, RPCs, Triggern und Storage-Policies; dabei gefundene Fehler sind mit `022_chat_fixes.sql` bzw. der Präambel in `setup.sql` behoben
+- [x] CI: Workflow `tests.yml` (Pull Requests + Voraussetzung für `deploy.yml`) führt Unit- und SQL-Tests aus
 - [x] Supabase-Keys im Deploy-Workflow aus GitHub Secrets in `appsettings.json` schreiben
 - [x] Service Worker / Offline-Cache für `/social/`: Basis aus dem Scope, base href vor dem Publish, neue Versionen übernehmen sofort (`skipWaiting` / `clients.claim`)
 - [x] PWA: App-Icons im Markendesign
-- [ ] PWA: eigene Offline-Seite
+- [x] PWA: eigene Offline-Seite `wwwroot/offline.html` (ohne externe Dateien, lädt automatisch neu, sobald wieder online), vom Service Worker ausgeliefert, wenn eine Seite weder im Cache noch im Netz ist; in der App zusätzlich ein Offline-Banner (`OfflineBanner`)
 
 ## 4. Datenbank
 
@@ -162,6 +163,9 @@ Zum Einrichten genügt [`supabase/setup.sql`](../supabase/setup.sql) im Supabase
 | `019_stories_media_replies_cleanup.sql` | `stories.media_type` (Bild/Video), Bucket `stories` bis 50 MB inkl. Video, `messages.story_id`/`story_url` + RPC `reply_to_story`, `invoke_story_cleanup` + stündlicher `pg_cron`-Job |
 | `020_chat_groups_edit_images.sql` | Gruppen (`conversations.is_group`/`title`, RPCs zum Anlegen/Hinzufügen/Umbenennen/Verlassen), Nachrichten bearbeiten/löschen (`edit_message`, `delete_message`, `updated_at` als Polling-Cursor), Bilder im privaten Bucket `chat-images`, `conversation_list` um Gruppen/Bild/gelöscht erweitert |
 | `021_mentions.sql` | `mentioned_user_ids`, Trigger auf `posts` (Anlegen/Bearbeiten) und `comments` → Benachrichtigung `mention` |
+| `022_chat_fixes.sql` | Korrekturen aus den SQL-Tests: erste Story-Antwort zählt als ungelesen, `messages_update_own` prüft den Absender-Ordner von `image_path` |
+
+`setup.sql` entfernt am Anfang die später erweiterten Views (`build-setup.ps1`), damit es beliebig oft ausführbar bleibt – das prüfen die SQL-Tests.
 
 Neue Änderungen werden **nie** in bestehende Skripte geschrieben, sondern als neues Skript mit der nächsten Nummer angelegt.
 
